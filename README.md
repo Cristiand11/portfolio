@@ -45,15 +45,10 @@ O sistema de Agendamento Inteligente de Consultas Médicas é uma plataforma web
 - **RF22** - O sistema deve enviar notificações por e-mail sobre consultas.
 - **RF23** - Médicos e auxiliares podem enviar mensagens para pacientes.
 
-### 1.5. Gerenciamento de Documentos
-- **RF24** - Médicos podem anexar documentos no perfil do paciente.
-- **RF25** - Pacientes podem acessar seus documentos.
-- **RF26** - Auxiliares podem organizar documentos dos pacientes.
-
-### 1.6. Relatórios e Monitoramento
-- **RF27** - Administradores podem visualizar relatórios de uso.
-- **RF28** - Médicos podem acessar estatísticas da agenda.
-- **RF29** - Pacientes podem acessar histórico de consultas.
+### 1.5. Relatórios e Monitoramento
+- **RF24** - Administradores podem visualizar relatórios de uso.
+- **RF25** - Médicos podem acessar estatísticas da agenda.
+- **RF26** - Pacientes podem acessar histórico de consultas.
 
 ---
 
