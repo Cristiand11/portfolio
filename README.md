@@ -65,23 +65,21 @@ O sistema de Agendamento Inteligente de Consultas Médicas é uma plataforma web
 - **RNF08** - O banco de dados deve ser PostgreSQL.
 
 ### 2.2. Desempenho e Escalabilidade
-- **RNF09** - O sistema deve suportar pelo menos 500 usuários simultâneos.
-- **RNF10** - As páginas devem carregar em até 3 segundos.
+- **RNF09** - As páginas devem carregar em até 3 segundos.
 
 ### 2.3. Segurança
-- **RNF11** - Implementação de autenticação JWT.
-- **RNF12** - Hashing de senhas com bcrypt.
-- **RNF13** - Proteção contra SQL Injection e XSS.
-- **RNF14** - Recuperação de senha via e-mail.
+- **RNF10** - Implementação de autenticação JWT.
+- **RNF11** - Hashing de senhas com bcrypt.
+- **RNF12** - Proteção contra SQL Injection e XSS.
+- **RNF13** - Recuperação de senha via e-mail.
 
 ### 2.4. Manutenibilidade e Monitoramento
-- **RNF15** - Desenvolvimento modular para manutenção e expansão.
-- **RNF16** - Registro de logs de erros e acessos.
-- **RNF17** - Uso de versionamento no GitHub.
+- **RNF14** - Desenvolvimento modular para manutenção e expansão.
+- **RNF15** - Registro de logs de erros e acessos.
+- **RNF16** - Uso de versionamento no GitHub.
 
 ### 2.5. Usabilidade e Acessibilidade
-- **RNF18** - Interface intuitiva e acessível.
-- **RNF19** - Suporte a leitores de tela para acessibilidade.
+- **RNF17** - Interface intuitiva e acessível.
 
 ---
 
