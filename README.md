@@ -101,7 +101,7 @@ O sistema de Agendamento Inteligente de Consultas Médicas é uma plataforma web
 
 ---
 
-## 4. Fluxo de Telas
+## 4. Telas por Perfil
 
 ### 4.1. Administrador
 - Dashboard com indicadores do sistema.
@@ -112,5 +112,17 @@ O sistema de Agendamento Inteligente de Consultas Médicas é uma plataforma web
 - Dashboard com agenda do dia.
 - Cadastro de auxiliares e pacientes.
 - Gerenciamento de consultas.
+- Tela de perfil do usuário.
+
+### 4.3. Auxiliar
+- Dashboard com agenda do dia.
+- Gerenciamento de consultas.
+- Cadastro de pacientes.
+- Tela de perfil do usuário.
+
+### 4.4 Paciente
+- Página Inicial indicando próxima consulta (se houver).
+- Tela de consultas (histórico e solicitação de novas consultas).
+- Tela de perfil do usuário.
 
 ---
