@@ -1,128 +1,167 @@
-# Sistema de Agendamento Inteligente de Consultas Médicas
+# 🏥 Agenda Médica - Sistema de Agendamento Inteligente de Consultas
 
-## Descrição
-O sistema de Agendamento Inteligente de Consultas Médicas é uma plataforma web projetada para facilitar a gestão de consultas entre administradores, médicos, auxiliares e pacientes. O sistema oferece funcionalidades como cadastro e autenticação segura de usuários, gerenciamento de agendas, envio de notificações e acompanhamento de histórico de consultas.
-
-## Tecnologias Utilizadas
-- **Front-end:** React.js
-- **Back-end:** Node.js com Express
-- **Banco de Dados:** PostgreSQL
-- **Autenticação:** JWT (JSON Web Token)
-- **Hospedagem:** À definir
+Sistema web para o agendamento inteligente de consultas médicas. O projeto visa **otimizar o gerenciamento de agendas** de clínicas, médicos e pacientes, evitando sobrecargas e reduzindo o absenteísmo.
 
 ---
 
-## 1. Requisitos Funcionais (RF)
+## 📘 Resumo
 
-### 1.1. Autenticação e Perfis de Usuário
-- **RF01** - Cadastro de administradores, médicos, auxiliares e pacientes.
-- **RF02** - Exibição de página de seleção de perfil antes do login.
-- **RF03** - Um mesmo e-mail pode ser utilizado em múltiplos perfis.
-- **RF04** - Login e autenticação segura para todos os usuários.
-- **RF05** - Médicos podem cadastrar auxiliares vinculados a eles.
-- **RF06** - Administradores podem cadastrar médicos na plataforma.
-- **RF07** - Pacientes podem se cadastrar e editar seus dados pessoais.
-- **RF08** - Administradores não podem visualizar dados de agendamentos, pacientes ou auxiliares.
-- **RF09** - Administradores podem solicitar a inativação de um médico.
-- **RF10** - O administrador pode reverter a solicitação de inativação dentro de 5 dias úteis.
-- **RF11** - Após 5 dias úteis sem reversão, o login do médico será bloqueado.
-- **RF12** - Após o bloqueio, o médico precisará se cadastrar novamente.
+A má gestão de agendas médicas prejudica o atendimento, gera desperdício de tempo e recursos, e afeta a qualidade dos serviços prestados. Este sistema busca combater esses problemas com tecnologia gratuita, acessível e inteligente, promovendo:
 
-### 1.2. Gerenciamento de Médicos e Auxiliares
-- **RF13** - Administradores podem visualizar, editar e remover médicos.
-- **RF14** - Médicos podem editar seu perfil, informando especialidades e horários.
-- **RF15** - Médicos podem cadastrar, editar ou remover auxiliares vinculados ao seu perfil.
-
-### 1.3. Gerenciamento de Agendas e Consultas
-- **RF16** - Médicos e auxiliares podem configurar horários disponíveis.
-- **RF17** - Pacientes podem solicitar consultas com médicos.
-- **RF18** - Auxiliares podem aprovar, cancelar ou remanejar consultas.
-- **RF19** - Médicos e auxiliares podem visualizar e gerenciar consultas.
-- **RF20** - Pacientes podem cancelar consultas com antecedência configurável.
-- **RF21** - O histórico de consultas deve ser registrado.
-
-### 1.4. Notificações e Comunicação
-- **RF22** - O sistema deve enviar notificações por e-mail sobre consultas.
-- **RF23** - Médicos e auxiliares podem enviar mensagens para pacientes.
-
-### 1.5. Relatórios e Monitoramento
-- **RF24** - Administradores podem visualizar relatórios de uso.
-- **RF25** - Médicos podem acessar estatísticas da agenda.
-- **RF26** - Pacientes podem acessar histórico de consultas.
+- Redução do absenteísmo
+- Controle eficiente de horários
+- Comunicação direta com os pacientes
 
 ---
 
-## 2. Requisitos Não Funcionais (RNF)
+## 🎯 Objetivo
 
-### 2.1. Tecnologias e Plataforma
-- **RNF01** - O sistema deve garantir segurança com criptografia de senhas.
-- **RNF02** - Tempo de resposta para login deve ser de até 3 segundos.
-- **RNF03** - A aplicação deve ser 100% web, sem suporte para apps móveis.
-- **RNF04** - Dados armazenados devem ser protegidos contra alterações não autorizadas.
-- **RNF05** - O sistema deve ser hospedado em plataforma gratuita.
-- **RNF06** - Compatibilidade garantida com Chrome, Firefox e Edge.
-- **RNF07** - A expiração da reversão de inativação deve ser contada em dias úteis.
-- **RNF08** - O banco de dados deve ser PostgreSQL.
-
-### 2.2. Desempenho e Escalabilidade
-- **RNF09** - As páginas devem carregar em até 3 segundos.
-
-### 2.3. Segurança
-- **RNF10** - Implementação de autenticação JWT.
-- **RNF11** - Hashing de senhas com bcrypt.
-- **RNF12** - Proteção contra SQL Injection e XSS.
-- **RNF13** - Recuperação de senha via e-mail.
-
-### 2.4. Manutenibilidade e Monitoramento
-- **RNF14** - Desenvolvimento modular para manutenção e expansão.
-- **RNF15** - Registro de logs de erros e acessos.
-- **RNF16** - Uso de versionamento no GitHub.
-
-### 2.5. Usabilidade e Acessibilidade
-- **RNF17** - Interface intuitiva e acessível.
+- Evitar sobreposição de horários e faltas sem aviso
+- Automatizar o controle de agendas médicas
+- Promover agendamentos transparentes e rastreáveis
+- Facilitar a comunicação clínica-paciente
 
 ---
 
-## 3. Relacionamentos entre Entidades
+## 🧩 Funcionalidades
 
-### Administrador
-- Pode cadastrar médicos, mas não gerencia seus acessos diretamente.
+### 👤 Perfis e Acessos
 
-### Médico
-- Pode ter vários auxiliares e pacientes associados.
+- **Administrador**: Cadastra médicos e visualiza relatórios
+- **Médico**: Gerencia pacientes, auxiliares e agenda
+- **Auxiliar**: Gerencia agendamentos e pacientes do médico
+- **Paciente**: Solicita e gerencia consultas
 
-### Auxiliar
-- Associado a apenas um médico.
-- Pode manejar agenda e documentos do médico.
+### 📅 Gerenciamento de Consultas
 
-### Paciente
-- Pode ser atendido por vários médicos.
-- O primeiro médico cria o registro do paciente.
+- Cadastro e visualização de consultas futuras
+- Cancelamento e reagendamento com regras de tempo
+- Validação de conflitos na agenda
+- Histórico completo de consultas por paciente
+
+### 🔔 Notificações e Comunicação
+
+- Envio de e-mails automáticos para lembretes
+- Médicos e auxiliares podem se comunicar com pacientes
+
+### 📊 Relatórios e Estatísticas
+
+- Administradores visualizam relatórios de uso
+- Médicos acessam estatísticas de sua agenda
+
+---
+
+## 🧱 Estrutura do Sistema
+
+### Fluxo de Telas
+
+✅ Telas específicas para cada perfil (Administrador, Médico, Auxiliar e Paciente), incluindo:
+
+- Dashboards personalizados
+- Cadastros e filtros por perfil
+- Modal de confirmação e regras de negócio aplicadas
+
+👉 Veja detalhes no [Fluxo de Telas dos Usuários](docs/fluxo-de-telas.pdf)
+
+### Relacionamentos entre Entidades
+
+- **1 Médico** ➝ N Auxiliares e N Pacientes  
+- **1 Paciente** ➝ N Médicos  
+- **1 Auxiliar** ➝ 1 Médico (obrigatoriamente)
+
+👉 Veja mais no [Relacionamento das Entidades](docs/relacionamentos.pdf)
 
 ---
 
-## 4. Telas por Perfil
+## 💻 Stack Tecnológica
 
-### 4.1. Administrador
-- Dashboard com indicadores do sistema.
-- Tela de cadastros para gerenciar médicos.
-- Tela de solicitações para gerenciar inativações.
-
-### 4.2. Médico
-- Dashboard com agenda do dia.
-- Cadastro de auxiliares e pacientes.
-- Gerenciamento de consultas.
-- Tela de perfil do usuário.
-
-### 4.3. Auxiliar
-- Dashboard com agenda do dia.
-- Gerenciamento de consultas.
-- Cadastro de pacientes.
-- Tela de perfil do usuário.
-
-### 4.4 Paciente
-- Página Inicial indicando próxima consulta (se houver).
-- Tela de consultas (histórico e solicitação de novas consultas).
-- Tela de perfil do usuário.
+| Camada       | Tecnologia                         |
+|--------------|-------------------------------------|
+| Front-end    | React.js + TailwindCSS              |
+| Back-end     | Node.js + Express.js                |
+| Banco de Dados | PostgreSQL (via Supabase)          |
+| Hospedagem   | Vercel                              |
+| CI/CD        | GitHub Actions                      |
+| Notificações | Resend API                          |
 
 ---
+
+## ⚙️ Requisitos Técnicos
+
+### Requisitos Funcionais (exemplos)
+
+- Cadastro e login por perfil
+- Gerenciamento de consultas com restrições de horário
+- Envio de notificações
+- Histórico de atendimentos
+
+### Requisitos Não Funcionais
+
+- Segurança: JWT, bcrypt, SQL Injection e XSS protection
+- Web-only: 100% online, sem app mobile
+- Compatível com: Chrome, Firefox e Edge
+- Performance: Resposta em até 3s
+
+---
+
+## 🛡️ Segurança
+
+- Autenticação via JWT
+- Hash de senhas com `bcrypt`
+- Proteção contra SQL Injection e XSS
+- Backup automático via Supabase
+
+---
+
+## 🗺️ Roadmap
+
+| Fase                        | Ferramentas            | Tempo Estimado |
+|----------------------------|------------------------|----------------|
+| Planejamento               | LucidChart             | 2 semanas      |
+| Configuração Inicial       | Supabase, Vercel       | 2 semanas      |
+| Cadastro de Usuários       | React, PostgreSQL      | 2 semanas      |
+| Lógica de Agendamento      | Express, PostgreSQL    | 3 semanas      |
+| Notificações               | Resend API             | 2 semanas      |
+| Testes e Segurança         | Jest, Supabase Auth    | 2 semanas      |
+| Deploy e Monitoramento     | Vercel, Grafana        | 2 semanas      |
+
+---
+
+## 📁 Organização do Código (em breve)
+
+- `/frontend` — Interface React
+- `/backend` — APIs Express
+- `/docs` — Documentação auxiliar (PDFs, diagramas)
+- `/tests` — Testes automatizados
+
+---
+
+## 📚 Referências
+
+- [Supabase Docs](https://supabase.com/docs)
+- [Vercel Docs](https://vercel.com/docs)
+- [PostgreSQL Docs](https://www.postgresql.org/docs/)
+- [Resend API](https://resend.com/docs)
+
+---
+
+## 🧾 Referências Bibliográficas
+
+1. GONÇALVES, André Luiz et al. *Absenteísmo em consultas e exames especializados ambulatoriais no SUS*. Ciência & Saúde Coletiva, 2021.  
+2. CARVALHO, Cássia Thaís et al. *Ausência de usuários agendados em consultas médicas em unidade de atenção primária à saúde*. Saúde em Debate, 2019.  
+3. NASCIMENTO, Rafaela. *Um em cada três pacientes do SUS não aparece para consultas, exames e cirurgias*. Folha Vitória, 2023.
+
+---
+
+## 🧠 Autor
+
+**Cristian Domingues**  
+Centro Universitário Católica de Santa Catarina — Joinville  
+2025
+
+---
+
+## 📜 Licença
+
+Este projeto é livre para uso acadêmico e não possui fins comerciais.
+
