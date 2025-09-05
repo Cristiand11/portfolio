@@ -1,12 +1,28 @@
-import express from "express";
-import cors from "cors";
+require('dotenv').config();
 
+const express = require('express');
 const app = express();
-app.use(cors());
+
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({ message: "API Agenda Médica funcionando 🚀" });
+// Importa as rotas
+const medicoRoutes = require('./src/routes/medicoRoutes');
+const pacienteRoutes = require('./src/routes/pacienteRoutes');
+const auxiliarRoutes = require('./src/routes/auxiliarRoutes');
+
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API de Agendamento Médico funcionando!' });
 });
 
-app.listen(3001, () => console.log("Backend rodando na porta 3001"));
+// Utiliza as rotas com prefixo /api
+app.use('/api/medicos', medicoRoutes);
+app.use('/api/pacientes', pacienteRoutes);
+app.use('/api/auxiliares', auxiliarRoutes);
+
+// Define a porta a partir das variáveis de ambiente ou usa 3001 como padrão
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
