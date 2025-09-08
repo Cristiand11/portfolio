@@ -9,6 +9,9 @@ app.use(express.json());
 const medicoRoutes = require('./src/routes/medicoRoutes');
 const pacienteRoutes = require('./src/routes/pacienteRoutes');
 const auxiliarRoutes = require('./src/routes/auxiliarRoutes');
+const consultaRoutes = require('./src/routes/consultaRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const administradorRoutes = require('./src/routes/administradorRoutes');
 
 // Rota de teste
 app.get('/', (req, res) => {
@@ -19,6 +22,9 @@ app.get('/', (req, res) => {
 app.use('/api/medicos', medicoRoutes);
 app.use('/api/pacientes', pacienteRoutes);
 app.use('/api/auxiliares', auxiliarRoutes);
+app.use('/api/consultas', consultaRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/administradores', administradorRoutes);
 
 // Define a porta a partir das variáveis de ambiente ou usa 3001 como padrão
 const PORT = process.env.PORT || 3001;

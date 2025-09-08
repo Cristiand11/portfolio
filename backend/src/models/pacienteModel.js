@@ -1,14 +1,21 @@
 const db = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 const Paciente = {};
 
 // Função para criar um paciente
 Paciente.create = async (pacienteData) => {
     const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
+    
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(senha, salt);
+    
     const { rows } = await db.query(
         'INSERT INTO paciente (nome, cpf, "dataNascimento", email, telefone, endereco, senha, "cepCodigo", "enderecoNumero", cidade, bairro, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
-        [nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado]
+        [nome, cpf, dataNascimento, email, telefone, endereco, hash, cepCodigo, enderecoNumero, cidade, bairro, estado]
     );
+
+    delete rows[0].senha;
     return rows[0];
 };
 
