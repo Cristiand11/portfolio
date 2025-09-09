@@ -86,11 +86,47 @@ Paciente.findById = async (id) => {
 
 // Função para editar um paciente
 Paciente.update = async (id, pacienteData) => {
-    const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
-    const { rows } = await db.query(
-        'UPDATE paciente SET nome = $1, cpf = $2, "dataNascimento" = $3, email = $4, telefone = $5, endereco = $6, senha = $7, "cepCodigo" = $8, "enderecoNumero" = $9, cidade = $10, bairro = $11, estado = $12, "lastModifiedDate" = NOW() WHERE id = $13 RETURNING *',
-        [nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado, id]
-    );
+    // Separa a senha do resto dos dados
+    const { senha, ...dadosSemSenha } = pacienteData;// Inicia a construção da query e dos valores
+    let querySetParts = [];
+    const values = [];
+    let paramIndex = 1;
+
+    // Adiciona os outros campos à query dinamicamente
+    for (const key in dadosSemSenha) {
+        if (dadosSemSenha[key] !== undefined) {
+            // Usa aspas duplas para nomes de coluna em camelCase
+            const columnName = key === 'dataNascimento' || key === 'cepCodigo' || key === 'enderecoNumero' ? `"${key}"` : key;
+            querySetParts.push(`${columnName} = $${paramIndex++}`);
+            values.push(dadosSemSenha[key]);
+        }
+    }
+
+    // Se uma nova senha foi fornecida, criptografa e adiciona à query
+    if (senha) {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(senha, salt);
+        querySetParts.push(`senha = $${paramIndex++}`);
+        values.push(hash);
+    }
+    
+    // Se não houver nada para atualizar, retorna (evita erro de query vazia)
+    if (querySetParts.length === 0) {
+        return Paciente.findById(id);
+    }
+
+    // Adiciona o lastModifiedDate e o WHERE
+    querySetParts.push(`"lastModifiedDate" = NOW()`);
+    values.push(id);
+    
+    const query = `UPDATE paciente SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+
+    const { rows } = await db.query(query, values);
+
+    if (rows[0]) {
+        delete rows[0].senha;
+    };
+    
     return rows[0];
 };
 
