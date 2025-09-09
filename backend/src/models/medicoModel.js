@@ -117,4 +117,22 @@ Medico.delete = async (id) => {
   return rowCount; // Retorna 1 se deletou, 0 se não encontrou
 };
 
+// Função para solicitar a inativação de um médico
+Medico.solicitarInativacao = async (id) => {
+  const { rows } = await db.query(
+    'UPDATE medico SET "inativacaoSolicitadaEm" = NOW() WHERE id = $1 AND ativo = true AND "inativacaoSolicitadaEm" IS NULL RETURNING *',
+    [id]
+  );
+  return rows[0];
+};
+
+// Função para reverter a solicitação de inativação de um médico
+Medico.reverterInativacao = async (id) => {
+  const { rows } = await db.query(
+    'UPDATE medico SET "inativacaoSolicitadaEm" = NULL WHERE id = $1 AND "inativacaoSolicitadaEm" IS NOT NULL RETURNING *',
+    [id]
+  );
+  return rows[0];
+};
+
 module.exports = Medico;

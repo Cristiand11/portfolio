@@ -25,9 +25,18 @@ exports.getAllConsultas = async (req, res) => {
         const sizeNum = parseInt(size || '10', 10);
         
         let filterString = '';
-        if (filter) {
-          filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
-        }
+
+        // VERIFICAÇÃO DE PERFIL
+        if (req.user.perfil === 'paciente') {
+            // Se for um paciente, ignora qualquer filtro da URL e força a busca pelo seu próprio ID
+            const idPacienteDoToken = req.user.id;
+            filterString = `idPaciente eq '${idPacienteDoToken}'`;
+        } else {
+            // Para outros perfis (médico, admin), o filtro funciona normalmente
+            if (filter) {
+                filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
+            }
+        };
 
         const result = await Consulta.findPaginated(pageNum, sizeNum, filterString);
         res.status(200).json(result);

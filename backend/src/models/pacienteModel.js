@@ -74,6 +74,15 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
     return { totalPages, totalElements, contents: rows };
 };
 
+// Função para buscar um único paciente
+Paciente.findById = async (id) => {
+    const { rows } = await db.query('SELECT * FROM paciente WHERE id = $1', [id]);
+    // Remove a senha da resposta
+    if (rows[0]) {
+        delete rows[0].senha;
+    }
+    return rows[0];
+};
 
 // Função para editar um paciente
 Paciente.update = async (id, pacienteData) => {

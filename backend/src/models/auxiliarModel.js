@@ -70,6 +70,12 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '') => {
     return { totalPages, totalElements, contents: rows };
 };
 
+// Função para buscar um único auxiliar
+Auxiliar.findById = async (id) => {
+    const { rows } = await db.query('SELECT * FROM auxiliar WHERE id = $1', [id]);
+    return rows[0];
+};
+
 
 // --- UPDATE ---
 Auxiliar.update = async (id, auxiliarData) => {

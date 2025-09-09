@@ -68,13 +68,21 @@ exports.getAllPacientes = async (req, res) => {
 // PUT /pacientes/:id
 exports.updatePaciente = async (req, res) => {
     try {
-        const { id } = req.params;
+        const idPacienteDoParametro = req.params.id;
+        const idPacienteDoToken = req.user.id;
+
+        if (idPacienteDoParametro !== idPacienteDoToken) {
+            return res.status(403).json({ message: 'Acesso negado. Você só pode editar seus próprios dados.' });
+        };
+        
         const processedData = await handlePacienteData(req.body);
-        const atualizado = await Paciente.update(id, processedData);
+
+        const atualizado = await Paciente.update(idPacienteDoParametro, processedData);
+
         if (!atualizado) {
             return res.status(404).json({ message: 'Paciente não encontrado' });
         }
-        res.status(200).json({ message: 'Paciente atualizado com sucesso!', data: atualizado });
+        res.status(200).json({ message: 'Dados atualizados com sucesso!', data: atualizado });
     } catch (error) {
         res.status(400).json({ message: 'Erro ao atualizar paciente', error: error.message });
     }
