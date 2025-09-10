@@ -43,23 +43,19 @@ const operatorMap = {
 
 Medico.findPaginated = async (page = 1, size = 10, filterString = '') => {
   const offset = (page - 1) * size;
-
   let whereClauses = [];
   const values = [];
 
   if (filterString) {
-    // Separa a string de filtros por ' AND '
     const filters = filterString.split(' AND ');
 
     filters.forEach(filter => {
       const match = filter.match(/(\w+)\s+(eq|co|gt|lt|ne)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
-
         if (Object.keys(allowedFilterFields).includes(field)) {
           const sqlField = allowedFilterFields[field];
           const sqlOperator = operatorMap[operator];
-
           if (sqlOperator) {
             // Adiciona a condição ao array de cláusulas
             whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
@@ -73,19 +69,23 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '') => {
   // Monta a cláusula WHERE final, se houver filtros
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-
   const countQuery = `SELECT COUNT(*) FROM medico ${whereClause}`;
   const countResult = await db.query(countQuery, values);
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
-  const queryValues = [...values];
   let paramIndex = values.length + 1;
+  const queryValues = [...values, size, offset];
 
-  queryValues.push(size, offset);
-
-  const dataQuery = `SELECT * FROM medico ${whereClause} ORDER BY nome ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+  const dataQuery = `
+    SELECT 
+      id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate" 
+    FROM medico 
+      ${whereClause} 
+    ORDER BY nome ASC 
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+  
   const { rows } = await db.query(dataQuery, queryValues);
-
   const totalPages = Math.ceil(totalElements / size);
 
   return {
@@ -133,6 +133,27 @@ Medico.reverterInativacao = async (id) => {
     [id]
   );
   return rows[0];
+};
+
+// Função para localizar um médico pelo ID
+Medico.findById = async (id) => {
+  const { rows } = await db.query('SELECT * FROM medico WHERE id = $1', [id]);
+  if (rows[0]) {
+    delete rows[0].senha;
+  }
+  return rows[0];
+};
+
+// Função para um médico visualizar os pacientes que ele já atendeu
+Medico.findPacientesAtendidos = async (idMedico) => {
+  const { rows } = await db.query(
+    `SELECT DISTINCT p.id, p.nome, p.cpf, p.email, p.telefone
+      FROM paciente p
+      JOIN consulta c ON p.id = c.paciente_id
+      WHERE c.medico_id = $1 AND c.status IN ('Concluída', 'Agendada', 'Confirmada')`,
+    [idMedico]
+  );
+  return rows;
 };
 
 module.exports = Medico;

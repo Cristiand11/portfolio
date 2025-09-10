@@ -4,6 +4,7 @@ const medicoController = require('../controllers/medicoController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const { adminAuth } = require('../middleware/authorizationMiddleware');
+const { medicoAuth } = require('../middleware/authorizationMiddleware');
 
 // Rota GET Medicos
 router.get('/', authMiddleware, medicoController.getAllMedicos);
@@ -22,5 +23,8 @@ router.post('/:id/solicitar-inativacao', authMiddleware, adminAuth, medicoContro
 
 // Rota POST para um admin reverter a solicitação de inativação de um médico
 router.post('/:id/reverter-inativacao', authMiddleware, adminAuth, medicoController.reverterInativacao);
+
+// ROTA GET para o médico visualizar o histórico de pacientes atendidos
+router.get('/me/pacientes', authMiddleware, medicoAuth, medicoController.getPacientesAtendidos);
 
 module.exports = router;

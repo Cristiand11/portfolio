@@ -143,3 +143,14 @@ exports.reverterInativacao = async (req, res) => {
     res.status(500).json({ message: 'Erro ao reverter solicitação.', error: error.message });
   };
 };
+
+// Função para o médico visualizar os pacientes que ele já atendeu
+exports.getPacientesAtendidos = async (req, res) => {
+    try {
+        const idMedicoDoToken = req.user.id;
+        const pacientes = await Medico.findPacientesAtendidos(idMedicoDoToken);
+        res.status(200).json(pacientes);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar histórico de pacientes.', error: error.message });
+    }
+};

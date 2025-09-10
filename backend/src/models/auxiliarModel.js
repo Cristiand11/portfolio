@@ -63,16 +63,40 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
     let paramIndex = values.length + 1;
     const queryValues = [...values, size, offset];
-    const dataQuery = `SELECT * FROM auxiliar ${whereClause} ORDER BY nome ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+
+    const dataQuery = `
+        SELECT 
+            id, nome, email, telefone, "dataNascimento", "idMedico", "createdDate", "lastModifiedDate" 
+        FROM auxiliar 
+        ${whereClause} 
+        ORDER BY nome ASC 
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+
     const { rows } = await db.query(dataQuery, queryValues);
+
+    const formattedRows = rows.map(row => {
+        if (row.dataNascimento) {
+            row.dataNascimento = new Date(row.dataNascimento).toISOString().slice(0, 10);
+        }
+        return row;
+    });
+
     const totalPages = Math.ceil(totalElements / size);
 
-    return { totalPages, totalElements, contents: rows };
+    return {
+        totalPages,
+        totalElements,
+        contents: formattedRows
+    };
 };
 
 // Função para buscar um único auxiliar
 Auxiliar.findById = async (id) => {
     const { rows } = await db.query('SELECT * FROM auxiliar WHERE id = $1', [id]);
+    if (rows[0]) {
+        delete rows[0].senha;
+    }
     return rows[0];
 };
 

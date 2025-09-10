@@ -66,12 +66,36 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
     const totalElements = parseInt(countResult.rows[0].count, 10);
 
     let paramIndex = values.length + 1;
-    const queryValues = [...values, size, offset];
-    const dataQuery = `SELECT * FROM paciente ${whereClause} ORDER BY nome ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-    const { rows } = await db.query(dataQuery, queryValues);
+    const finalQueryValues = [...values, size, offset];
+
+    const dataQuery = `
+        SELECT 
+            id, nome, cpf, "dataNascimento", email, telefone, endereco, "cepCodigo", 
+            "enderecoNumero", cidade, bairro, estado, "createdDate", "lastModifiedDate" 
+        FROM paciente 
+        ${whereClause} 
+        ORDER BY nome ASC 
+        LIMIT $1 OFFSET $2
+    `;
+
+    const dataQueryFinal = dataQuery.replace('$1', `$${paramIndex++}`).replace('$2', `$${paramIndex++}`);
+
+    const { rows } = await db.query(dataQueryFinal, finalQueryValues);
+
+    const formattedRows = rows.map(row => {
+        if (row.dataNascimento) {
+            row.dataNascimento = new Date(row.dataNascimento).toISOString().slice(0, 10);
+        }
+        return row;
+    });
+
     const totalPages = Math.ceil(totalElements / size);
 
-    return { totalPages, totalElements, contents: rows };
+    return {
+        totalPages,
+        totalElements,
+        contents: formattedRows
+    };
 };
 
 // Função para buscar um único paciente
@@ -133,6 +157,18 @@ Paciente.update = async (id, pacienteData) => {
 Paciente.delete = async (id) => {
     const { rowCount } = await db.query('DELETE FROM paciente WHERE id = $1', [id]);
     return rowCount;
+};
+
+// Função para visualizar com quais médicos o paciente já se consultou
+Paciente.findMedicosConsultados = async (idPaciente) => {
+    const { rows } = await db.query(
+        `SELECT DISTINCT m.id, m.nome, m.crm, m.especialidade
+         FROM medico m
+         JOIN consulta c ON m.id = c.medico_id
+         WHERE c.paciente_id = $1`,
+        [idPaciente]
+    );
+    return rows;
 };
 
 module.exports = Paciente;

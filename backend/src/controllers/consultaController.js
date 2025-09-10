@@ -1,4 +1,6 @@
 const Consulta = require('../models/consultaModel');
+const Medico = require('../models/medicoModel');
+const Auxiliar = require('../models/auxiliarModel');
 
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {
@@ -95,5 +97,83 @@ exports.deleteConsulta = async (req, res) => {
         res.status(200).json({ message: 'Consulta removida com sucesso!' });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao remover consulta', error: error.message });
+    }
+};
+
+// Função para cancelar uma consulta
+exports.cancelarConsulta = async (req, res) => {
+    try {
+        const { id: consultaId } = req.params;
+        const idPacienteDoToken = req.user.id;
+
+        const consulta = await Consulta.findById(consultaId);
+        if (!consulta || consulta.paciente_id !== idPacienteDoToken) {
+            return res.status(404).json({ message: 'Consulta não encontrada.' });
+        }
+
+        if (consulta.status !== 'Agendada' && consulta.status !== 'Confirmada') {
+            return res.status(409).json({ message: `Não é possível cancelar uma consulta com status "${consulta.status}".` });
+        }
+
+        const medico = await Medico.findById(consulta.medico_id);
+        if (!medico) {
+            return res.status(404).json({ message: 'Médico associado à consulta não encontrado.' });
+        }
+        const antecedenciaMinimaHoras = medico.cancelamentoAntecedenciaHoras;
+
+        const agora = new Date();
+        const dataConsulta = new Date(`${consulta.data.toISOString().slice(0, 10)}T${consulta.hora}`);
+        const diffEmHoras = (dataConsulta - agora) / (1000 * 60 * 60);
+
+        if (diffEmHoras < antecedenciaMinimaHoras) {
+            return res.status(403).json({ message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.` });
+        }
+
+        // 7. Se todas as regras passaram, cancela a consulta
+        const consultaCancelada = await Consulta.cancelar(consultaId);
+        res.status(200).json({ message: 'Consulta cancelada com sucesso!', data: consultaCancelada });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao cancelar consulta.', error: error.message });
+    }
+};
+
+// Função para concluir uma consulta
+exports.concluirConsulta = async (req, res) => {
+    try {
+        const { id: consultaId } = req.params;
+        const { id: idUsuarioLogado, perfil } = req.user;
+
+        // 1. Busca a consulta
+        const consulta = await Consulta.findById(consultaId);
+        if (!consulta) {
+            return res.status(404).json({ message: 'Consulta não encontrada.' });
+        }
+
+        // 2. Verifica se a consulta está em um status que permite a conclusão
+        if (consulta.status !== 'Agendada' && consulta.status !== 'Confirmada') {
+            return res.status(409).json({ message: `Não é possível concluir uma consulta com status "${consulta.status}".` });
+        }
+
+        // 3. LÓGICA DE AUTORIZAÇÃO
+        if (perfil === 'medico') {
+            // Se for médico, verifica se a consulta pertence a ele
+            if (consulta.medico_id !== idUsuarioLogado) {
+                return res.status(403).json({ message: 'Acesso negado. Você só pode concluir suas próprias consultas.' });
+            }
+        } else if (perfil === 'auxiliar') {
+            // Se for auxiliar, verifica se a consulta pertence ao seu médico vinculado
+            const auxiliar = await Auxiliar.findById(idUsuarioLogado);
+            if (!auxiliar || consulta.medico_id !== auxiliar.idMedico) {
+                return res.status(403).json({ message: 'Acesso negado. Você só pode concluir consultas do seu médico vinculado.' });
+            }
+        }
+
+        // 4. Se todas as validações passaram, conclui a consulta
+        const consultaConcluida = await Consulta.marcarComoConcluida(consultaId);
+        res.status(200).json({ message: 'Consulta marcada como concluída!', data: consultaConcluida });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao concluir consulta.', error: error.message });
     }
 };

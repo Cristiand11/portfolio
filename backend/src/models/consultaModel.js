@@ -97,12 +97,15 @@ Consulta.delete = async (id) => {
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, excludeConsultaId = null) => {
-    let query = 'SELECT COUNT(*) FROM consulta WHERE medico_id = $1 AND data = $2 AND hora = $3';
-    const values = [idMedico, data, hora];
+    // Definimos os status que são considerados "horário ocupado"
+    const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
+
+    let query = `SELECT COUNT(*) FROM consulta WHERE medico_id = $1 AND data = $2 AND hora = $3 AND status = ANY($4::varchar[])`;
+    const values = [idMedico, data, hora, busyStatus];
 
     // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
     if (excludeConsultaId) {
-        query += ' AND id != $4';
+        query += ' AND id != $5';
         values.push(excludeConsultaId);
     }
 
@@ -115,12 +118,15 @@ Consulta.checkConflict = async (idMedico, data, hora, excludeConsultaId = null) 
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O PACIENTE ---
 Consulta.checkPatientConflict = async (idPaciente, data, hora, excludeConsultaId = null) => {
-    let query = 'SELECT COUNT(*) FROM consulta WHERE paciente_id = $1 AND data = $2 AND hora = $3';
-    const values = [idPaciente, data, hora];
+    // Definimos os status que são considerados "horário ocupado"
+    const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
+
+    let query = `SELECT COUNT(*) FROM consulta WHERE paciente_id = $1 AND data = $2 AND hora = $3 AND status = ANY($4::varchar[])`;
+    const values = [idPaciente, data, hora, busyStatus];
 
     // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
     if (excludeConsultaId) {
-        query += ' AND id != $4';
+        query += ' AND id != $5';
         values.push(excludeConsultaId);
     }
 
@@ -129,6 +135,35 @@ Consulta.checkPatientConflict = async (idPaciente, data, hora, excludeConsultaId
     
     // Retorna true se encontrar algum conflito
     return count > 0;
+};
+
+// --- FUNÇÃO DE GET CONSULTA BY ID ---
+Consulta.findById = async (id) => {
+    const { rows } = await db.query('SELECT * FROM consulta WHERE id = $1', [id]);
+    return rows[0];
+};
+
+// --- FUNÇÃO DE SOLICITAÇÃO DE CANCELAMENTO ---
+Consulta.cancelar = async (id) => {
+    const statusCancelado = 'Cancelada Pelo Paciente';
+    const { rows } = await db.query(
+        'UPDATE consulta SET status = $1, "lastModifiedDate" = NOW() WHERE id = $2 RETURNING *',
+        [statusCancelado, id]
+    );
+    return rows[0];
+};
+
+// --- FUNÇÃO PARA MARCAR UMA CONSULTA COMO CONCLUÍDA ---
+Consulta.marcarComoConcluida = async (id) => {
+    const statusConcluido = 'Concluída';
+    const { rows } = await db.query(
+        'UPDATE consulta SET status = $1, "lastModifiedDate" = NOW() WHERE id = $2 RETURNING *',
+        [statusConcluido, id]
+    );
+    if (rows[0]) {
+        delete rows[0].senha; // Segurança caso houvesse dados sensíveis
+    }
+    return rows[0];
 };
 
 module.exports = Consulta;

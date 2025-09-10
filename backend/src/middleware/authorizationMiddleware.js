@@ -21,3 +21,12 @@ exports.pacienteAuth = (req, res, next) => {
         res.status(403).json({ message: 'Acesso negado. Apenas pacientes podem realizar esta ação.' });
     }
 };
+
+exports.medicoOuAuxiliarAuth = (req, res, next) => {
+    const perfil = req.user.perfil;
+    if (perfil === 'medico' || perfil === 'auxiliar') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Acesso negado. Apenas médicos ou auxiliares podem realizar esta ação.' });
+    }
+};

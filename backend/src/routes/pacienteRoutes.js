@@ -16,4 +16,7 @@ router.put('/:id', authMiddleware, pacienteAuth, pacienteController.updatePacien
 // Rota para DELETE pacientes
 router.delete('/:id', authMiddleware, pacienteController.deletePaciente);
 
+// Rota GET para o paciente ver seu histórico de médicos
+router.get('/me/medicos', authMiddleware, pacienteAuth, pacienteController.getMedicosConsultados);
+
 module.exports = router;

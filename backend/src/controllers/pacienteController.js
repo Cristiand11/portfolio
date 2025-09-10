@@ -101,3 +101,14 @@ exports.deletePaciente = async (req, res) => {
         res.status(500).json({ message: 'Erro ao remover paciente', error: error.message });
     }
 };
+
+// GET /pacientes/me/medicos
+exports.getMedicosConsultados = async (req, res) => {
+    try {
+        const idPacienteDoToken = req.user.id;
+        const medicos = await Paciente.findMedicosConsultados(idPacienteDoToken);
+        res.status(200).json(medicos);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar histórico de médicos.', error: error.message });
+    }
+};
