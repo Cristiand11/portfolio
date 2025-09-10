@@ -3,10 +3,21 @@ const Consulta = require('../models/consultaModel');
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {
     try {
-        const { idMedico, idPaciente } = req.body;
+        const { idMedico, idPaciente, data, hora } = req.body;
         if (!idMedico || !idPaciente) {
             return res.status(400).json({ message: 'Os IDs do médico (idMedico) e do paciente (idPaciente) são obrigatórios.' });
         }
+
+        const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora);
+        if (medicoconflictExists) {
+            return res.status(409).json({ message: 'Conflito de agendamento. O médico já possui uma consulta marcada para esta data e hora.' });
+        }
+
+        const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora);
+        if (pacienteConflictExists) {
+            return res.status(409).json({ message: 'Conflito de agendamento. O paciente já possui uma consulta marcada para esta data e hora.' });
+        }
+
         const novaConsulta = await Consulta.create(req.body);
         res.status(201).json({
             message: 'Consulta agendada com sucesso!',
@@ -49,6 +60,20 @@ exports.getAllConsultas = async (req, res) => {
 exports.updateConsulta = async (req, res) => {
     try {
         const { id } = req.params;
+        const { idMedico, idPaciente, data, hora } = req.body;
+
+        // Se o usuário está tentando alterar a data ou a hora, precisamos validar
+        if (idMedico && idPaciente && data && hora) {
+            const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora, id);
+            if (medicoconflictExists) {
+                return res.status(409).json({ message: 'Conflito de agendamento. O médico já possui outra consulta marcada para esta data e hora.' });
+            }
+            const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora, id);
+            if (pacienteConflictExists) {
+                return res.status(409).json({ message: 'Conflito de agendamento. O paciente já possui outra consulta marcada para esta data e hora.' });
+            }
+        }
+
         const atualizada = await Consulta.update(id, req.body);
         if (!atualizada) {
             return res.status(404).json({ message: 'Consulta não encontrada' });

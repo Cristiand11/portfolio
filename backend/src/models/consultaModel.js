@@ -95,4 +95,40 @@ Consulta.delete = async (id) => {
     return rowCount;
 };
 
+// --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
+Consulta.checkConflict = async (idMedico, data, hora, excludeConsultaId = null) => {
+    let query = 'SELECT COUNT(*) FROM consulta WHERE medico_id = $1 AND data = $2 AND hora = $3';
+    const values = [idMedico, data, hora];
+
+    // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
+    if (excludeConsultaId) {
+        query += ' AND id != $4';
+        values.push(excludeConsultaId);
+    }
+
+    const { rows } = await db.query(query, values);
+    const count = parseInt(rows[0].count, 10);
+    
+    // Retorna true se encontrar algum conflito (count > 0)
+    return count > 0;
+};
+
+// --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O PACIENTE ---
+Consulta.checkPatientConflict = async (idPaciente, data, hora, excludeConsultaId = null) => {
+    let query = 'SELECT COUNT(*) FROM consulta WHERE paciente_id = $1 AND data = $2 AND hora = $3';
+    const values = [idPaciente, data, hora];
+
+    // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
+    if (excludeConsultaId) {
+        query += ' AND id != $4';
+        values.push(excludeConsultaId);
+    }
+
+    const { rows } = await db.query(query, values);
+    const count = parseInt(rows[0].count, 10);
+    
+    // Retorna true se encontrar algum conflito
+    return count > 0;
+};
+
 module.exports = Consulta;

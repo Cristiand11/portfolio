@@ -86,8 +86,7 @@ Paciente.findById = async (id) => {
 
 // Função para editar um paciente
 Paciente.update = async (id, pacienteData) => {
-    // Separa a senha do resto dos dados
-    const { senha, ...dadosSemSenha } = pacienteData;// Inicia a construção da query e dos valores
+    const { senha, ...dadosSemSenha } = pacienteData;
     let querySetParts = [];
     const values = [];
     let paramIndex = 1;
