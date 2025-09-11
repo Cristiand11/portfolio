@@ -1,14 +1,21 @@
 const db = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 const Auxiliar = {};
 
 // --- CREATE ---
 Auxiliar.create = async (auxiliarData) => {
     const { nome, email, telefone, dataNascimento, senha, idMedico } = auxiliarData;
+    
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(senha, salt);
+
     const { rows } = await db.query(
         'INSERT INTO auxiliar (nome, email, telefone, "dataNascimento", senha, "idMedico") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [nome, email, telefone, dataNascimento, senha, idMedico]
+        [nome, email, telefone, dataNascimento, hash, idMedico]
     );
+
+    delete rows[0].senha;
     return rows[0];
 };
 
@@ -61,6 +68,12 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '') => {
     const totalPages = Math.ceil(totalElements / size);
 
     return { totalPages, totalElements, contents: rows };
+};
+
+// Função para buscar um único auxiliar
+Auxiliar.findById = async (id) => {
+    const { rows } = await db.query('SELECT * FROM auxiliar WHERE id = $1', [id]);
+    return rows[0];
 };
 
 

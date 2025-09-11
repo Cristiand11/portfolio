@@ -1,0 +1,99 @@
+const Consulta = require('../models/consultaModel');
+
+// Função para criar uma consulta
+exports.createConsulta = async (req, res) => {
+    try {
+        const { idMedico, idPaciente, data, hora } = req.body;
+        if (!idMedico || !idPaciente) {
+            return res.status(400).json({ message: 'Os IDs do médico (idMedico) e do paciente (idPaciente) são obrigatórios.' });
+        }
+
+        const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora);
+        if (medicoconflictExists) {
+            return res.status(409).json({ message: 'Conflito de agendamento. O médico já possui uma consulta marcada para esta data e hora.' });
+        }
+
+        const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora);
+        if (pacienteConflictExists) {
+            return res.status(409).json({ message: 'Conflito de agendamento. O paciente já possui uma consulta marcada para esta data e hora.' });
+        }
+
+        const novaConsulta = await Consulta.create(req.body);
+        res.status(201).json({
+            message: 'Consulta agendada com sucesso!',
+            data: novaConsulta
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao agendar consulta', error: error.message });
+    }
+};
+
+// Função para listar todas as consultas
+exports.getAllConsultas = async (req, res) => {
+    try {
+        const { page, size, filter } = req.query;
+        const pageNum = parseInt(page || '1', 10);
+        const sizeNum = parseInt(size || '10', 10);
+        
+        let filterString = '';
+
+        // VERIFICAÇÃO DE PERFIL
+        if (req.user.perfil === 'paciente') {
+            // Se for um paciente, ignora qualquer filtro da URL e força a busca pelo seu próprio ID
+            const idPacienteDoToken = req.user.id;
+            filterString = `idPaciente eq '${idPacienteDoToken}'`;
+        } else {
+            // Para outros perfis (médico, admin), o filtro funciona normalmente
+            if (filter) {
+                filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
+            }
+        };
+
+        const result = await Consulta.findPaginated(pageNum, sizeNum, filterString);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar consultas', error: error.message });
+    }
+};
+
+// Função para editar uma consulta
+exports.updateConsulta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { idMedico, idPaciente, data, hora } = req.body;
+
+        // Se o usuário está tentando alterar a data ou a hora, precisamos validar
+        if (idMedico && idPaciente && data && hora) {
+            const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora, id);
+            if (medicoconflictExists) {
+                return res.status(409).json({ message: 'Conflito de agendamento. O médico já possui outra consulta marcada para esta data e hora.' });
+            }
+            const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora, id);
+            if (pacienteConflictExists) {
+                return res.status(409).json({ message: 'Conflito de agendamento. O paciente já possui outra consulta marcada para esta data e hora.' });
+            }
+        }
+
+        const atualizada = await Consulta.update(id, req.body);
+        if (!atualizada) {
+            return res.status(404).json({ message: 'Consulta não encontrada' });
+        }
+        res.status(200).json({ message: 'Consulta atualizada com sucesso!', data: atualizada });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao atualizar consulta', error: error.message });
+    }
+};
+
+// Função para excluir uma consulta
+exports.deleteConsulta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletada = await Consulta.delete(id);
+        if (deletada === 0) {
+            return res.status(404).json({ message: 'Consulta não encontrada' });
+        }
+        res.status(200).json({ message: 'Consulta removida com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao remover consulta', error: error.message });
+    }
+};
