@@ -34,24 +34,33 @@ exports.createConsulta = async (req, res) => {
 exports.getAllConsultas = async (req, res) => {
     try {
         const { page, size, filter } = req.query;
+        const { id: idUsuarioLogado, perfil } = req.user;
+
         const pageNum = parseInt(page || '1', 10);
         const sizeNum = parseInt(size || '10', 10);
-        
-        let filterString = '';
 
-        // VERIFICAÇÃO DE PERFIL
-        if (req.user.perfil === 'paciente') {
-            // Se for um paciente, ignora qualquer filtro da URL e força a busca pelo seu próprio ID
-            const idPacienteDoToken = req.user.id;
-            filterString = `idPaciente eq '${idPacienteDoToken}'`;
-        } else {
-            // Para outros perfis (médico, admin), o filtro funciona normalmente
-            if (filter) {
-                filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
+        let securityFilter = '';
+
+        if (perfil === 'paciente') {
+            securityFilter = `idPaciente eq '${idUsuarioLogado}'`;
+        } else if (perfil === 'medico') {
+            securityFilter = `idMedico eq '${idUsuarioLogado}'`;
+        } else if (perfil === 'auxiliar') {
+            const auxiliar = await Auxiliar.findById(idUsuarioLogado);
+            if (!auxiliar || !auxiliar.idMedico) {
+                return res.status(403).json({ message: 'Acesso negado. O seu perfil de auxiliar não está vinculado a nenhum médico.' });
             }
-        };
+            securityFilter = `idMedico eq '${auxiliar.idMedico}'`;
+        }
+        
+        // Combina o filtro de segurança com os filtros opcionais do usuário
+        let finalFilterString = securityFilter;
+        if (filter) {
+            const userFilter = Array.isArray(filter) ? filter.join(' AND ') : filter;
+            finalFilterString = `${securityFilter} AND ${userFilter}`;
+        }
 
-        const result = await Consulta.findPaginated(pageNum, sizeNum, filterString);
+        const result = await Consulta.findPaginated(pageNum, sizeNum, finalFilterString);
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar consultas', error: error.message });

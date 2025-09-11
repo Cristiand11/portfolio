@@ -3,20 +3,22 @@ const router = express.Router();
 const medicoController = require('../controllers/medicoController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const { adminAuth } = require('../middleware/authorizationMiddleware');
-const { medicoAuth } = require('../middleware/authorizationMiddleware');
-
-// Rota GET Medicos
-router.get('/', authMiddleware, medicoController.getAllMedicos);
+const { adminAuth, adminOuMedicoDonoAuth, adminOuPacienteAuth, medicoAuth } = require('../middleware/authorizationMiddleware');
 
 // Rota POST /api/medicos
 router.post('/', authMiddleware, medicoController.createMedico);
 
+// Rota para o médico logado buscar seus próprios dados
+router.get('/me', authMiddleware, medicoAuth, medicoController.getMe);
+
+// Rota GET Medicos
+router.get('/', authMiddleware, adminOuPacienteAuth, medicoController.getAllMedicos);
+
 // Rota PUT para atualizar um médico por ID
-router.put('/:id', authMiddleware, medicoController.updateMedico);
+router.put('/:id', authMiddleware, adminOuMedicoDonoAuth, medicoController.updateMedico);
 
 // Rota DELETE para remover um médico por ID
-router.delete('/:id',authMiddleware, medicoController.deleteMedico);
+router.delete('/:id',authMiddleware, adminOuMedicoDonoAuth, medicoController.deleteMedico);
 
 // Rota POST para um admin solicitar a inativação de um médico por ID
 router.post('/:id/solicitar-inativacao', authMiddleware, adminAuth, medicoController.solicitarInativacao);
@@ -24,7 +26,10 @@ router.post('/:id/solicitar-inativacao', authMiddleware, adminAuth, medicoContro
 // Rota POST para um admin reverter a solicitação de inativação de um médico
 router.post('/:id/reverter-inativacao', authMiddleware, adminAuth, medicoController.reverterInativacao);
 
-// ROTA GET para o médico visualizar o histórico de pacientes atendidos
+// Rota GET para o médico visualizar o histórico de pacientes atendidos
 router.get('/me/pacientes', authMiddleware, medicoAuth, medicoController.getPacientesAtendidos);
+
+// Rota GET para o médico visualizar apenas os seus auxiliares
+router.get('/me/auxiliares', authMiddleware, medicoAuth, medicoController.getMeusAuxiliares);
 
 module.exports = router;

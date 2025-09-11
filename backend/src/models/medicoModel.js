@@ -41,7 +41,7 @@ const operatorMap = {
   ne: '!=',     // Not equal
 };
 
-Medico.findPaginated = async (page = 1, size = 10, filterString = '') => {
+Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
   const offset = (page - 1) * size;
   let whereClauses = [];
   const values = [];
@@ -73,12 +73,19 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '') => {
   const countResult = await db.query(countQuery, values);
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
+  let selectColumns = '';
+  if (options.perfil === 'paciente') {
+    selectColumns = 'id, nome, crm, email, telefone, especialidade';
+  } else {
+    selectColumns = 'id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate", "inativacaoSolicitadaEm"';
+  }
+
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
 
   const dataQuery = `
     SELECT 
-      id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate" 
+      ${selectColumns} 
     FROM medico 
       ${whereClause} 
     ORDER BY nome ASC 
@@ -145,15 +152,50 @@ Medico.findById = async (id) => {
 };
 
 // Função para um médico visualizar os pacientes que ele já atendeu
-Medico.findPacientesAtendidos = async (idMedico) => {
-  const { rows } = await db.query(
-    `SELECT DISTINCT p.id, p.nome, p.cpf, p.email, p.telefone
+Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10) => {
+  const offset = (page - 1) * size;
+  const statusPermitidos = ['Concluída', 'Agendada', 'Confirmada', 'Cancelada Pelo Paciente'];
+
+  const countQuery = `
+    SELECT COUNT(DISTINCT p.id) 
       FROM paciente p
       JOIN consulta c ON p.id = c.paciente_id
-      WHERE c.medico_id = $1 AND c.status IN ('Concluída', 'Agendada', 'Confirmada')`,
-    [idMedico]
-  );
-  return rows;
+      WHERE c.medico_id = $1 AND c.status = ANY($2::varchar[])
+  `;
+  const countResult = await db.query(countQuery, [idMedico, statusPermitidos]);
+  const totalElements = parseInt(countResult.rows[0].count, 10);
+
+  const dataQuery = `
+    SELECT 
+      p.id, 
+      p.nome, 
+      p.cpf, 
+      p.email, 
+      p.telefone,
+      MAX(c.data) as "ultimaConsultaData" -- <-- ALTERAÇÃO PRINCIPAL AQUI
+    FROM paciente p
+    JOIN consulta c ON p.id = c.paciente_id
+    WHERE c.medico_id = $1 AND c.status = ANY($2::varchar[])
+    GROUP BY p.id -- Agrupamos por paciente para que o MAX() funcione para cada um
+    ORDER BY p.nome ASC
+    LIMIT $3 OFFSET $4
+  `;
+  const { rows } = await db.query(dataQuery, [idMedico, statusPermitidos, size, offset]);
+
+  const formattedRows = rows.map(row => {
+    if (row.ultimaConsultaData) {
+      row.ultimaConsultaData = new Date(row.ultimaConsultaData).toISOString().slice(0, 10);
+    }
+    return row;
+  });
+
+  const totalPages = Math.ceil(totalElements / size);
+
+  return {
+    totalPages,
+    totalElements,
+    contents: formattedRows
+  };
 };
 
 module.exports = Medico;

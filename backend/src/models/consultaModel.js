@@ -5,10 +5,10 @@ const Consulta = {};
 // --- CREATE ---
 Consulta.create = async (consultaData) => {
     // Padronizando os nomes para camelCase
-    const { data, hora, status, observacoes, idMedico, idPaciente, idAuxiliar } = consultaData;
+    const { data, hora, status, observacoes, idMedico, idPaciente } = consultaData;
     const { rows } = await db.query(
-        'INSERT INTO consulta (data, hora, status, observacoes, medico_id, paciente_id, auxiliar_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-        [data, hora, status, observacoes, idMedico, idPaciente, idAuxiliar]
+        'INSERT INTO consulta (data, hora, status, observacoes, medico_id, paciente_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [data, hora, status, observacoes, idMedico, idPaciente]
     );
     return rows[0];
 };
@@ -81,10 +81,10 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
 // --- UPDATE ---
 Consulta.update = async (id, consultaData) => {
-    const { data, hora, status, observacoes, idMedico, idPaciente, idAuxiliar } = consultaData;
+    const { data, hora, status, observacoes, idMedico, idPaciente } = consultaData;
     const { rows } = await db.query(
-        'UPDATE consulta SET data = $1, hora = $2, status = $3, observacoes = $4, medico_id = $5, paciente_id = $6, auxiliar_id = $7, "lastModifiedDate" = NOW() WHERE id = $8 RETURNING *',
-        [data, hora, status, observacoes, idMedico, idPaciente, idAuxiliar, id]
+        'UPDATE consulta SET data = $1, hora = $2, status = $3, observacoes = $4, medico_id = $5, paciente_id = $6, "lastModifiedDate" = NOW() WHERE id = $7 RETURNING *',
+        [data, hora, status, observacoes, idMedico, idPaciente, id]
     );
     return rows[0];
 };
