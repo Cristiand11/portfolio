@@ -6,15 +6,21 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { adminAuth, pacienteAuth } = require('../middleware/authorizationMiddleware');
 
 // Rota para POST pacientes
-router.post('/', authMiddleware, pacienteController.createPaciente);
+router.post('/', pacienteController.createPaciente);
 
 // Rota para GET pacientes
-router.get('/', authMiddleware, adminAuth, pacienteController.getAllPacientes);
+// router.get('/', authMiddleware, adminAuth, pacienteController.getAllPacientes);
+
+// Rota para um paciente ver seus próprios dados
+router.get('/me', authMiddleware, pacienteAuth, pacienteController.getMe);
 
 // Rota para PUT pacientes
-router.put('/:id', authMiddleware, pacienteAuth, pacienteController.updatePaciente);
+router.put('/:id', authMiddleware, pacienteController.updatePaciente);
 
 // Rota para DELETE pacientes
-router.delete('/:id', authMiddleware, pacienteController.deletePaciente);
+router.delete('/:id', authMiddleware, adminAuth, pacienteController.deletePaciente);
+
+// Rota para o paciente ver seu histórico de médicos
+router.get('/me/medicos', authMiddleware, pacienteAuth, pacienteController.getMedicosConsultados);
 
 module.exports = router;

@@ -159,4 +159,16 @@ Paciente.delete = async (id) => {
     return rowCount;
 };
 
+// Função para visualizar os médicos com quem já se consultou
+Paciente.findMedicosConsultados = async (idPaciente) => {
+    const { rows } = await db.query(
+        `SELECT DISTINCT m.id, m.nome, m.crm, m.especialidade, m.email, m.telefone
+         FROM medico m
+         JOIN consulta c ON m.id = c.medico_id
+         WHERE c.paciente_id = $1`,
+        [idPaciente]
+    );
+    return rows;
+};
+
 module.exports = Paciente;
