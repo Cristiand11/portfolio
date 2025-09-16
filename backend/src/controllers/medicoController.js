@@ -3,6 +3,7 @@ const { getDiasUteis } = require('../utils/dateUtils');
 
 const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
+const HorarioTrabalho = require('../models/horarioTrabalhoModel');
 
 // Helper para validar o formato do CRM
 function isCrmValido(crm) {
@@ -202,7 +203,35 @@ exports.getMeusAuxiliares = async (req, res) => {
 
     const result = await Auxiliar.findPaginated(pageNum, sizeNum, finalFilterString, { perfil: 'medico' });
     res.status(200).json(result);
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao buscar auxiliares.', error: error.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar auxiliares.', error: error.message });
+  }
+};
+
+exports.definirMeusHorarios = async (req, res) => {
+  try {
+    const idMedicoDoToken = req.user.id;
+    const horarios = req.body;
+
+    if (!Array.isArray(horarios)) {
+      return res.status(400).json({ message: 'O corpo da requisição deve ser um array de horários.' });
     }
+
+    await HorarioTrabalho.definirHorarios(idMedicoDoToken, horarios);
+
+    res.status(200).json({ message: 'Horários de trabalho atualizados com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao definir horários de trabalho.', error: error.message });
+  }
+};
+
+exports.getHorariosByMedicoId = async (req, res) => {
+  try {
+    const { id: medicoId } = req.params;
+    const horarios = await HorarioTrabalho.findByMedicoId(medicoId);
+
+    res.status(200).json(horarios);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar horários do médico.', error: error.message });
+  }
 };

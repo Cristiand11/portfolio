@@ -32,4 +32,10 @@ router.get('/me/pacientes', authMiddleware, medicoAuth, medicoController.getPaci
 // Rota GET para o médico visualizar apenas os seus auxiliares
 router.get('/me/auxiliares', authMiddleware, medicoAuth, medicoController.getMeusAuxiliares);
 
+// Rota PUT para o médico definir/substituir sua grade de horários de trabalho
+router.put('/me/horarios', authMiddleware, medicoAuth, medicoController.definirMeusHorarios);
+
+// Rota para qualquer usuário logado ver os horários de trabalho de um médico específico
+router.get('/:id/horarios', authMiddleware, medicoController.getHorariosByMedicoId);
+
 module.exports = router;
