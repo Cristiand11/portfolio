@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { formatarData } = require('../utils/dateUtils');
 
 const Administrador = {};
 
@@ -17,6 +18,8 @@ Administrador.create = async (adminData) => {
     );
     // Remove a senha da resposta por segurança
     delete rows[0].senha;
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 
@@ -63,7 +66,13 @@ Administrador.findPaginated = async (page = 1, size = 10, filterString = '') => 
     const { rows } = await db.query(dataQuery, queryValues);
     const totalPages = Math.ceil(totalElements / size);
 
-    return { totalPages, totalElements, contents: rows };
+    const formattedRows = rows.map(row => ({
+        ...row,
+        createdDate: formatarData(row.createdDate),
+        lastModifiedDate: formatarData(row.lastModifiedDate)
+    }));
+
+    return { totalPages, totalElements, contents: formattedRows };
 };
 
 
@@ -80,6 +89,8 @@ Administrador.update = async (id, adminData) => {
     );
 
     delete rows[0].senha;
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 

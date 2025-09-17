@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { formatarData } = require('../utils/dateUtils');
 
 const Auxiliar = {};
 
@@ -16,6 +17,9 @@ Auxiliar.create = async (auxiliarData) => {
     );
 
     delete rows[0].senha;
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 
@@ -83,12 +87,12 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '', options 
 
     const { rows } = await db.query(dataQuery, queryValues);
 
-    const formattedRows = rows.map(row => {
-        if (row.dataNascimento) {
-            row.dataNascimento = new Date(row.dataNascimento).toISOString().slice(0, 10);
-        }
-        return row;
-    });
+    const formattedRows = rows.map(row => ({
+        ...row,
+        dataNascimento: formatarData(row.dataNascimento),
+        createdDate: formatarData(row.createdDate),
+        lastModifiedDate: formatarData(row.lastModifiedDate)
+    }));
 
     const totalPages = Math.ceil(totalElements / size);
 
@@ -105,6 +109,9 @@ Auxiliar.findById = async (id) => {
     if (rows[0]) {
         delete rows[0].senha;
     }
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 
@@ -116,6 +123,9 @@ Auxiliar.update = async (id, auxiliarData) => {
         'UPDATE auxiliar SET nome = $1, email = $2, telefone = $3, "dataNascimento" = $4, senha = $5, "idMedico" = $6, "lastModifiedDate" = NOW() WHERE id = $7 RETURNING *',
         [nome, email, telefone, dataNascimento, senha, idMedico, id]
     );
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 

@@ -5,28 +5,65 @@ const Auxiliar = require('../models/auxiliarModel');
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {
     try {
-        const { idMedico, idPaciente, data, hora } = req.body;
-        if (!idMedico || !idPaciente) {
-            return res.status(400).json({ message: 'Os IDs do médico (idMedico) e do paciente (idPaciente) são obrigatórios.' });
+        const { id: idUsuarioLogado, perfil } = req.user;
+        const { data, hora } = req.body;
+
+        let idMedico, idPaciente, statusInicial;
+
+        // Lógica de negócio baseada no perfil
+        if (perfil === 'paciente') {
+            idPaciente = idUsuarioLogado;
+            idMedico = req.body.idMedico;
+            statusInicial = 'Aguardando Confirmação do Médico';
+            if (!idMedico) return res.status(400).json({ message: 'O ID do médico (idMedico) é obrigatório.' });
+
+        } else if (perfil === 'medico') {
+            idMedico = idUsuarioLogado;
+            idPaciente = req.body.idPaciente;
+            statusInicial = 'Aguardando Confirmação do Paciente';
+            if (!idPaciente) return res.status(400).json({ message: 'O ID do paciente (idPaciente) é obrigatório.' });
+
+        } else if (perfil === 'auxiliar') {
+            const auxiliar = await Auxiliar.findById(idUsuarioLogado);
+            if (!auxiliar || !auxiliar.idMedico) return res.status(403).json({ message: 'Seu perfil de auxiliar não está vinculado a um médico.' });
+            idMedico = auxiliar.idMedico;
+            idPaciente = req.body.idPaciente;
+            statusInicial = 'Aguardando Confirmação do Paciente';
+            if (!idPaciente) return res.status(400).json({ message: 'O ID do paciente (idPaciente) é obrigatório.' });
+
+        } else {
+            return res.status(403).json({ message: 'Seu perfil não tem permissão para criar consultas.' });
+        }
+
+        if (!data || !hora) {
+            return res.status(400).json({ message: 'O horário da consulta é obrigatório.' });
         }
 
         const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora);
         if (medicoconflictExists) {
-            return res.status(409).json({ message: 'Conflito de agendamento. O médico já possui uma consulta marcada para esta data e hora.' });
+            return res.status(409).json({ message: 'Conflito de agendamento para o médico.' });
         }
 
         const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora);
         if (pacienteConflictExists) {
-            return res.status(409).json({ message: 'Conflito de agendamento. O paciente já possui uma consulta marcada para esta data e hora.' });
+            return res.status(409).json({ message: 'Conflito de agendamento para o paciente.' });
         }
 
-        const novaConsulta = await Consulta.create(req.body);
+        const dadosConsulta = {
+            ...req.body,
+            idPaciente: req.body.idPaciente,
+            status: statusInicial
+        };
+
+        const novaConsulta = await Consulta.create(dadosConsulta);
+        delete novaConsulta.dataRemarcacaoSugerida;
+        delete novaConsulta.horaRemarcacaoSugerida;
         res.status(201).json({
-            message: 'Consulta agendada com sucesso!',
+            message: 'Solicitação de consulta enviada com sucesso! Aguardando aprovação.',
             data: novaConsulta
         });
     } catch (error) {
-        res.status(500).json({ message: 'Erro ao agendar consulta', error: error.message });
+        res.status(500).json({ message: 'Erro ao solicitar consulta', error: error.message });
     }
 };
 
@@ -180,9 +217,123 @@ exports.concluirConsulta = async (req, res) => {
 
         // 4. Se todas as validações passaram, conclui a consulta
         const consultaConcluida = await Consulta.marcarComoConcluida(consultaId);
+        delete consultaConcluida.dataRemarcacaoSugerida;
+        delete consultaConcluida.horaRemarcacaoSugerida;
         res.status(200).json({ message: 'Consulta marcada como concluída!', data: consultaConcluida });
 
     } catch (error) {
         res.status(500).json({ message: 'Erro ao concluir consulta.', error: error.message });
+    }
+};
+
+// Função para confirmar uma solicitação de consulta
+exports.confirmarConsulta = async (req, res) => {
+    try {
+        const { id: consultaId } = req.params;
+        const { id: idUsuarioLogado, perfil } = req.user;
+        
+        const consulta = await Consulta.findById(consultaId);
+        if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
+
+        let permissaoConcedida = false;
+        let dataFinal = consulta.data;
+        let horaFinal = consulta.hora;
+
+        // Cenário 1: Confirmação inicial da consulta
+        if (consulta.status === 'Aguardando Confirmação do Médico' || consulta.status === 'Aguardando Confirmação do Paciente') {
+            // A lógica de permissão que já tínhamos
+            if (consulta.status === 'Aguardando Confirmação do Médico' && (perfil === 'medico' || perfil === 'auxiliar')) {
+                // (Aqui a lógica completa para verificar se o auxiliar pertence ao médico seria necessária)
+                permissaoConcedida = true; 
+            } else if (consulta.status === 'Aguardando Confirmação do Paciente' && perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id) {
+                permissaoConcedida = true;
+            }
+        } 
+        // Cenário 2: Aceitação de uma remarcação
+        else if (consulta.status === 'Remarcação Solicitada Pelo Médico' || consulta.status === 'Remarcação Solicitada Pelo Paciente') {
+             // A lógica de permissão que já tínhamos
+            if (consulta.status === 'Remarcação Solicitada Pelo Médico' && perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id) {
+                permissaoConcedida = true;
+            } else if (consulta.status === 'Remarcação Solicitada Pelo Paciente' && perfil === 'medico') { // Simplificado para médico
+                 permissaoConcedida = true;
+            }
+            // Pega a data/hora da sugestão para a confirmação final
+            dataFinal = consulta.dataRemarcacaoSugerida;
+            horaFinal = consulta.horaRemarcacaoSugerida;
+        } 
+        else {
+            return res.status(409).json({ message: `Esta consulta não pode ser confirmada, pois seu status é "${consulta.status}".`});
+        }
+
+        if (!permissaoConcedida) {
+            return res.status(403).json({ message: 'Você não tem permissão para confirmar esta consulta.' });
+        }
+
+        // Chama a nova função do model com a data/hora correta
+        const consultaConfirmada = await Consulta.confirmar(consultaId, dataFinal, horaFinal);
+        delete consultaConfirmada.dataRemarcacaoSugerida;
+        delete consultaConfirmada.horaRemarcacaoSugerida;
+        res.status(200).json({ message: 'Consulta confirmada com sucesso!', data: consultaConfirmada });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao confirmar consulta.', error: error.message });
+    }
+};
+
+// Função para reprovar uma solicitação de consulta
+exports.reprovarConsulta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const consultaCancelada = await Consulta.reprovar(id);
+        delete consultaCancelada.dataRemarcacaoSugerida;
+        delete consultaCancelada.horaRemarcacaoSugerida;
+        res.status(200).json({ message: 'Consulta reprovada com sucesso!', data: consultaCancelada });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao reprovar consulta.', error: error.message });
+    }
+};
+
+// Função para solicitar a remarcação de uma consulta
+exports.solicitarRemarcacao = async (req, res) => {
+    try {
+        const { id: consultaId } = req.params;
+        const { id: idUsuarioLogado, perfil } = req.user;
+        const { novaData, novaHora } = req.body;
+
+        if (!novaData || !novaHora) {
+            return res.status(400).json({ message: 'A nova data e hora são obrigatórias.' });
+        }
+
+        const consulta = await Consulta.findById(consultaId);
+        if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
+
+        // Validação de permissão: o usuário precisa ser o paciente ou o médico/auxiliar da consulta
+        const isOwner = (perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id);
+        const isProvider = (perfil === 'medico' && idUsuarioLogado === consulta.medico_id);
+        // (A lógica para auxiliar seria mais complexa aqui, vamos simplificar por enquanto)
+        if (!isOwner && !isProvider) {
+            return res.status(403).json({ message: 'Você não tem permissão para alterar esta consulta.' });
+        }
+
+        // Validação de status: só pode remarcar uma consulta confirmada
+        if (consulta.status !== 'Confirmada') {
+            return res.status(409).json({ message: `Não é possível remarcar uma consulta com status "${consulta.status}".` });
+        }
+
+        // Validação de conflito para a NOVA data/hora
+        const medicoConflict = await Consulta.checkConflict(consulta.medico_id, novaData, novaHora);
+        if (medicoConflict) return res.status(409).json({ message: 'Conflito de agendamento para o médico no novo horário.' });
+
+        const pacienteConflict = await Consulta.checkPatientConflict(consulta.paciente_id, novaData, novaHora);
+        if (pacienteConflict) return res.status(409).json({ message: 'Conflito de agendamento para o paciente no novo horário.' });
+
+        // Define o novo status com base em quem solicitou
+        const novoStatus = perfil === 'paciente' ? 'Remarcação Solicitada Pelo Paciente' : 'Remarcação Solicitada Pelo Médico';
+
+        const solicitacao = await Consulta.solicitarRemarcacao(consultaId, novaData, novaHora, novoStatus);
+        res.status(200).json({ message: 'Solicitação de remarcação enviada com sucesso!', data: solicitacao });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao solicitar remarcação.', error: error.message });
     }
 };

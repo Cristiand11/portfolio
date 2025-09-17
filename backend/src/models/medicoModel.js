@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { formatarData } = require('../utils/dateUtils');
 
 const Medico = {};
 
@@ -16,6 +17,9 @@ Medico.create = async (medicoData) => {
   );
 
   delete rows[0].senha;
+
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
   return rows[0];
 };
 
@@ -93,12 +97,18 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
     `;
   
   const { rows } = await db.query(dataQuery, queryValues);
+
+  const formattedRows = rows.map(row => ({
+    ...row,
+    createdDate: formatarData(row.createdDate),
+    lastModifiedDate: formatarData(row.lastModifiedDate)
+  }));
   const totalPages = Math.ceil(totalElements / size);
 
   return {
     totalPages,
     totalElements,
-    contents: rows
+    contents: formattedRows
   };
 };
 
@@ -115,6 +125,9 @@ Medico.update = async (id, medicoData) => {
   );
 
   delete rows[0].senha;
+
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
   return rows[0];
 };
 
@@ -130,6 +143,9 @@ Medico.solicitarInativacao = async (id) => {
     'UPDATE medico SET "inativacaoSolicitadaEm" = NOW() WHERE id = $1 AND ativo = true AND "inativacaoSolicitadaEm" IS NULL RETURNING *',
     [id]
   );
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  rows[0].inativacaoSolicitadaEm = formatarData(rows[0].inativacaoSolicitadaEm);
   return rows[0];
 };
 
@@ -139,6 +155,9 @@ Medico.reverterInativacao = async (id) => {
     'UPDATE medico SET "inativacaoSolicitadaEm" = NULL WHERE id = $1 AND "inativacaoSolicitadaEm" IS NOT NULL RETURNING *',
     [id]
   );
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  rows[0].inativacaoSolicitadaEm = formatarData(rows[0].inativacaoSolicitadaEm);
   return rows[0];
 };
 
@@ -148,6 +167,9 @@ Medico.findById = async (id) => {
   if (rows[0]) {
     delete rows[0].senha;
   }
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  rows[0].inativacaoSolicitadaEm = formatarData(rows[0].inativacaoSolicitadaEm);
   return rows[0];
 };
 

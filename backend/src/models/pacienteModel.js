@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { formatarData } = require('../utils/dateUtils');
 
 const Paciente = {};
 
@@ -16,6 +17,9 @@ Paciente.create = async (pacienteData) => {
     );
 
     delete rows[0].senha;
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 
@@ -82,12 +86,12 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
     const { rows } = await db.query(dataQueryFinal, finalQueryValues);
 
-    const formattedRows = rows.map(row => {
-        if (row.dataNascimento) {
-            row.dataNascimento = new Date(row.dataNascimento).toISOString().slice(0, 10);
-        }
-        return row;
-    });
+    const formattedRows = rows.map(row => ({
+        ...row,
+        dataNascimento: formatarData(row.dataNascimento),
+        createdDate: formatarData(row.createdDate),
+        lastModifiedDate: formatarData(row.lastModifiedDate)
+    }));
 
     const totalPages = Math.ceil(totalElements / size);
 
@@ -105,6 +109,9 @@ Paciente.findById = async (id) => {
     if (rows[0]) {
         delete rows[0].senha;
     }
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 
@@ -150,6 +157,9 @@ Paciente.update = async (id, pacienteData) => {
         delete rows[0].senha;
     };
     
+    rows[0].dataNascimento = formatarData(rows[0].dataNascimento);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
 };
 

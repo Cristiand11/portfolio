@@ -1,3 +1,5 @@
+const { formatInTimeZone } = require('date-fns-tz');
+
 function getDiasUteis(dataInicial) {
     let dias = 0;
     let dataAtual = new Date(dataInicial);
@@ -13,6 +15,14 @@ function getDiasUteis(dataInicial) {
     return dias;
 }
 
+function formatarData(data) {
+    if (!data) return null;
+    const timeZone = 'America/Sao_Paulo';
+    // Formato: Ano-Mês-Dia Hora:Minuto:Segundo
+    return formatInTimeZone(data, timeZone, 'yyyy-MM-dd HH:mm:ss');
+}
+
 module.exports = {
-    getDiasUteis
+    getDiasUteis,
+    formatarData
 };

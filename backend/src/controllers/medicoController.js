@@ -179,6 +179,7 @@ exports.getMe = async (req, res) => {
       return res.status(404).json({ message: 'Médico não encontrado.' });
     }
 
+    delete medico.inativacaoSolicitadaEm;
     res.status(200).json(medico);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar dados do médico.', error: error.message });

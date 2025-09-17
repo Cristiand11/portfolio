@@ -64,6 +64,34 @@ exports.medicoOuAuxiliarAuth = (req, res, next) => {
     }
 };
 
+exports.medicoOuSeuAuxiliarAuth = async (req, res, next) => {
+    try {
+        const { id: idUsuarioLogado, perfil } = req.user;
+        const { id: consultaId } = req.params;
+
+        const consultaResult = await db.query('SELECT medico_id FROM consulta WHERE id = $1', [consultaId]);
+        if (consultaResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Consulta não encontrada.' });
+        }
+        const idMedicoDaConsulta = consultaResult.rows[0].medico_id;
+
+        if (perfil === 'medico' && idUsuarioLogado === idMedicoDaConsulta) {
+            return next();
+        }
+
+        if (perfil === 'auxiliar') {
+            const auxiliarResult = await db.query('SELECT "idMedico" FROM auxiliar WHERE id = $1', [idUsuarioLogado]);
+            if (auxiliarResult.rows.length > 0 && auxiliarResult.rows[0].idMedico === idMedicoDaConsulta) {
+                return next();
+            }
+        }
+
+        return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para gerenciar esta consulta.' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Erro na verificação de permissão.', error: error.message });
+    }
+};
+
 exports.auxiliarUpdateAuth = async (req, res, next) => {
     try {
         const { id: idUsuarioLogado, perfil } = req.user;
