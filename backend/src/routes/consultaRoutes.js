@@ -3,7 +3,7 @@ const router = express.Router();
 const consultaController = require('../controllers/consultaController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const { consultaViewAuth, medicoOuAuxiliarAuth, medicoOuSeuAuxiliarAuth, pacienteAuth } = require('../middleware/authorizationMiddleware');
+const { consultaViewAuth, medicoOuAuxiliarAuth, pacienteAuth } = require('../middleware/authorizationMiddleware');
 
 // Rota para POST consultas
 router.post('/', authMiddleware, consultaController.createConsulta);

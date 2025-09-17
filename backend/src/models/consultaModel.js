@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { formatarData } = require('../utils/dateUtils');
+const { formatarApenasData } = require('../utils/dateUtils');
 
 const Consulta = {};
 
@@ -11,7 +12,7 @@ Consulta.create = async (consultaData) => {
         'INSERT INTO consulta (data, hora, status, observacoes, medico_id, paciente_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
         [data, hora, status, observacoes, idMedico, idPaciente]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -81,7 +82,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
     
     const formattedRows = rows.map(row => ({
     ...row,
-    data: formatarData(row.data),
+    data: formatarApenasData(row.data),
     createdDate: formatarData(row.createdDate),
     lastModifiedDate: formatarData(row.lastModifiedDate)
   }));
@@ -97,7 +98,7 @@ Consulta.update = async (id, consultaData) => {
         'UPDATE consulta SET data = $1, hora = $2, status = $3, observacoes = $4, medico_id = $5, paciente_id = $6, "lastModifiedDate" = NOW() WHERE id = $7 RETURNING *',
         [data, hora, status, observacoes, idMedico, idPaciente, id]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -154,7 +155,7 @@ Consulta.checkPatientConflict = async (idPaciente, data, hora, excludeConsultaId
 // --- FUNÇÃO DE GET CONSULTA BY ID ---
 Consulta.findById = async (id) => {
     const { rows } = await db.query('SELECT * FROM consulta WHERE id = $1', [id]);
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -167,7 +168,7 @@ Consulta.cancelar = async (id) => {
         'UPDATE consulta SET status = $1, "lastModifiedDate" = NOW() WHERE id = $2 RETURNING *',
         [statusCancelado, id]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -183,7 +184,7 @@ Consulta.marcarComoConcluida = async (id) => {
     if (rows[0]) {
         delete rows[0].senha; // Segurança caso houvesse dados sensíveis
     }
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -202,7 +203,7 @@ Consulta.confirmar = async (id, novaData, novaHora) => {
          WHERE id = $3 RETURNING *`,
         [novaData, novaHora, id]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -219,7 +220,7 @@ Consulta.reprovar = async (id) => {
          WHERE id = $1 RETURNING *`,
         [id]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
     return rows[0];
@@ -236,9 +237,10 @@ Consulta.solicitarRemarcacao = async (id, novaData, novaHora, novoStatus) => {
          WHERE id = $4 RETURNING *`,
         [novoStatus, novaData, novaHora, id]
     );
-    rows[0].data = formatarData(rows[0].data);
+    rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
     rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+    rows[0].dataRemarcacaoSugerida = formatarApenasData(rows[0].dataRemarcacaoSugerida);
     return rows[0];
 };
 

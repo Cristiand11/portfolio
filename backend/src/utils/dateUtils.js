@@ -22,7 +22,15 @@ function formatarData(data) {
     return formatInTimeZone(data, timeZone, 'yyyy-MM-dd HH:mm:ss');
 }
 
+function formatarApenasData(data) {
+    if (!data) return null;
+    // Pega o objeto Date e converte para uma string YYYY-MM-DD
+    // Adicionamos 'Z' para garantir que a conversão para UTC não mude o dia
+    return new Date(data + 'Z').toISOString().slice(0, 10);
+}
+
 module.exports = {
     getDiasUteis,
-    formatarData
+    formatarData,
+    formatarApenasData
 };
