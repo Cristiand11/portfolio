@@ -29,8 +29,20 @@ function formatarApenasData(data) {
     return new Date(data + 'Z').toISOString().slice(0, 10);
 }
 
+function formatarDataParaEmail(dataString) {
+    if (!dataString || typeof dataString !== 'string') return '';
+    // Pega a string 'YYYY-MM-DD' e a divide em um array ['YYYY', 'MM', 'DD']
+    const partes = dataString.split('-');
+    if (partes.length !== 3) return dataString; // Retorna o original se o formato for inesperado
+    
+    const [ano, mes, dia] = partes;
+    // Remonta o array na ordem 'DD/MM/YYYY'
+    return `${dia}/${mes}/${ano}`;
+}
+
 module.exports = {
     getDiasUteis,
     formatarData,
-    formatarApenasData
+    formatarApenasData,
+    formatarDataParaEmail
 };

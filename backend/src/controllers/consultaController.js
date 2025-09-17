@@ -1,6 +1,11 @@
+const NotificationService = require('../services/notificationService');
+
+const { formatarDataParaEmail } = require('../utils/dateUtils');
+
 const Consulta = require('../models/consultaModel');
 const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
+const Paciente = require('../models/pacienteModel');
 
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {
@@ -8,7 +13,12 @@ exports.createConsulta = async (req, res) => {
         const { id: idUsuarioLogado, perfil } = req.user;
         const { data, hora } = req.body;
 
+        if (!data || !hora) {
+            return res.status(400).json({ message: 'O horário da consulta é obrigatório.' });
+        }
+
         let idMedico, idPaciente, statusInicial;
+        let medico, paciente;
 
         // Lógica de negócio baseada no perfil
         if (perfil === 'paciente') {
@@ -35,29 +45,83 @@ exports.createConsulta = async (req, res) => {
             return res.status(403).json({ message: 'Seu perfil não tem permissão para criar consultas.' });
         }
 
-        if (!data || !hora) {
-            return res.status(400).json({ message: 'O horário da consulta é obrigatório.' });
+        medico = await Medico.findById(idMedico);
+        if (!medico) {
+            return res.status(404).json({ message: 'Médico para agendamento não encontrado.' });
         }
+        const duracaoConsulta = medico.duracaoPadraoConsultaMinutos;
 
-        const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora);
+        const medicoconflictExists = await Consulta.checkConflict(idMedico, data, hora, duracaoConsulta);
         if (medicoconflictExists) {
             return res.status(409).json({ message: 'Conflito de agendamento para o médico.' });
         }
 
-        const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora);
+        const pacienteConflictExists = await Consulta.checkPatientConflict(idPaciente, data, hora, duracaoConsulta);
         if (pacienteConflictExists) {
             return res.status(409).json({ message: 'Conflito de agendamento para o paciente.' });
         }
 
         const dadosConsulta = {
             ...req.body,
-            idPaciente: req.body.idPaciente,
-            status: statusInicial
+            idMedico: idMedico,
+            idPaciente: idPaciente,
+            status: statusInicial,
+            duracaoMinutos: duracaoConsulta
         };
 
         const novaConsulta = await Consulta.create(dadosConsulta);
         delete novaConsulta.dataRemarcacaoSugerida;
         delete novaConsulta.horaRemarcacaoSugerida;
+        
+        paciente = await Paciente.findById(idPaciente);
+        if (perfil === 'paciente') {
+            if (medico && paciente) {
+                // Monta a mensagem do e-mail
+                const assunto = `Nova Solicitação de Consulta: ${paciente.nome}`;
+                const dataFormatada = formatarDataParaEmail(novaConsulta.data);
+                const mensagemHtml = `
+                    <h1>Nova Solicitação de Consulta</h1>
+                    <p>Olá, Dr(a). ${medico.nome},</p>
+                    <p>O paciente <strong>${paciente.nome}</strong> solicitou uma nova consulta.</p>
+                    <ul>
+                        <li><strong>Data:</strong> ${dataFormatada}</li>
+                        <li><strong>Hora:</strong> ${novaConsulta.hora}</li>
+                    </ul>
+                    <p>Por favor, acesse o sistema para aprovar ou rejeitar a solicitação.</p>
+                `;
+
+                // Envia o e-mail para o médico
+                NotificationService.enviarEmail({
+                    para: medico.email,
+                    assunto: assunto,
+                    mensagemHtml: mensagemHtml
+                });
+            }
+        } else if (perfil === 'medico') {
+            if (medico && paciente) {
+                // Monta a mensagem do e-mail
+                const assunto = `Nova Solicitação de Consulta: ${medico.nome}`;
+                const dataFormatada = formatarDataParaEmail(novaConsulta.data);
+                const mensagemHtml = `
+                    <h1>Nova Solicitação de Consulta</h1>
+                    <p>Olá, Sr(a). ${paciente.nome},</p>
+                    <p>O Dr(a). <strong>${medico.nome}</strong> solicitou uma nova consulta.</p>
+                    <ul>
+                        <li><strong>Data:</strong> ${dataFormatada}</li>
+                        <li><strong>Hora:</strong> ${novaConsulta.hora}</li>
+                    </ul>
+                    <p>Por favor, acesse o sistema para aprovar ou rejeitar a solicitação.</p>
+                `;
+
+                // Envia o e-mail para o paciente
+                NotificationService.enviarEmail({
+                    para: paciente.email,
+                    assunto: assunto,
+                    mensagemHtml: mensagemHtml
+                });
+            }
+        }
+
         res.status(201).json({
             message: 'Solicitação de consulta enviada com sucesso! Aguardando aprovação.',
             data: novaConsulta
@@ -175,8 +239,30 @@ exports.cancelarConsulta = async (req, res) => {
             return res.status(403).json({ message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.` });
         }
 
-        // 7. Se todas as regras passaram, cancela a consulta
         const consultaCancelada = await Consulta.cancelar(consultaId);
+
+        const paciente = await Paciente.findById(idPacienteDoToken);
+        if (medico && paciente) {
+            // Monta a mensagem do e-mail
+            const assunto = `Consulta cancelada por: ${paciente.nome}`;
+            const mensagemHtml = `
+                <h1>Cancelamento de Consulta</h1>
+                <p>Olá, Dr(a). ${medico.nome},</p>
+                <p>O paciente <strong>${paciente.nome}</strong> cancelou a seguinte consulta:</p>
+                <ul>
+                    <li><strong>Data:</strong> ${new Date(consulta.data).toLocaleDateString()}</li>
+                    <li><strong>Hora:</strong> ${consulta.hora}</li>
+                </ul>
+                <p>Portanto, considere que este a partir deste momento, a sua agenda para o horário mencionado está disponível.</p>
+            `;
+
+            // Envia o e-mail para o médico
+            NotificationService.enviarEmail({
+                para: medico.email,
+                assunto: assunto,
+                mensagemHtml: mensagemHtml
+            });
+        }
         res.status(200).json({ message: 'Consulta cancelada com sucesso!', data: consultaCancelada });
 
     } catch (error) {
@@ -331,6 +417,59 @@ exports.solicitarRemarcacao = async (req, res) => {
         const novoStatus = perfil === 'paciente' ? 'Remarcação Solicitada Pelo Paciente' : 'Remarcação Solicitada Pelo Médico';
 
         const solicitacao = await Consulta.solicitarRemarcacao(consultaId, novaData, novaHora, novoStatus);
+
+        if (perfil === 'paciente') {
+            const medico = await Medico.findById(consulta.medico_id);
+            const paciente = await Paciente.findById(idUsuarioLogado);
+
+            if (medico && paciente) {
+                // Monta a mensagem do e-mail
+                const assunto = `Nova Solicitação de Remarcação de Consulta: ${paciente.nome}`;
+                const mensagemHtml = `
+                    <h1>Nova Solicitação de Remarcação de Consulta</h1>
+                    <p>Olá, Dr(a). ${medico.nome},</p>
+                    <p>O paciente <strong>${paciente.nome}</strong> solicitou uma nova data e hora para a consulta.</p>
+                    <ul>
+                        <li><strong>Data:</strong> ${new Date(novaData).toLocaleDateString()}</li>
+                        <li><strong>Hora:</strong> ${novaHora}</li>
+                    </ul>
+                    <p>Por favor, acesse o sistema para aprovar ou rejeitar a solicitação.</p>
+                `;
+
+                // Envia o e-mail para o médico
+                NotificationService.enviarEmail({
+                    para: medico.email,
+                    assunto: assunto,
+                    mensagemHtml: mensagemHtml
+                });
+            }
+        } else if (perfil === 'medico'){
+            const medico = await Medico.findById(idUsuarioLogado);
+            const paciente = await Paciente.findById(consulta.paciente_id);
+
+            if (medico && paciente) {
+                // Monta a mensagem do e-mail
+                const assunto = `Nova Solicitação de Remarcação de Consulta: ${medico.nome}`;
+                const mensagemHtml = `
+                    <h1>Nova Solicitação de Remarcação de Consulta</h1>
+                    <p>Olá, Sr(a). ${paciente.nome},</p>
+                    <p>O Dr(a). <strong>${medico.nome}</strong> solicitou uma nova data e hora para a consulta.</p>
+                    <ul>
+                        <li><strong>Data:</strong> ${new Date(novaData).toLocaleDateString()}</li>
+                        <li><strong>Hora:</strong> ${novaHora}</li>
+                    </ul>
+                    <p>Por favor, acesse o sistema para aprovar ou rejeitar a solicitação.</p>
+                `;
+
+                // Envia o e-mail para o paciente
+                NotificationService.enviarEmail({
+                    para: paciente.email,
+                    assunto: assunto,
+                    mensagemHtml: mensagemHtml
+                });
+            }
+        }
+
         res.status(200).json({ message: 'Solicitação de remarcação enviada com sucesso!', data: solicitacao });
 
     } catch (error) {

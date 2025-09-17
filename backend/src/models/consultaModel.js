@@ -3,14 +3,15 @@ const { formatarData } = require('../utils/dateUtils');
 const { formatarApenasData } = require('../utils/dateUtils');
 
 const Consulta = {};
+const MINUTOS_ENTRE_CONSULTAS = 5;
 
 // --- CREATE ---
 Consulta.create = async (consultaData) => {
     // Padronizando os nomes para camelCase
-    const { data, hora, status, observacoes, idMedico, idPaciente } = consultaData;
+    const { data, hora, status, observacoes, idMedico, idPaciente, duracaoMinutos } = consultaData;
     const { rows } = await db.query(
-        'INSERT INTO consulta (data, hora, status, observacoes, medico_id, paciente_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [data, hora, status, observacoes, idMedico, idPaciente]
+        'INSERT INTO consulta (data, hora, status, observacoes, medico_id, paciente_id, "duracaoMinutos") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [data, hora, status, observacoes, idMedico, idPaciente, duracaoMinutos]
     );
     rows[0].data = formatarApenasData(rows[0].data);
     rows[0].createdDate = formatarData(rows[0].createdDate);
@@ -111,45 +112,62 @@ Consulta.delete = async (id) => {
 };
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
-Consulta.checkConflict = async (idMedico, data, hora, excludeConsultaId = null) => {
-    // Definimos os status que são considerados "horário ocupado"
+Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
     const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
+    let query = `
+        SELECT COUNT(*) FROM consulta 
+        WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+        AND (
+            -- A nova consulta começa durante uma existente
+            ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+            OR 
+            -- A nova consulta termina durante uma existente
+            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+            OR
+            -- A nova consulta "envelopa" uma existente
+            ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+        )
+    `;
+    const values = [idMedico, data, busyStatus, hora, duracao];
 
-    let query = `SELECT COUNT(*) FROM consulta WHERE medico_id = $1 AND data = $2 AND hora = $3 AND status = ANY($4::varchar[])`;
-    const values = [idMedico, data, hora, busyStatus];
-
-    // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
     if (excludeConsultaId) {
-        query += ' AND id != $5';
+        query += ` AND id != $6`;
         values.push(excludeConsultaId);
     }
 
     const { rows } = await db.query(query, values);
-    const count = parseInt(rows[0].count, 10);
-    
-    // Retorna true se encontrar algum conflito (count > 0)
-    return count > 0;
+    return parseInt(rows[0].count, 10) > 0;
 };
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O PACIENTE ---
-Consulta.checkPatientConflict = async (idPaciente, data, hora, excludeConsultaId = null) => {
+Consulta.checkPatientConflict = async (idPaciente, data, hora, duracao, excludeConsultaId = null) => {
     // Definimos os status que são considerados "horário ocupado"
     const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
 
-    let query = `SELECT COUNT(*) FROM consulta WHERE paciente_id = $1 AND data = $2 AND hora = $3 AND status = ANY($4::varchar[])`;
-    const values = [idPaciente, data, hora, busyStatus];
+    let query = `
+        SELECT COUNT(*) FROM consulta 
+        WHERE paciente_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+        AND (
+            -- A nova consulta começa durante uma existente
+            ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+            OR 
+            -- A nova consulta termina durante uma existente
+            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+            OR
+            -- A nova consulta "envelopa" uma existente
+            ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+        )
+    `;
+    const values = [idPaciente, data, busyStatus, hora, duracao];
 
     // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
     if (excludeConsultaId) {
-        query += ' AND id != $5';
+        query += ' AND id != $6';
         values.push(excludeConsultaId);
     }
 
     const { rows } = await db.query(query, values);
-    const count = parseInt(rows[0].count, 10);
-    
-    // Retorna true se encontrar algum conflito
-    return count > 0;
+    return parseInt(rows[0].count, 10) > 0;
 };
 
 // --- FUNÇÃO DE GET CONSULTA BY ID ---

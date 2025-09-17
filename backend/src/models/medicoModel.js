@@ -163,14 +163,22 @@ Medico.reverterInativacao = async (id) => {
 
 // Função para localizar um médico pelo ID
 Medico.findById = async (id) => {
-  const { rows } = await db.query('SELECT * FROM medico WHERE id = $1', [id]);
-  if (rows[0]) {
-    delete rows[0].senha;
-  }
-  rows[0].createdDate = formatarData(rows[0].createdDate);
-  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
-  rows[0].inativacaoSolicitadaEm = formatarData(rows[0].inativacaoSolicitadaEm);
-  return rows[0];
+    const { rows } = await db.query('SELECT * FROM medico WHERE id = $1', [id]);
+    const medico = rows[0];
+
+    // --- CORREÇÃO AQUI ---
+    // Se nenhum médico for encontrado, retorna null imediatamente.
+    if (!medico) {
+        return null;
+    }
+
+    // Se encontrou, formata os dados e remove a senha antes de retornar.
+    delete medico.senha;
+    medico.createdDate = formatarData(medico.createdDate);
+    medico.lastModifiedDate = formatarData(medico.lastModifiedDate);
+    medico.inativacaoSolicitadaEm = formatarData(medico.inativacaoSolicitadaEm);
+    
+    return medico;
 };
 
 // Função para um médico visualizar os pacientes que ele já atendeu
