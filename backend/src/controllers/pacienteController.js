@@ -25,7 +25,7 @@ const handlePacienteData = async (data) => {
             data.cidade = cepData.localidade;
             data.bairro = cepData.bairro;
             data.estado = cepData.uf;
-        } catch (error) {
+        } catch {
             throw new Error('Erro ao consultar o CEP.');
         }
     }

@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest"
+    "lint": "eslint .",
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -36,8 +38,18 @@
     "resend": "^6.1.0"
   },
   "devDependencies": {
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "husky": "^9.1.7",
     "jest": "^30.0.5",
+    "lint-staged": "^16.1.6",
     "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4"
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix"
   }
 }

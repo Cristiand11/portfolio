@@ -147,7 +147,7 @@ Paciente.update = async (id, pacienteData) => {
     }
 
     // Adiciona o lastModifiedDate e o WHERE
-    querySetParts.push(`"lastModifiedDate" = NOW()`);
+    querySetParts.push('"lastModifiedDate" = NOW()');
     values.push(id);
     
     const query = `UPDATE paciente SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;

@@ -66,14 +66,6 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '', options 
     const countResult = await db.query(countQuery, values);
     const totalElements = parseInt(countResult.rows[0].count, 10);
 
-    let selectColumns = '';
-    if (options.perfil === 'paciente') {
-        // Pacientes veem apenas os campos públicos do auxiliar 
-        selectColumns = 'id, nome, email, telefone';
-    } else {
-        selectColumns = 'id, nome, email, telefone, "dataNascimento", "idMedico", "createdDate", "lastModifiedDate"';
-    }
-
     let paramIndex = values.length + 1;
     const queryValues = [...values, size, offset];
 

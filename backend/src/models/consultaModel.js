@@ -40,7 +40,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
     if (filterString) {
         const filters = filterString.split(' AND ');
         filters.forEach(filter => {
-            const match = filter.match(/([\w\.]+)\s+(eq|co)\s+'([^']*)'/);
+            const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
             if (match) {
                 const [, field, operator, value] = match;
                 if (Object.keys(allowedFilterFields).includes(field)) {
@@ -131,7 +131,7 @@ Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId
     const values = [idMedico, data, busyStatus, hora, duracao];
 
     if (excludeConsultaId) {
-        query += ` AND id != $6`;
+        query += ' AND id != $6';
         values.push(excludeConsultaId);
     }
 

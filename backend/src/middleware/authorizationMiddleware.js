@@ -1,6 +1,4 @@
 const db = require('../config/database');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.adminAuth = (req, res, next) => {
     if (req.user && req.user.perfil === 'administrador') {
