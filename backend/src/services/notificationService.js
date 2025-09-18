@@ -12,17 +12,17 @@ const NotificationService = {};
  * não quebre a aplicação inteira. Apenas registramos o erro no console.
  */
 NotificationService.enviarEmail = async ({ para, assunto, mensagemHtml }) => {
-    try {
-        await resend.emails.send({
-            from: 'AgendaMed <onboarding@resend.dev>',
-            to: para,
-            subject: assunto,
-            html: mensagemHtml,
-        });
-        console.log(`E-mail enviado com sucesso para ${para}`);
-    } catch (error) {
-        console.error(`Erro ao enviar e-mail para ${para}:`, error);
-    }
+  try {
+    await resend.emails.send({
+      from: 'AgendaMed <onboarding@resend.dev>',
+      to: para,
+      subject: assunto,
+      html: mensagemHtml,
+    });
+    console.log(`E-mail enviado com sucesso para ${para}`);
+  } catch (error) {
+    console.error(`Erro ao enviar e-mail para ${para}:`, error);
+  }
 };
 
 module.exports = NotificationService;

@@ -26,15 +26,15 @@ Medico.create = async (medicoData) => {
 // Função para buscar médicos
 // Mapeia o nome do filtro da URL para o nome da coluna no banco
 const allowedFilterFields = {
-    'id': 'id',
-    'nome': 'nome',
-    'crm': 'crm',
-    'email': 'email',
-    'telefone': 'telefone',
-    'especialidade': 'especialidade',
-    'ativo': 'ativo',
-    'createdDate': '"createdDate"',
-    'lastModifiedDate': '"lastModifiedDate"'
+  'id': 'id',
+  'nome': 'nome',
+  'crm': 'crm',
+  'email': 'email',
+  'telefone': 'telefone',
+  'especialidade': 'especialidade',
+  'ativo': 'ativo',
+  'createdDate': '"createdDate"',
+  'lastModifiedDate': '"lastModifiedDate"'
 };
 
 const operatorMap = {
@@ -163,22 +163,22 @@ Medico.reverterInativacao = async (id) => {
 
 // Função para localizar um médico pelo ID
 Medico.findById = async (id) => {
-    const { rows } = await db.query('SELECT * FROM medico WHERE id = $1', [id]);
-    const medico = rows[0];
+  const { rows } = await db.query('SELECT * FROM medico WHERE id = $1', [id]);
+  const medico = rows[0];
 
-    // --- CORREÇÃO AQUI ---
-    // Se nenhum médico for encontrado, retorna null imediatamente.
-    if (!medico) {
-        return null;
-    }
+  // --- CORREÇÃO AQUI ---
+  // Se nenhum médico for encontrado, retorna null imediatamente.
+  if (!medico) {
+    return null;
+  }
 
-    // Se encontrou, formata os dados e remove a senha antes de retornar.
-    delete medico.senha;
-    medico.createdDate = formatarData(medico.createdDate);
-    medico.lastModifiedDate = formatarData(medico.lastModifiedDate);
-    medico.inativacaoSolicitadaEm = formatarData(medico.inativacaoSolicitadaEm);
+  // Se encontrou, formata os dados e remove a senha antes de retornar.
+  delete medico.senha;
+  medico.createdDate = formatarData(medico.createdDate);
+  medico.lastModifiedDate = formatarData(medico.lastModifiedDate);
+  medico.inativacaoSolicitadaEm = formatarData(medico.inativacaoSolicitadaEm);
     
-    return medico;
+  return medico;
 };
 
 // Função para um médico visualizar os pacientes que ele já atendeu

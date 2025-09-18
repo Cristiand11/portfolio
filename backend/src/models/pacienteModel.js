@@ -7,73 +7,73 @@ const Paciente = {};
 
 // Função para criar um paciente
 Paciente.create = async (pacienteData) => {
-    const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
+  const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
     
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(senha, salt);
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(senha, salt);
     
-    const { rows } = await db.query(
-        'INSERT INTO paciente (nome, cpf, "dataNascimento", email, telefone, endereco, senha, "cepCodigo", "enderecoNumero", cidade, bairro, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
-        [nome, cpf, dataNascimento, email, telefone, endereco, hash, cepCodigo, enderecoNumero, cidade, bairro, estado]
-    );
+  const { rows } = await db.query(
+    'INSERT INTO paciente (nome, cpf, "dataNascimento", email, telefone, endereco, senha, "cepCodigo", "enderecoNumero", cidade, bairro, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
+    [nome, cpf, dataNascimento, email, telefone, endereco, hash, cepCodigo, enderecoNumero, cidade, bairro, estado]
+  );
 
-    delete rows[0].senha;
-    rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
-    rows[0].createdDate = formatarData(rows[0].createdDate);
-    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
-    return rows[0];
+  delete rows[0].senha;
+  rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  return rows[0];
 };
 
 // Função para buscar pacientes
 const allowedFilterFields = {
-    'id': 'id',
-    'nome': 'nome',
-    'cpf': 'cpf',
-    'email': 'email',
-    'telefone': 'telefone',
-    'cepCodigo': '"cepCodigo"',
-    'cidade': 'cidade',
-    'bairro': 'bairro',
-    'estado': 'estado'
+  'id': 'id',
+  'nome': 'nome',
+  'cpf': 'cpf',
+  'email': 'email',
+  'telefone': 'telefone',
+  'cepCodigo': '"cepCodigo"',
+  'cidade': 'cidade',
+  'bairro': 'bairro',
+  'estado': 'estado'
 };
 
 const operatorMap = {
-    eq: '=',
-    co: 'ILIKE',
+  eq: '=',
+  co: 'ILIKE',
 };
 
 Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
-    const offset = (page - 1) * size;
-    let whereClauses = [];
-    const values = [];
+  const offset = (page - 1) * size;
+  let whereClauses = [];
+  const values = [];
 
-    if (filterString) {
-        const filters = filterString.split(' AND ');
-        filters.forEach(filter => {
-            const match = filter.match(/(\w+)\s+(eq|co)\s+'([^']*)'/);
-            if (match) {
-                const [, field, operator, value] = match;
-                if (Object.keys(allowedFilterFields).includes(field)) {
-                    const sqlField = allowedFilterFields[field];
-                    const sqlOperator = operatorMap[operator];
-                    if (sqlOperator) {
-                        whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
-                        values.push(operator === 'co' ? `%${value}%` : value);
-                    }
-                }
-            }
-        });
-    }
+  if (filterString) {
+    const filters = filterString.split(' AND ');
+    filters.forEach(filter => {
+      const match = filter.match(/(\w+)\s+(eq|co)\s+'([^']*)'/);
+      if (match) {
+        const [, field, operator, value] = match;
+        if (Object.keys(allowedFilterFields).includes(field)) {
+          const sqlField = allowedFilterFields[field];
+          const sqlOperator = operatorMap[operator];
+          if (sqlOperator) {
+            whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
+            values.push(operator === 'co' ? `%${value}%` : value);
+          }
+        }
+      }
+    });
+  }
 
-    const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    const countQuery = `SELECT COUNT(*) FROM paciente ${whereClause}`;
-    const countResult = await db.query(countQuery, values);
-    const totalElements = parseInt(countResult.rows[0].count, 10);
+  const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+  const countQuery = `SELECT COUNT(*) FROM paciente ${whereClause}`;
+  const countResult = await db.query(countQuery, values);
+  const totalElements = parseInt(countResult.rows[0].count, 10);
 
-    let paramIndex = values.length + 1;
-    const finalQueryValues = [...values, size, offset];
+  let paramIndex = values.length + 1;
+  const finalQueryValues = [...values, size, offset];
 
-    const dataQuery = `
+  const dataQuery = `
         SELECT 
             id, nome, cpf, "dataNascimento", email, telefone, endereco, "cepCodigo", 
             "enderecoNumero", cidade, bairro, estado, "createdDate", "lastModifiedDate" 
@@ -83,103 +83,103 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
         LIMIT $1 OFFSET $2
     `;
 
-    const dataQueryFinal = dataQuery.replace('$1', `$${paramIndex++}`).replace('$2', `$${paramIndex++}`);
+  const dataQueryFinal = dataQuery.replace('$1', `$${paramIndex++}`).replace('$2', `$${paramIndex++}`);
 
-    const { rows } = await db.query(dataQueryFinal, finalQueryValues);
+  const { rows } = await db.query(dataQueryFinal, finalQueryValues);
 
-    const formattedRows = rows.map(row => ({
-        ...row,
-        dataNascimento: formatarApenasData(row.dataNascimento),
-        createdDate: formatarData(row.createdDate),
-        lastModifiedDate: formatarData(row.lastModifiedDate)
-    }));
+  const formattedRows = rows.map(row => ({
+    ...row,
+    dataNascimento: formatarApenasData(row.dataNascimento),
+    createdDate: formatarData(row.createdDate),
+    lastModifiedDate: formatarData(row.lastModifiedDate)
+  }));
 
-    const totalPages = Math.ceil(totalElements / size);
+  const totalPages = Math.ceil(totalElements / size);
 
-    return {
-        totalPages,
-        totalElements,
-        contents: formattedRows
-    };
+  return {
+    totalPages,
+    totalElements,
+    contents: formattedRows
+  };
 };
 
 // Função para buscar um único paciente
 Paciente.findById = async (id) => {
-    const { rows } = await db.query('SELECT * FROM paciente WHERE id = $1', [id]);
-    // Remove a senha da resposta
-    if (rows[0]) {
-        delete rows[0].senha;
-    }
-    rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
-    rows[0].createdDate = formatarData(rows[0].createdDate);
-    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
-    return rows[0];
+  const { rows } = await db.query('SELECT * FROM paciente WHERE id = $1', [id]);
+  // Remove a senha da resposta
+  if (rows[0]) {
+    delete rows[0].senha;
+  }
+  rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  return rows[0];
 };
 
 // Função para editar um paciente
 Paciente.update = async (id, pacienteData) => {
-    const { senha, ...dadosSemSenha } = pacienteData;
-    let querySetParts = [];
-    const values = [];
-    let paramIndex = 1;
+  const { senha, ...dadosSemSenha } = pacienteData;
+  let querySetParts = [];
+  const values = [];
+  let paramIndex = 1;
 
-    // Adiciona os outros campos à query dinamicamente
-    for (const key in dadosSemSenha) {
-        if (dadosSemSenha[key] !== undefined) {
-            // Usa aspas duplas para nomes de coluna em camelCase
-            const columnName = key === 'dataNascimento' || key === 'cepCodigo' || key === 'enderecoNumero' ? `"${key}"` : key;
-            querySetParts.push(`${columnName} = $${paramIndex++}`);
-            values.push(dadosSemSenha[key]);
-        }
+  // Adiciona os outros campos à query dinamicamente
+  for (const key in dadosSemSenha) {
+    if (dadosSemSenha[key] !== undefined) {
+      // Usa aspas duplas para nomes de coluna em camelCase
+      const columnName = key === 'dataNascimento' || key === 'cepCodigo' || key === 'enderecoNumero' ? `"${key}"` : key;
+      querySetParts.push(`${columnName} = $${paramIndex++}`);
+      values.push(dadosSemSenha[key]);
     }
+  }
 
-    // Se uma nova senha foi fornecida, criptografa e adiciona à query
-    if (senha) {
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(senha, salt);
-        querySetParts.push(`senha = $${paramIndex++}`);
-        values.push(hash);
-    }
+  // Se uma nova senha foi fornecida, criptografa e adiciona à query
+  if (senha) {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(senha, salt);
+    querySetParts.push(`senha = $${paramIndex++}`);
+    values.push(hash);
+  }
     
-    // Se não houver nada para atualizar, retorna (evita erro de query vazia)
-    if (querySetParts.length === 0) {
-        return Paciente.findById(id);
-    }
+  // Se não houver nada para atualizar, retorna (evita erro de query vazia)
+  if (querySetParts.length === 0) {
+    return Paciente.findById(id);
+  }
 
-    // Adiciona o lastModifiedDate e o WHERE
-    querySetParts.push('"lastModifiedDate" = NOW()');
-    values.push(id);
+  // Adiciona o lastModifiedDate e o WHERE
+  querySetParts.push('"lastModifiedDate" = NOW()');
+  values.push(id);
     
-    const query = `UPDATE paciente SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+  const query = `UPDATE paciente SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
 
-    const { rows } = await db.query(query, values);
+  const { rows } = await db.query(query, values);
 
-    if (rows[0]) {
-        delete rows[0].senha;
-    };
+  if (rows[0]) {
+    delete rows[0].senha;
+  };
     
-    rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
-    rows[0].createdDate = formatarData(rows[0].createdDate);
-    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
-    return rows[0];
+  rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
+  rows[0].createdDate = formatarData(rows[0].createdDate);
+  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  return rows[0];
 };
 
 // Função para excluir um paciente
 Paciente.delete = async (id) => {
-    const { rowCount } = await db.query('DELETE FROM paciente WHERE id = $1', [id]);
-    return rowCount;
+  const { rowCount } = await db.query('DELETE FROM paciente WHERE id = $1', [id]);
+  return rowCount;
 };
 
 // Função para visualizar os médicos com quem já se consultou
 Paciente.findMedicosConsultados = async (idPaciente) => {
-    const { rows } = await db.query(
-        `SELECT DISTINCT m.id, m.nome, m.crm, m.especialidade, m.email, m.telefone
+  const { rows } = await db.query(
+    `SELECT DISTINCT m.id, m.nome, m.crm, m.especialidade, m.email, m.telefone
          FROM medico m
          JOIN consulta c ON m.id = c.medico_id
          WHERE c.paciente_id = $1`,
-        [idPaciente]
-    );
-    return rows;
+    [idPaciente]
+  );
+  return rows;
 };
 
 module.exports = Paciente;

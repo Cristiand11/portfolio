@@ -23,7 +23,8 @@ module.exports = [
     rules: {
       'semi': ['error', 'always'],
       'quotes': ['error', 'single'],
-      'no-unused-vars': ['warn', { 'args': 'none' }] // Avisa sobre variáveis não usadas
+      'no-unused-vars': ['warn', { 'args': 'none' }], // Avisa sobre variáveis não usadas
+      'indent': ['error', 2]
     },
   }
 ];
