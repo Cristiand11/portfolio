@@ -21,7 +21,7 @@ exports.getAllMedicos = async (req, res) => {
 
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
-    
+
     let filterString = '';
     if (filter) {
       filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
@@ -43,7 +43,7 @@ exports.createMedico = async (req, res) => {
     if (!isCrmValido(req.body.crm)) {
       return res.status(400).json({ message: 'Formato de CRM inválido. Use o formato NÚMERO/UF (ex: 12345/SC).' });
     }
-    
+
     const novoMedico = await Medico.create(req.body);
     res.status(201).json({
       message: 'Médico cadastrado com sucesso!',
@@ -156,12 +156,12 @@ exports.reverterInativacao = async (req, res) => {
 exports.getPacientesAtendidos = async (req, res) => {
   try {
     const idMedicoDoToken = req.user.id;
-        
+
     const { page, size } = req.query;
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
 
-    const pacientesPaginados = await Medico.findPacientesAtendidos(idMedicoDoToken, pageNum, sizeNum);    
+    const pacientesPaginados = await Medico.findPacientesAtendidos(idMedicoDoToken, pageNum, sizeNum);
     res.status(200).json(pacientesPaginados);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar histórico de pacientes.', error: error.message });
@@ -191,9 +191,9 @@ exports.getMeusAuxiliares = async (req, res) => {
     const { page, size, filter } = req.query;
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
-        
+
     const idMedicoDoToken = req.user.id;
-        
+
     const securityFilter = `idMedico eq '${idMedicoDoToken}'`;
 
     let finalFilterString = securityFilter;

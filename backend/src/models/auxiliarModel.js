@@ -8,7 +8,7 @@ const Auxiliar = {};
 // --- CREATE ---
 Auxiliar.create = async (auxiliarData) => {
   const { nome, email, telefone, dataNascimento, senha, idMedico } = auxiliarData;
-    
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
 
@@ -30,7 +30,7 @@ const allowedFilterFields = {
   'nome': 'nome',
   'email': 'email',
   'idMedico': '"idMedico"',
-  'dataNascimento': '"dataNascimento"' 
+  'dataNascimento': '"dataNascimento"'
 };
 
 const operatorMap = {

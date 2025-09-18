@@ -79,7 +79,7 @@ Administrador.findPaginated = async (page = 1, size = 10, filterString = '') => 
 // --- UPDATE ---
 Administrador.update = async (id, adminData) => {
   const { nome, email, senha } = adminData;
-    
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
 

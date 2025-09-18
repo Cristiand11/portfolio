@@ -7,10 +7,10 @@ const Medico = {};
 // Função para criar um médico
 Medico.create = async (medicoData) => {
   const { nome, crm, email, telefone, especialidade, senha, ativo } = medicoData;
-  
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
-  
+
   const { rows } = await db.query(
     'INSERT INTO medico (nome, crm, email, telefone, especialidade, senha, ativo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
     [nome, crm, email, telefone, especialidade, hash, ativo]
@@ -95,7 +95,7 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
     ORDER BY nome ASC 
     LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
-  
+
   const { rows } = await db.query(dataQuery, queryValues);
 
   const formattedRows = rows.map(row => ({
@@ -118,7 +118,7 @@ Medico.update = async (id, medicoData) => {
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
-  
+
   const { rows } = await db.query(
     'UPDATE medico SET nome = $1, crm = $2, email = $3, telefone = $4, especialidade = $5, senha = $6, ativo = $7, "lastModifiedDate" = NOW() WHERE id = $8 RETURNING *',
     [nome, crm, email, telefone, especialidade, hash, ativo, id]
@@ -177,7 +177,7 @@ Medico.findById = async (id) => {
   medico.createdDate = formatarData(medico.createdDate);
   medico.lastModifiedDate = formatarData(medico.lastModifiedDate);
   medico.inativacaoSolicitadaEm = formatarData(medico.inativacaoSolicitadaEm);
-    
+
   return medico;
 };
 

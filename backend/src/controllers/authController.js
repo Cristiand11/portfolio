@@ -74,7 +74,7 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email, perfil } = req.body;
-        
+
     // 1. Encontra o usuário na tabela correta
     const tabelas = {
       medico: 'MEDICO',
@@ -112,7 +112,7 @@ exports.forgotPassword = async (req, res) => {
     const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Por favor, clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link irá expirar em 1 hora.</p>`;
 
     NotificationService.enviarEmail({ para: user.email, assunto, mensagemHtml });
-        
+
     res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.' });
   } catch (error) {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
@@ -142,7 +142,7 @@ exports.resetPassword = async (req, res) => {
     // 3. Criptografa a nova senha
     const salt = await bcrypt.genSalt(10);
     const novaSenhaHash = await bcrypt.hash(novaSenha, salt);
-        
+
     // 4. Atualiza a senha na tabela correta do usuário
     const tabelas = {
       medico: 'MEDICO',
@@ -155,7 +155,7 @@ exports.resetPassword = async (req, res) => {
 
     // 5. Deleta o token para que ele não possa ser usado novamente
     await db.query('DELETE FROM PASSWORD_RESET_TOKENS WHERE id = $1', [tokenData.id]);
-        
+
     res.status(200).json({ message: 'Senha redefinida com sucesso!' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao redefinir a senha.', error: error.message });

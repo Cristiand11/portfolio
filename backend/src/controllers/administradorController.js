@@ -17,7 +17,7 @@ exports.getAllAdministradores = async (req, res) => {
     const { page, size, filter } = req.query;
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
-        
+
     let filterString = '';
     if (filter) {
       filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;

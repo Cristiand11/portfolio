@@ -56,7 +56,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   }
 
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    
+
   const baseQuery = `
         FROM consulta c
         LEFT JOIN medico m ON c.medico_id = m.id
@@ -80,7 +80,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
-    
+
   const formattedRows = rows.map(row => ({
     ...row,
     data: formatarApenasData(row.data),

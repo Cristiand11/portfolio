@@ -1,9 +1,11 @@
 const globals = require('globals');
 const js = require('@eslint/js');
+const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   // Aplica as configurações recomendadas pelo ESLint
   js.configs.recommended,
+  prettierConfig,
 
   {
     // Aplica estas regras a todos os arquivos .js e .mjs
@@ -21,10 +23,12 @@ module.exports = [
 
     // Aqui você pode adicionar suas regras personalizadas
     rules: {
-      'semi': ['error', 'always'],
-      'quotes': ['error', 'single'],
-      'no-unused-vars': ['warn', { 'args': 'none' }], // Avisa sobre variáveis não usadas
-      'indent': ['error', 2]
+      'no-undef': 'error',
+      'no-unused-vars': ['warn', { args: 'none' }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
+      'no-var': 'error',
+      'no-trailing-spaces': 'error',
     },
-  }
+  },
 ];

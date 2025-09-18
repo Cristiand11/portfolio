@@ -52,7 +52,7 @@ exports.getAllPacientes = async (req, res) => {
     const { page, size, filter } = req.query;
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
-        
+
     let filterString = '';
     if (filter) {
       filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
@@ -74,7 +74,7 @@ exports.updatePaciente = async (req, res) => {
     if (idPacienteDoParametro !== idPacienteDoToken) {
       return res.status(403).json({ message: 'Acesso negado. Você só pode editar seus próprios dados.' });
     };
-        
+
     const processedData = await handlePacienteData(req.body);
 
     const atualizado = await Paciente.update(idPacienteDoParametro, processedData);
@@ -106,7 +106,7 @@ exports.deletePaciente = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const pacienteId = req.user.id;
-        
+
     const paciente = await Paciente.findById(pacienteId);
     if (!paciente) {
       return res.status(404).json({ message: 'Paciente não encontrado.' });

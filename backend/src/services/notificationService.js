@@ -19,7 +19,6 @@ NotificationService.enviarEmail = async ({ para, assunto, mensagemHtml }) => {
       subject: assunto,
       html: mensagemHtml,
     });
-    console.log(`E-mail enviado com sucesso para ${para}`);
   } catch (error) {
     console.error(`Erro ao enviar e-mail para ${para}:`, error);
   }

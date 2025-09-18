@@ -72,7 +72,7 @@ exports.createConsulta = async (req, res) => {
     const novaConsulta = await Consulta.create(dadosConsulta);
     delete novaConsulta.dataRemarcacaoSugerida;
     delete novaConsulta.horaRemarcacaoSugerida;
-        
+
     paciente = await Paciente.findById(idPaciente);
     if (perfil === 'paciente') {
       if (medico && paciente) {
@@ -153,7 +153,7 @@ exports.getAllConsultas = async (req, res) => {
       }
       securityFilter = `idMedico eq '${auxiliar.idMedico}'`;
     }
-        
+
     // Combina o filtro de segurança com os filtros opcionais do usuário
     let finalFilterString = securityFilter;
     if (filter) {
@@ -317,7 +317,7 @@ exports.confirmarConsulta = async (req, res) => {
   try {
     const { id: consultaId } = req.params;
     const { id: idUsuarioLogado, perfil } = req.user;
-        
+
     const consulta = await Consulta.findById(consultaId);
     if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
 
@@ -330,11 +330,11 @@ exports.confirmarConsulta = async (req, res) => {
       // A lógica de permissão que já tínhamos
       if (consulta.status === 'Aguardando Confirmação do Médico' && (perfil === 'medico' || perfil === 'auxiliar')) {
         // (Aqui a lógica completa para verificar se o auxiliar pertence ao médico seria necessária)
-        permissaoConcedida = true; 
+        permissaoConcedida = true;
       } else if (consulta.status === 'Aguardando Confirmação do Paciente' && perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id) {
         permissaoConcedida = true;
       }
-    } 
+    }
     // Cenário 2: Aceitação de uma remarcação
     else if (consulta.status === 'Remarcação Solicitada Pelo Médico' || consulta.status === 'Remarcação Solicitada Pelo Paciente') {
       // A lógica de permissão que já tínhamos
@@ -346,7 +346,7 @@ exports.confirmarConsulta = async (req, res) => {
       // Pega a data/hora da sugestão para a confirmação final
       dataFinal = consulta.dataRemarcacaoSugerida;
       horaFinal = consulta.horaRemarcacaoSugerida;
-    } 
+    }
     else {
       return res.status(409).json({ message: `Esta consulta não pode ser confirmada, pois seu status é "${consulta.status}".`});
     }

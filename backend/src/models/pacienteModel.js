@@ -8,10 +8,10 @@ const Paciente = {};
 // Função para criar um paciente
 Paciente.create = async (pacienteData) => {
   const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
-    
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
-    
+
   const { rows } = await db.query(
     'INSERT INTO paciente (nome, cpf, "dataNascimento", email, telefone, endereco, senha, "cepCodigo", "enderecoNumero", cidade, bairro, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
     [nome, cpf, dataNascimento, email, telefone, endereco, hash, cepCodigo, enderecoNumero, cidade, bairro, estado]
@@ -140,7 +140,7 @@ Paciente.update = async (id, pacienteData) => {
     querySetParts.push(`senha = $${paramIndex++}`);
     values.push(hash);
   }
-    
+
   // Se não houver nada para atualizar, retorna (evita erro de query vazia)
   if (querySetParts.length === 0) {
     return Paciente.findById(id);
@@ -149,7 +149,7 @@ Paciente.update = async (id, pacienteData) => {
   // Adiciona o lastModifiedDate e o WHERE
   querySetParts.push('"lastModifiedDate" = NOW()');
   values.push(id);
-    
+
   const query = `UPDATE paciente SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
 
   const { rows } = await db.query(query, values);
@@ -157,7 +157,7 @@ Paciente.update = async (id, pacienteData) => {
   if (rows[0]) {
     delete rows[0].senha;
   };
-    
+
   rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
   rows[0].createdDate = formatarData(rows[0].createdDate);
   rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
