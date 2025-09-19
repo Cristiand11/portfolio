@@ -26,11 +26,11 @@ Auxiliar.create = async (auxiliarData) => {
 
 // --- READ  ---
 const allowedFilterFields = {
-  'id': 'id',
-  'nome': 'nome',
-  'email': 'email',
-  'idMedico': '"idMedico"',
-  'dataNascimento': '"dataNascimento"'
+  id: 'id',
+  nome: 'nome',
+  email: 'email',
+  idMedico: '"idMedico"',
+  dataNascimento: '"dataNascimento"',
 };
 
 const operatorMap = {
@@ -38,14 +38,24 @@ const operatorMap = {
   co: 'ILIKE',
 };
 
+const colunasOrdenaveis = {
+  nome: 'nome',
+  email: 'email',
+};
+
 Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
   const offset = (page - 1) * size;
   let whereClauses = [];
   const values = [];
+  const sortKey = options.sort || 'nome';
+  const sortOrder = options.order || 'asc';
+
+  const orderByClause = colunasOrdenaveis[sortKey] || colunasOrdenaveis.nome;
+  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
   if (filterString) {
     const filters = filterString.split(' AND ');
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       const match = filter.match(/(\w+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
@@ -70,21 +80,21 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '', options 
   const queryValues = [...values, size, offset];
 
   const dataQuery = `
-        SELECT 
-            id, nome, email, telefone, "dataNascimento", "idMedico", "createdDate", "lastModifiedDate" 
-        FROM auxiliar 
-        ${whereClause} 
-        ORDER BY nome ASC 
-        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-    `;
+    SELECT 
+      id, nome, email, telefone, "dataNascimento", "idMedico", "createdDate", "lastModifiedDate" 
+    FROM auxiliar 
+    ${whereClause} 
+    ORDER BY ${orderByClause} ${orderDirection}
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+  `;
 
   const { rows } = await db.query(dataQuery, queryValues);
 
-  const formattedRows = rows.map(row => ({
+  const formattedRows = rows.map((row) => ({
     ...row,
     dataNascimento: formatarApenasData(row.dataNascimento),
     createdDate: formatarData(row.createdDate),
-    lastModifiedDate: formatarData(row.lastModifiedDate)
+    lastModifiedDate: formatarData(row.lastModifiedDate),
   }));
 
   const totalPages = Math.ceil(totalElements / size);
@@ -92,22 +102,30 @@ Auxiliar.findPaginated = async (page = 1, size = 10, filterString = '', options 
   return {
     totalPages,
     totalElements,
-    contents: formattedRows
+    contents: formattedRows,
   };
 };
 
 // Função para buscar um único auxiliar
 Auxiliar.findById = async (id) => {
   const { rows } = await db.query('SELECT * FROM auxiliar WHERE id = $1', [id]);
-  if (rows[0]) {
-    delete rows[0].senha;
-  }
-  rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
-  rows[0].createdDate = formatarData(rows[0].createdDate);
-  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
-  return rows[0];
-};
+  const auxiliar = rows[0];
 
+  if (!auxiliar) {
+    return null;
+  }
+
+  delete auxiliar.senha;
+
+  if (auxiliar.dataNascimento) {
+    auxiliar.dataNascimento = formatarApenasData(auxiliar.dataNascimento);
+  }
+
+  auxiliar.createdDate = formatarData(auxiliar.createdDate);
+  auxiliar.lastModifiedDate = formatarData(auxiliar.lastModifiedDate);
+
+  return auxiliar;
+};
 
 // --- UPDATE ---
 Auxiliar.update = async (id, auxiliarData) => {

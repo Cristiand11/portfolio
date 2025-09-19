@@ -1,0 +1,173 @@
+import { useState, useEffect } from "react";
+import { getMeusPacientes } from "../../services/pacienteService";
+import Modal from "../../components/Modal";
+import AddPacienteForm from "../../components/paciente/AddPacienteForm";
+
+const SortIcon = ({ direction }) => {
+  if (!direction) return <span className="text-gray-400">↕️</span>;
+  if (direction === "asc") return <span className="text-gray-800">🔼</span>;
+  return <span className="text-gray-800">🔽</span>;
+};
+
+export default function PacientesPage() {
+  const [pacientes, setPacientes] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [sortConfig, setSortConfig] = useState({
+    key: "ultimaConsultaData",
+    direction: "desc",
+  });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  const handleSuccess = () => {
+    setRefetchTrigger((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      setIsLoading(true);
+      setError("");
+      try {
+        const response = await getMeusPacientes(paginaAtual, 10, sortConfig);
+        setPacientes(response.data.contents);
+        setTotalPaginas(response.data.totalPages);
+      } catch (err) {
+        console.error("Erro ao buscar pacientes:", err);
+        setError("Não foi possível carregar a lista de pacientes.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPacientes();
+  }, [paginaAtual, sortConfig, refetchTrigger]);
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    } else if (sortConfig.key === key && sortConfig.direction === "desc") {
+      setSortConfig({ key: "ultimaConsultaData", direction: "desc" });
+      return;
+    }
+    setSortConfig({ key, direction });
+  };
+
+  if (isLoading) {
+    return <div>Carregando pacientes...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600">{error}</div>;
+  }
+
+  return (
+    <div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Cadastrar Novo Paciente"
+      >
+        <AddPacienteForm
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleSuccess}
+        />
+      </Modal>
+
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Meus Pacientes
+          </h1>
+          <p className="mt-1 text-gray-600">
+            Visualize os pacientes que você já atendeu.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+        >
+          Adicionar Paciente
+        </button>
+      </div>
+
+      {/* Tabela de Pacientes */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left">
+                <button
+                  onClick={() => handleSort("nome")}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Nome{" "}
+                  <SortIcon
+                    direction={
+                      sortConfig.key === "nome" ? sortConfig.direction : null
+                    }
+                  />
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left">
+                <button
+                  onClick={() => handleSort("email")}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Email{" "}
+                  <SortIcon
+                    direction={
+                      sortConfig.key === "email" ? sortConfig.direction : null
+                    }
+                  />
+                </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Telefone
+              </th>
+              <th className="px-6 py-3 text-left">
+                <button
+                  onClick={() => handleSort("ultimaConsultaData")}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Última Consulta{" "}
+                  <SortIcon
+                    direction={
+                      sortConfig.key === "ultimaConsultaData"
+                        ? sortConfig.direction
+                        : null
+                    }
+                  />
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {pacientes.map((paciente) => (
+              <tr key={paciente.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {paciente.nome}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {paciente.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {paciente.telefone}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {paciente.ultimaConsultaData}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Aqui virá a navegação da paginação */}
+    </div>
+  );
+}
