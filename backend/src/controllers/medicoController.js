@@ -1,26 +1,34 @@
-const Medico = require('../models/medicoModel');
 const db = require('../config/database');
 const { getDiasUteis } = require('../utils/dateUtils');
+
+const Medico = require('../models/medicoModel');
+const Auxiliar = require('../models/auxiliarModel');
+const HorarioTrabalho = require('../models/horarioTrabalhoModel');
+
+// Helper para validar o formato do CRM
+function isCrmValido(crm) {
+  if (!crm) return false;
+  // Regex: verifica se o formato é número(s)/UF com 2 letras. Ex: 12345/SC
+  const crmRegex = /^\d{1,8}\/[A-Z]{2}$/i;
+  return crmRegex.test(crm);
+};
 
 // Função para listar todos os médicos
 exports.getAllMedicos = async (req, res) => {
   try {
     const { page, size, filter } = req.query;
+    const { perfil } = req.user;
 
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
-    
+
     let filterString = '';
     if (filter) {
-      // Se 'filter' for um array (múltiplos filtros), junte-os com ' AND '
-      // Se for apenas uma string (um filtro), use-a como está.
       filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
     }
 
-    // Passa a string de filtro (agora sempre uma string) para o model
-    const paginatedResult = await Medico.findPaginated(pageNum, sizeNum, filterString);
-
-    res.status(200).json(paginatedResult);
+    const result = await Medico.findPaginated(pageNum, sizeNum, filterString, { perfil });
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({
       message: 'Erro ao buscar médicos',
@@ -32,6 +40,10 @@ exports.getAllMedicos = async (req, res) => {
 // Função para criar um médico
 exports.createMedico = async (req, res) => {
   try {
+    if (!isCrmValido(req.body.crm)) {
+      return res.status(400).json({ message: 'Formato de CRM inválido. Use o formato NÚMERO/UF (ex: 12345/SC).' });
+    }
+
     const novoMedico = await Medico.create(req.body);
     res.status(201).json({
       message: 'Médico cadastrado com sucesso!',
@@ -48,6 +60,10 @@ exports.createMedico = async (req, res) => {
 // Função para atualizar um médico
 exports.updateMedico = async (req, res) => {
   try {
+    if (!isCrmValido(req.body.crm)) {
+      return res.status(400).json({ message: 'Formato de CRM inválido. Use o formato NÚMERO/UF (ex: 12345/SC).' });
+    }
+
     const { id } = req.params;
     const medicoAtualizado = await Medico.update(id, req.body);
 
@@ -100,11 +116,8 @@ exports.solicitarInativacao = async (req, res) => {
       return res.status(409).json({ message: 'Este médico já possui uma solicitação de inativação pendente.' });
     };
 
-    if (medico) {
-      delete medico.senha;
-    };
-
     const medico = await Medico.solicitarInativacao(id);
+    delete medico.senha;
     res.status(200).json({ message: 'Solicitação de inativação registrada. O médico será inativado em 5 dias úteis se a ação não for revertida.', data: medico });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao solicitar inativação.', error: error.message });
@@ -125,21 +138,101 @@ exports.reverterInativacao = async (req, res) => {
       return res.status(404).json({ message: 'Médico não possui solicitação de inativação pendente.' });
     }
 
-    // Verificação do prazo
     const diasUteisPassados = getDiasUteis(medicoExistente.inativacaoSolicitadaEm);
     if (diasUteisPassados > 5) {
       return res.status(409).json({ message: 'O prazo de 5 dias úteis para reverter esta solicitação já expirou.' });
     }
 
-    // Se passou em todas as verificações, executa a reversão
     const medico = await Medico.reverterInativacao(id);
-
-    if (medico) {
-      delete medico.senha;
-    };
+    delete medico.senha;
 
     res.status(200).json({ message: 'Solicitação de inativação revertida com sucesso.', data: medico });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao reverter solicitação.', error: error.message });
   };
+};
+
+// Função para o médico visualizar os pacientes que ele já atendeu
+exports.getPacientesAtendidos = async (req, res) => {
+  try {
+    const idMedicoDoToken = req.user.id;
+
+    const { page, size } = req.query;
+    const pageNum = parseInt(page || '1', 10);
+    const sizeNum = parseInt(size || '10', 10);
+
+    const pacientesPaginados = await Medico.findPacientesAtendidos(idMedicoDoToken, pageNum, sizeNum);
+    res.status(200).json(pacientesPaginados);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar histórico de pacientes.', error: error.message });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const medicoId = req.user.id;
+
+    const medico = await Medico.findById(medicoId);
+    if (!medico) {
+      // Este caso é raro, mas pode acontecer se o médico for deletado
+      // e o token ainda estiver válido
+      return res.status(404).json({ message: 'Médico não encontrado.' });
+    }
+
+    delete medico.inativacaoSolicitadaEm;
+    res.status(200).json(medico);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar dados do médico.', error: error.message });
+  }
+};
+
+exports.getMeusAuxiliares = async (req, res) => {
+  try {
+    const { page, size, filter } = req.query;
+    const pageNum = parseInt(page || '1', 10);
+    const sizeNum = parseInt(size || '10', 10);
+
+    const idMedicoDoToken = req.user.id;
+
+    const securityFilter = `idMedico eq '${idMedicoDoToken}'`;
+
+    let finalFilterString = securityFilter;
+    if (filter) {
+      const userFilter = Array.isArray(filter) ? filter.join(' AND ') : filter;
+      finalFilterString = `${securityFilter} AND ${userFilter}`;
+    }
+
+    const result = await Auxiliar.findPaginated(pageNum, sizeNum, finalFilterString, { perfil: 'medico' });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar auxiliares.', error: error.message });
+  }
+};
+
+exports.definirMeusHorarios = async (req, res) => {
+  try {
+    const idMedicoDoToken = req.user.id;
+    const horarios = req.body;
+
+    if (!Array.isArray(horarios)) {
+      return res.status(400).json({ message: 'O corpo da requisição deve ser um array de horários.' });
+    }
+
+    await HorarioTrabalho.definirHorarios(idMedicoDoToken, horarios);
+
+    res.status(200).json({ message: 'Horários de trabalho atualizados com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao definir horários de trabalho.', error: error.message });
+  }
+};
+
+exports.getHorariosByMedicoId = async (req, res) => {
+  try {
+    const { id: medicoId } = req.params;
+    const horarios = await HorarioTrabalho.findByMedicoId(medicoId);
+
+    res.status(200).json(horarios);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar horários do médico.', error: error.message });
+  }
 };
