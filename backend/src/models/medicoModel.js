@@ -26,23 +26,23 @@ Medico.create = async (medicoData) => {
 // Função para buscar médicos
 // Mapeia o nome do filtro da URL para o nome da coluna no banco
 const allowedFilterFields = {
-  'id': 'id',
-  'nome': 'nome',
-  'crm': 'crm',
-  'email': 'email',
-  'telefone': 'telefone',
-  'especialidade': 'especialidade',
-  'ativo': 'ativo',
-  'createdDate': '"createdDate"',
-  'lastModifiedDate': '"lastModifiedDate"'
+  id: 'id',
+  nome: 'nome',
+  crm: 'crm',
+  email: 'email',
+  telefone: 'telefone',
+  especialidade: 'especialidade',
+  ativo: 'ativo',
+  createdDate: '"createdDate"',
+  lastModifiedDate: '"lastModifiedDate"',
 };
 
 const operatorMap = {
-  eq: '=',      // Equals
-  co: 'ILIKE',  // Contains (case-insensitive)
-  gt: '>',      // Greater than
-  lt: '<',      // Less than
-  ne: '!=',     // Not equal
+  eq: '=', // Equals
+  co: 'ILIKE', // Contains (case-insensitive)
+  gt: '>', // Greater than
+  lt: '<', // Less than
+  ne: '!=', // Not equal
 };
 
 Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
@@ -53,7 +53,7 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
   if (filterString) {
     const filters = filterString.split(' AND ');
 
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       const match = filter.match(/(\w+)\s+(eq|co|gt|lt|ne)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
@@ -81,7 +81,8 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
   if (options.perfil === 'paciente') {
     selectColumns = 'id, nome, crm, email, telefone, especialidade';
   } else {
-    selectColumns = 'id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate", "inativacaoSolicitadaEm"';
+    selectColumns =
+      'id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate", "inativacaoSolicitadaEm"';
   }
 
   let paramIndex = values.length + 1;
@@ -98,36 +99,74 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
 
   const { rows } = await db.query(dataQuery, queryValues);
 
-  const formattedRows = rows.map(row => ({
+  const formattedRows = rows.map((row) => ({
     ...row,
     createdDate: formatarData(row.createdDate),
-    lastModifiedDate: formatarData(row.lastModifiedDate)
+    lastModifiedDate: formatarData(row.lastModifiedDate),
   }));
   const totalPages = Math.ceil(totalElements / size);
 
   return {
     totalPages,
     totalElements,
-    contents: formattedRows
+    contents: formattedRows,
   };
 };
 
 // Função para editar um médico
 Medico.update = async (id, medicoData) => {
-  const { nome, crm, email, telefone, especialidade, senha, ativo } = medicoData;
+  const { senha, ...dadosSemSenha } = medicoData;
 
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(senha, salt);
+  let querySetParts = [];
+  const values = [];
+  let paramIndex = 1;
 
-  const { rows } = await db.query(
-    'UPDATE medico SET nome = $1, crm = $2, email = $3, telefone = $4, especialidade = $5, senha = $6, ativo = $7, "lastModifiedDate" = NOW() WHERE id = $8 RETURNING *',
-    [nome, crm, email, telefone, especialidade, hash, ativo, id]
-  );
+  for (const key in dadosSemSenha) {
+    // Garante que não estamos tentando atualizar o ID ou campos nulos
+    if (
+      dadosSemSenha[key] !== undefined &&
+      key !== 'id' &&
+      key !== 'createdDate' &&
+      key !== 'lastModifiedDate'
+    ) {
+      const colunasCamelCase = [
+        'duracaoPadraoConsultaMinutos',
+        'inativacaoSolicitadaEm',
+        'cancelamentoAntecedenciaHoras',
+      ];
+      const columnName = colunasCamelCase.includes(key) ? `"${key}"` : key;
+      querySetParts.push(`${columnName} = $${paramIndex++}`);
+      values.push(dadosSemSenha[key]);
+    }
+  }
 
-  delete rows[0].senha;
+  // Se uma nova senha foi fornecida, e não é uma string vazia, criptografa e adiciona à query
+  if (senha) {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(senha, salt);
+    querySetParts.push(`senha = $${paramIndex++}`);
+    values.push(hash);
+  }
 
-  rows[0].createdDate = formatarData(rows[0].createdDate);
-  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  // Se não houver nada para atualizar, retorna os dados atuais
+  if (querySetParts.length === 0) {
+    return Medico.findById(id);
+  }
+
+  // Adiciona o lastModifiedDate e o WHERE
+  querySetParts.push(`"lastModifiedDate" = NOW()`);
+  values.push(id);
+
+  const query = `UPDATE medico SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+
+  const { rows } = await db.query(query, values);
+
+  if (rows[0]) {
+    delete rows[0].senha;
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  }
+
   return rows[0];
 };
 
@@ -181,10 +220,24 @@ Medico.findById = async (id) => {
   return medico;
 };
 
+const colunasOrdenaveis = {
+  nome: 'p.nome',
+  email: 'p.email',
+  ultimaConsultaData: 'MAX(c.data)',
+};
+
 // Função para um médico visualizar os pacientes que ele já atendeu
-Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10) => {
+Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, order) => {
   const offset = (page - 1) * size;
   const statusPermitidos = ['Concluída', 'Agendada', 'Confirmada', 'Cancelada Pelo Paciente'];
+
+  const sortKey = sort || 'ultimaConsultaData';
+  const sortOrder = order || 'desc';
+
+  const orderByClause = colunasOrdenaveis[sortKey]
+    ? colunasOrdenaveis[sortKey]
+    : colunasOrdenaveis.ultimaConsultaData;
+  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
   const countQuery = `
     SELECT COUNT(DISTINCT p.id) 
@@ -197,22 +250,18 @@ Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10) => {
 
   const dataQuery = `
     SELECT 
-      p.id, 
-      p.nome, 
-      p.cpf, 
-      p.email, 
-      p.telefone,
-      MAX(c.data) as "ultimaConsultaData" -- <-- ALTERAÇÃO PRINCIPAL AQUI
+      p.id, p.nome, p.cpf, p.email, p.telefone,
+      MAX(c.data) as "ultimaConsultaData"
     FROM paciente p
     JOIN consulta c ON p.id = c.paciente_id
     WHERE c.medico_id = $1 AND c.status = ANY($2::varchar[])
-    GROUP BY p.id -- Agrupamos por paciente para que o MAX() funcione para cada um
-    ORDER BY p.nome ASC
+    GROUP BY p.id
+    ORDER BY ${orderByClause} ${orderDirection} 
     LIMIT $3 OFFSET $4
   `;
   const { rows } = await db.query(dataQuery, [idMedico, statusPermitidos, size, offset]);
 
-  const formattedRows = rows.map(row => {
+  const formattedRows = rows.map((row) => {
     if (row.ultimaConsultaData) {
       row.ultimaConsultaData = new Date(row.ultimaConsultaData).toISOString().slice(0, 10);
     }
@@ -224,7 +273,7 @@ Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10) => {
   return {
     totalPages,
     totalElements,
-    contents: formattedRows
+    contents: formattedRows,
   };
 };
 
