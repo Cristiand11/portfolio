@@ -21,11 +21,11 @@ Consulta.create = async (consultaData) => {
 
 // --- READ (PAGINATED & WITH JOINS) ---
 const allowedFilterFields = {
-  'id': 'c.id',
-  'status': 'c.status',
-  'data': 'c.data',
-  'idMedico': 'c.medico_id',
-  'idPaciente': 'c.paciente_id',
+  id: 'c.id',
+  status: 'c.status',
+  data: 'c.data',
+  idMedico: 'c.medico_id',
+  idPaciente: 'c.paciente_id',
   'medico.nome': 'm.nome', // Filtro por nome do médico
   'paciente.nome': 'p.nome', // Filtro por nome do paciente
 };
@@ -39,7 +39,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
   if (filterString) {
     const filters = filterString.split(' AND ');
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
@@ -81,27 +81,55 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
 
-  const formattedRows = rows.map(row => ({
+  const formattedRows = rows.map((row) => ({
     ...row,
     data: formatarApenasData(row.data),
     createdDate: formatarData(row.createdDate),
-    lastModifiedDate: formatarData(row.lastModifiedDate)
+    lastModifiedDate: formatarData(row.lastModifiedDate),
   }));
 
   return { totalPages, totalElements, contents: formattedRows };
 };
 
-
 // --- UPDATE ---
 Consulta.update = async (id, consultaData) => {
-  const { data, hora, status, observacoes, idMedico, idPaciente } = consultaData;
-  const { rows } = await db.query(
-    'UPDATE consulta SET data = $1, hora = $2, status = $3, observacoes = $4, medico_id = $5, paciente_id = $6, "lastModifiedDate" = NOW() WHERE id = $7 RETURNING *',
-    [data, hora, status, observacoes, idMedico, idPaciente, id]
-  );
-  rows[0].data = formatarApenasData(rows[0].data);
-  rows[0].createdDate = formatarData(rows[0].createdDate);
-  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  let querySetParts = [];
+  const values = [];
+  let paramIndex = 1;
+
+  // Constrói a query dinamicamente com os campos fornecidos
+  for (const key in consultaData) {
+    if (consultaData[key] !== undefined && key !== 'id') {
+      // Usa aspas duplas para nomes de coluna em camelCase
+      const colunasCamelCase = [
+        'dataRemarcacaoSugerida',
+        'horaRemarcacaoSugerida',
+        'duracaoMinutos',
+      ];
+      const columnName = colunasCamelCase.includes(key) ? `"${key}"` : key;
+      querySetParts.push(`${columnName} = $${paramIndex++}`);
+      values.push(consultaData[key]);
+    }
+  }
+
+  if (querySetParts.length === 0) {
+    return Consulta.findById(id);
+  }
+
+  querySetParts.push(`"lastModifiedDate" = NOW()`);
+  values.push(id);
+
+  const query = `UPDATE consulta SET ${querySetParts.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+
+  const { rows } = await db.query(query, values);
+
+  // Formata a resposta
+  if (rows[0]) {
+    rows[0].data = formatarApenasData(rows[0].data);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  }
+
   return rows[0];
 };
 
@@ -140,7 +168,13 @@ Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId
 };
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O PACIENTE ---
-Consulta.checkPatientConflict = async (idPaciente, data, hora, duracao, excludeConsultaId = null) => {
+Consulta.checkPatientConflict = async (
+  idPaciente,
+  data,
+  hora,
+  duracao,
+  excludeConsultaId = null
+) => {
   // Definimos os status que são considerados "horário ocupado"
   const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
 
@@ -180,15 +214,18 @@ Consulta.findById = async (id) => {
 };
 
 // --- FUNÇÃO DE SOLICITAÇÃO DE CANCELAMENTO ---
-Consulta.cancelar = async (id) => {
-  const statusCancelado = 'Cancelada Pelo Paciente';
+Consulta.cancelar = async (id, novoStatus) => {
   const { rows } = await db.query(
     'UPDATE consulta SET status = $1, "lastModifiedDate" = NOW() WHERE id = $2 RETURNING *',
-    [statusCancelado, id]
+    [novoStatus, id]
   );
-  rows[0].data = formatarApenasData(rows[0].data);
-  rows[0].createdDate = formatarData(rows[0].createdDate);
-  rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+
+  if (rows[0]) {
+    rows[0].data = formatarApenasData(rows[0].data);
+    rows[0].createdDate = formatarData(rows[0].createdDate);
+    rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
+  }
+
   return rows[0];
 };
 
@@ -259,6 +296,15 @@ Consulta.solicitarRemarcacao = async (id, novaData, novaHora, novoStatus) => {
   rows[0].createdDate = formatarData(rows[0].createdDate);
   rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
   rows[0].dataRemarcacaoSugerida = formatarApenasData(rows[0].dataRemarcacaoSugerida);
+  return rows[0];
+};
+
+// --- FUNÇÃO PARA ATUALIZAR O STATUS DA CONSULTA ---
+Consulta.updateStatus = async (id, novoStatus) => {
+  const { rows } = await db.query(
+    'UPDATE consulta SET status = $1, "lastModifiedDate" = NOW() WHERE id = $2 RETURNING *',
+    [novoStatus, id]
+  );
   return rows[0];
 };
 
