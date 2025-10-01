@@ -11,24 +11,23 @@ export default function DashboardMedicoPage() {
   useEffect(() => {
     const fetchConsultas = async () => {
       try {
-        // 1. Pega a data de hoje no formato YYYY-MM-DD
-        const hoje = new Date().toISOString().slice(0, 10);
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+        const dia = String(hoje.getDate()).padStart(2, "0");
+        const hojeStr = `${ano}-${mes}-${dia}`;
 
-        // 2. Chama o serviço para buscar consultas do dia, apenas as confirmadas
         const response = await getMinhasConsultas({
-          filter: [`data eq '${hoje}'`, `status eq 'Confirmada'`],
+          filter: [`data eq '${hojeStr}'`, `status eq 'Confirmada'`],
         });
 
         const consultasDoDia = response.data.contents;
 
-        // 3. Ordena as consultas por hora
         consultasDoDia.sort((a, b) => a.hora.localeCompare(b.hora));
         setConsultasHoje(consultasDoDia);
 
-        // 4. Encontra a próxima consulta a partir do horário atual
         const agora = new Date();
         const proxima = consultasDoDia.find((c) => {
-          // O campo 'data' já vem formatado como YYYY-MM-DD
           const dataConsulta = new Date(`${c.data}T${c.hora}`);
           return dataConsulta > agora;
         });
