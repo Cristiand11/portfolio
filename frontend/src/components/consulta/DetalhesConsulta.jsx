@@ -48,7 +48,7 @@ export default function DetalhesConsulta({
     if (
       agora > dataHoraConsulta &&
       status !== "Cancelada Pelo Paciente" &&
-      status !== "Cancelada Pelo Medico/Auxiliar" &&
+      status !== "Cancelada Pelo Médico/Auxiliar" &&
       status !== "Expirada"
     ) {
       return (

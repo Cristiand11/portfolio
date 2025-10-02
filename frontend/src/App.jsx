@@ -9,6 +9,7 @@ import PacientesPage from "./pages/medico/PacientesPage";
 import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
 import MeuPerfilPage from "./pages/medico/MeuPerfilPage";
 import AgendamentoPage from "./pages/medico/AgendamentoPage";
+import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           <Route path="/medico/pacientes" element={<PacientesPage />} />
           <Route path="/medico/meu-perfil" element={<MeuPerfilPage />} />
           <Route path="/medico/agendamento" element={<AgendamentoPage />} />
+          <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
           {/* Adicione as outras rotas de dashboard aqui */}
         </Route>
       </Routes>

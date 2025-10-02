@@ -149,7 +149,8 @@ exports.createConsulta = async (req, res) => {
 // Função para listar todas as consultas
 exports.getAllConsultas = async (req, res) => {
   try {
-    const { page, size, filter } = req.query;
+    const { page, size, filter, sort, order } = req.query;
+    console.log('Backend recebeu - Sort:', sort, 'Order:', order);
     const { id: idUsuarioLogado, perfil } = req.user;
 
     const pageNum = parseInt(page || '1', 10);
@@ -178,7 +179,10 @@ exports.getAllConsultas = async (req, res) => {
       finalFilterString = `${securityFilter} AND ${userFilter}`;
     }
 
-    const result = await Consulta.findPaginated(pageNum, sizeNum, finalFilterString);
+    const result = await Consulta.findPaginated(pageNum, sizeNum, finalFilterString, {
+      sort,
+      order,
+    });
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar consultas', error: error.message });
@@ -291,7 +295,7 @@ exports.cancelarConsulta = async (req, res) => {
       novoStatus = 'Cancelada Pelo Paciente';
       notificacaoPara = 'medico';
     } else if (isMedicoDono || isAuxiliarDoMedico) {
-      novoStatus = 'Cancelada Pelo Medico/Auxiliar';
+      novoStatus = 'Cancelada Pelo Médico/Auxiliar';
       notificacaoPara = 'paciente';
     }
 
@@ -327,7 +331,7 @@ exports.concluirConsulta = async (req, res) => {
     const nonCompletableStatuses = [
       'Concluída',
       'Cancelada Pelo Paciente',
-      'Cancelada Pelo Medico/Auxiliar',
+      'Cancelada Pelo Médico/Auxiliar',
       'Expirada',
     ];
     if (nonCompletableStatuses.includes(consulta.status)) {
