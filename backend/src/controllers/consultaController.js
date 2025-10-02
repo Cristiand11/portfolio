@@ -150,7 +150,6 @@ exports.createConsulta = async (req, res) => {
 exports.getAllConsultas = async (req, res) => {
   try {
     const { page, size, filter, sort, order } = req.query;
-    console.log('Backend recebeu - Sort:', sort, 'Order:', order);
     const { id: idUsuarioLogado, perfil } = req.user;
 
     const pageNum = parseInt(page || '1', 10);
@@ -172,7 +171,6 @@ exports.getAllConsultas = async (req, res) => {
       securityFilter = `idMedico eq '${auxiliar.idMedico}'`;
     }
 
-    // Combina o filtro de segurança com os filtros opcionais do usuário
     let finalFilterString = securityFilter;
     if (filter) {
       const userFilter = Array.isArray(filter) ? filter.join(' AND ') : filter;

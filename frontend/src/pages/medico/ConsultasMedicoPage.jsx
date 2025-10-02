@@ -86,7 +86,14 @@ export default function ConsultasMedicoPage() {
     data: "",
   });
 
-  console.log("Estado de Ordenação Atual (sortConfig):", sortConfig);
+  // Monta a string de filtro no formato que o backend espera: "campo op 'valor' AND campo2 op 'valor2'"
+  const buildFilterString = (applied) => {
+    const parts = [];
+    if (applied.status) parts.push(`status eq '${applied.status}'`);
+    if (applied.paciente) parts.push(`nomePaciente co '${applied.paciente}'`);
+    if (applied.data) parts.push(`data eq '${applied.data}'`);
+    return parts.length ? parts.join(" AND ") : undefined;
+  };
 
   const fetchConsultas = useCallback(async () => {
     setIsLoading(true);
@@ -95,18 +102,10 @@ export default function ConsultasMedicoPage() {
         size: 100,
         sort: sortConfig.key,
         order: sortConfig.direction,
-        filter: [],
       };
 
-      if (appliedFilters.status) {
-        params.filter.push(`status eq '${appliedFilters.status}'`);
-      }
-      if (appliedFilters.paciente) {
-        params.filter.push(`nomePaciente co '${appliedFilters.paciente}'`);
-      }
-      if (appliedFilters.data) {
-        params.filter.push(`data eq '${appliedFilters.data}'`);
-      }
+      const filterString = buildFilterString(appliedFilters);
+      if (filterString) params.filter = filterString;
 
       const response = await getMinhasConsultas(params);
       setConsultas(response.data.contents);
@@ -121,24 +120,14 @@ export default function ConsultasMedicoPage() {
     fetchConsultas();
   }, [fetchConsultas]);
 
+  // Simples toggle: se clicar na mesma coluna alterna asc <-> desc; se coluna nova seta asc
   const handleSort = (key) => {
-    let newDirection = "asc";
-    let newKey = key;
-
-    // Se está a clicar na mesma coluna que já está ordenada...
-    if (sortConfig.key === key) {
-      if (sortConfig.direction === "asc") {
-        // Se está 'asc', muda para 'desc' (segundo clique)
-        newDirection = "desc";
-      } else if (sortConfig.direction === "desc") {
-        // Se está 'desc', volta para o padrão (terceiro clique)
-        newKey = "data"; // Chave de ordenação padrão
-        newDirection = "asc"; // Direção padrão
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
       }
-    }
-    // Se for uma coluna nova, a direção padrão 'asc' já está definida.
-
-    setSortConfig({ key: newKey, direction: newDirection });
+      return { key, direction: "asc" };
+    });
   };
 
   const handleFilterChange = (e) => {
