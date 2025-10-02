@@ -378,10 +378,10 @@ export default function ConsultasMedicoPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider rounded-tl-lg">
                 <button
                   onClick={() => handleSort("nomePaciente")}
-                  className="flex items-center gap-2"
+                  className="flex items-center uppercase gap-2"
                 >
                   Paciente
                   <SortIcon
@@ -394,10 +394,10 @@ export default function ConsultasMedicoPage() {
                 </button>
               </th>
 
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
                 <button
                   onClick={() => handleSort("data")}
-                  className="flex items-center gap-2"
+                  className="flex items-center uppercase gap-2"
                 >
                   Data
                   <SortIcon
@@ -412,10 +412,10 @@ export default function ConsultasMedicoPage() {
                 Hora
               </th>
 
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
                 <button
                   onClick={() => handleSort("status")}
-                  className="flex items-center gap-2"
+                  className="flex items-center uppercase gap-2"
                 >
                   Status
                   <SortIcon
