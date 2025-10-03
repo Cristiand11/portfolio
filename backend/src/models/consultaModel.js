@@ -28,11 +28,18 @@ const allowedFilterFields = {
   idPaciente: 'c.paciente_id',
   'medico.nome': 'm.nome', // Filtro por nome do médico
   'paciente.nome': 'p.nome', // Filtro por nome do paciente
+  nomePaciente: 'p.nome',
 };
 
 const operatorMap = { eq: '=', co: 'ILIKE' };
 
-Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
+const colunasOrdenaveis = {
+  data: 'c.data',
+  status: 'c.status',
+  nomePaciente: 'p.nome',
+};
+
+Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
   const offset = (page - 1) * size;
   let whereClauses = [];
   const values = [];
@@ -40,7 +47,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   if (filterString) {
     const filters = filterString.split(' AND ');
     filters.forEach((filter) => {
-      const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
+      const match = filter.match(/([\w\.]+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
         if (Object.keys(allowedFilterFields).includes(field)) {
@@ -57,11 +64,12 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-  const baseQuery = `
-        FROM consulta c
-        LEFT JOIN medico m ON c.medico_id = m.id
-        LEFT JOIN paciente p ON c.paciente_id = p.id
-    `;
+  const sortKey = options.sort || 'data';
+  const sortOrder = options.order || 'asc';
+  const orderByClause = colunasOrdenaveis[sortKey] || colunasOrdenaveis.data;
+  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+  const baseQuery = `FROM consulta c LEFT JOIN paciente p ON c.paciente_id = p.id`;
 
   const countQuery = `SELECT COUNT(c.id) ${baseQuery} ${whereClause}`;
   const countResult = await db.query(countQuery, values);
@@ -70,14 +78,12 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
   const dataQuery = `
-        SELECT 
-            c.*, 
-            m.nome as "nomeMedico", 
-            p.nome as "nomePaciente"
-        ${baseQuery} 
-        ${whereClause} 
-        ORDER BY c.data, c.hora DESC 
-        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    SELECT c.*, p.nome as "nomePaciente"
+    ${baseQuery} 
+    ${whereClause} 
+    ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
 

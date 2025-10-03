@@ -229,37 +229,30 @@ const colunasOrdenaveis = {
 // Função para um médico visualizar os pacientes que ele já atendeu
 Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, order) => {
   const offset = (page - 1) * size;
-  const statusPermitidos = ['Concluída', 'Agendada', 'Confirmada', 'Cancelada Pelo Paciente'];
 
-  const sortKey = sort || 'ultimaConsultaData';
-  const sortOrder = order || 'desc';
-
-  const orderByClause = colunasOrdenaveis[sortKey]
-    ? colunasOrdenaveis[sortKey]
-    : colunasOrdenaveis.ultimaConsultaData;
-  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-
-  const countQuery = `
-    SELECT COUNT(DISTINCT p.id) 
-      FROM paciente p
-      JOIN consulta c ON p.id = c.paciente_id
-      WHERE c.medico_id = $1 AND c.status = ANY($2::varchar[])
-  `;
-  const countResult = await db.query(countQuery, [idMedico, statusPermitidos]);
+  // A query de contagem agora olha para a tabela de vínculo
+  const countQuery = `SELECT COUNT(*) FROM MEDICO_PACIENTE WHERE medico_id = $1`;
+  const countResult = await db.query(countQuery, [idMedico]);
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
+  const sortKey = sort || 'nome';
+  const orderDirection = (order || 'asc').toUpperCase();
+  const orderByClause = colunasOrdenaveis[sortKey] || 'p.nome';
+
+  // A query principal agora usa a tabela de vínculo como base e um LEFT JOIN
   const dataQuery = `
-    SELECT 
-      p.id, p.nome, p.cpf, p.email, p.telefone,
-      MAX(c.data) as "ultimaConsultaData"
-    FROM paciente p
-    JOIN consulta c ON p.id = c.paciente_id
-    WHERE c.medico_id = $1 AND c.status = ANY($2::varchar[])
-    GROUP BY p.id
-    ORDER BY ${orderByClause} ${orderDirection} 
-    LIMIT $3 OFFSET $4
-  `;
-  const { rows } = await db.query(dataQuery, [idMedico, statusPermitidos, size, offset]);
+        SELECT 
+            p.id, p.nome, p.cpf, p.email, p.telefone,
+            MAX(c.data) as "ultimaConsultaData"
+        FROM paciente p
+        JOIN MEDICO_PACIENTE mp ON p.id = mp.paciente_id
+        LEFT JOIN consulta c ON p.id = c.paciente_id AND c.medico_id = mp.medico_id
+        WHERE mp.medico_id = $1
+        GROUP BY p.id
+        ORDER BY ${orderByClause} ${orderDirection}
+        LIMIT $2 OFFSET $3
+    `;
+  const { rows } = await db.query(dataQuery, [idMedico, size, offset]);
 
   const formattedRows = rows.map((row) => {
     if (row.ultimaConsultaData) {
@@ -275,6 +268,16 @@ Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, orde
     totalElements,
     contents: formattedRows,
   };
+};
+
+// Função para criar um vínculo entre médico e paciente
+Medico.createLink = async (medicoId, pacienteId) => {
+  const query = `
+    INSERT INTO MEDICO_PACIENTE (medico_id, paciente_id) 
+    VALUES ($1, $2) 
+    ON CONFLICT (medico_id, paciente_id) DO NOTHING
+  `;
+  await db.query(query, [medicoId, pacienteId]);
 };
 
 module.exports = Medico;

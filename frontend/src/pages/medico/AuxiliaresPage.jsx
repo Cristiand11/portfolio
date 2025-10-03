@@ -8,9 +8,62 @@ import Modal from "../../components/Modal";
 import AddAuxiliarForm from "../../components/auxiliar/AddAuxiliarForm";
 
 const SortIcon = ({ direction }) => {
-  if (!direction) return <span className="text-gray-400">↕️</span>;
-  if (direction === "asc") return <span className="text-gray-800">🔼</span>;
-  return <span className="text-gray-800">🔽</span>;
+  if (!direction) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 text-gray-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+        />
+      </svg>
+    );
+  }
+
+  // Ícone para ordenação ascendente (seta para cima)
+  if (direction === "asc") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 text-gray-800"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 15l7-7 7 7"
+        />
+      </svg>
+    );
+  }
+
+  // Ícone para ordenação descendente (seta para baixo)
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-4 w-4 text-gray-800"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  );
 };
 
 export default function AuxiliaresPage() {
@@ -131,9 +184,6 @@ export default function AuxiliaresPage() {
           <h1 className="text-2xl font-semibold text-gray-800">
             Meus Auxiliares
           </h1>
-          <p className="mt-1 text-gray-600">
-            Gerencie os perfis que podem te auxiliar na gestão da sua agenda.
-          </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}

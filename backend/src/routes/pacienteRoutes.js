@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pacienteController = require('../controllers/pacienteController');
 const authMiddleware = require('../middleware/authMiddleware');
+const checkAuthMiddleware = require('../middleware/checkAuthMiddleware');
 
 const { adminAuth, pacienteAuth } = require('../middleware/authorizationMiddleware');
 
 // Rota para POST pacientes
-router.post('/', pacienteController.createPaciente);
+router.post('/', checkAuthMiddleware, pacienteController.createPaciente);
 
 // Rota para GET pacientes
 // router.get('/', authMiddleware, adminAuth, pacienteController.getAllPacientes);

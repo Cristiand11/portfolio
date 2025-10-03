@@ -463,7 +463,7 @@ export default function AgendamentoPage() {
             week: "Semana",
             day: "Dia",
           }}
-          allDaySlot={true}
+          allDaySlot={false}
         />
       </div>
     </div>

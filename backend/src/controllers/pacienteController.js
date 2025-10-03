@@ -1,5 +1,7 @@
 const Paciente = require('../models/pacienteModel');
-const axios = require('axios'); // Importa o axios
+const Medico = require('../models/medicoModel');
+const Auxiliar = require('../models/auxiliarModel');
+const axios = require('axios');
 const { cpf } = require('cpf-cnpj-validator');
 
 const handlePacienteData = async (data) => {
@@ -12,6 +14,7 @@ const handlePacienteData = async (data) => {
 
   // Lógica do CEP
   if (data.cepCodigo) {
+    data.cepCodigo = data.cepCodigo.replace(/\D/g, '');
     try {
       const cepResponse = await axios.get(`https://viacep.com.br/ws/${data.cepCodigo}/json/`);
       const cepData = cepResponse.data;
@@ -35,11 +38,23 @@ const handlePacienteData = async (data) => {
 // POST /pacientes
 exports.createPaciente = async (req, res) => {
   try {
+    const { id: idUsuarioLogado, perfil } = req.user || {};
+
     const processedData = await handlePacienteData(req.body);
     const novoPaciente = await Paciente.create(processedData);
+
+    if (perfil === 'medico') {
+      await Medico.createLink(idUsuarioLogado, novoPaciente.id);
+    } else if (perfil === 'auxiliar') {
+      const auxiliar = await Auxiliar.findById(idUsuarioLogado);
+      if (auxiliar && auxiliar.idMedico) {
+        await Medico.createLink(auxiliar.idMedico, novoPaciente.id);
+      }
+    }
+
     res.status(201).json({
       message: 'Paciente cadastrado com sucesso!',
-      data: novoPaciente
+      data: novoPaciente,
     });
   } catch (error) {
     res.status(400).json({ message: 'Erro ao cadastrar paciente', error: error.message });
@@ -72,8 +87,10 @@ exports.updatePaciente = async (req, res) => {
     const idPacienteDoToken = req.user.id;
 
     if (idPacienteDoParametro !== idPacienteDoToken) {
-      return res.status(403).json({ message: 'Acesso negado. Você só pode editar seus próprios dados.' });
-    };
+      return res
+        .status(403)
+        .json({ message: 'Acesso negado. Você só pode editar seus próprios dados.' });
+    }
 
     const processedData = await handlePacienteData(req.body);
 
