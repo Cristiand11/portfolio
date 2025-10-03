@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getMeusAuxiliares,
   deleteAuxiliar,
+  deleteVariosAuxiliares,
 } from "../../services/auxiliarService";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
@@ -80,6 +81,7 @@ export default function AuxiliaresPage() {
     isOpen: false,
     auxiliarId: null,
   });
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     const fetchAuxiliares = async () => {
@@ -105,6 +107,37 @@ export default function AuxiliaresPage() {
 
   const handleSuccess = () => {
     setRefetchTrigger((prev) => prev + 1);
+  };
+
+  const handleSelectOne = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(auxiliares.map((aux) => aux.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (
+      window.confirm(
+        `Tem certeza de que deseja excluir ${selectedIds.length} auxiliares?`
+      )
+    ) {
+      try {
+        await deleteVariosAuxiliares(selectedIds);
+        toast.success("Auxiliares excluídos com sucesso!");
+        setSelectedIds([]);
+        handleSuccess();
+      } catch (err) {
+        toast.error("Não foi possível excluir os auxiliares.");
+      }
+    }
   };
 
   const handleSort = (key) => {
@@ -185,12 +218,21 @@ export default function AuxiliaresPage() {
             Meus Auxiliares
           </h1>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
-        >
-          Adicionar Auxiliar
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+          >
+            Adicionar
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={selectedIds.length === 0}
+            className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
+          >
+            Excluir
+          </button>
+        </div>
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -202,6 +244,17 @@ export default function AuxiliaresPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="p-4 py-3 w-16 text-center">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    onChange={handleSelectAll}
+                    checked={
+                      auxiliares.length > 0 &&
+                      selectedIds.length === auxiliares.length
+                    }
+                  />
+                </th>
                 <th className="px-6 py-3 text-left">
                   <button
                     onClick={() => handleSort("nome")}
@@ -246,6 +299,14 @@ export default function AuxiliaresPage() {
               ) : auxiliares.length > 0 ? (
                 auxiliares.map((aux) => (
                   <tr key={aux.id}>
+                    <td className="p-4 py-4 w-16 text-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={selectedIds.includes(aux.id)}
+                        onChange={() => handleSelectOne(aux.id)}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {aux.nome}
                     </td>

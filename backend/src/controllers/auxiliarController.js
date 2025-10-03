@@ -1,4 +1,5 @@
 const Auxiliar = require('../models/auxiliarModel');
+const db = require('../config/database');
 
 exports.createAuxiliar = async (req, res) => {
   try {
@@ -6,13 +7,13 @@ exports.createAuxiliar = async (req, res) => {
 
     const dadosAuxiliar = {
       ...req.body,
-      idMedico: idMedicoDoToken
+      idMedico: idMedicoDoToken,
     };
 
     const novoAuxiliar = await Auxiliar.create(dadosAuxiliar);
     res.status(201).json({
       message: 'Auxiliar cadastrado com sucesso!',
-      data: novoAuxiliar
+      data: novoAuxiliar,
     });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao cadastrar auxiliar', error: error.message });
@@ -51,13 +52,12 @@ exports.updateAuxiliar = async (req, res) => {
 
     res.status(200).json({
       message: 'Dados do auxiliar atualizados com sucesso!',
-      data: auxiliarAtualizado
+      data: auxiliarAtualizado,
     });
-
   } catch (error) {
     res.status(500).json({
       message: 'Erro ao atualizar dados do auxiliar',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -73,13 +73,45 @@ exports.deleteAuxiliar = async (req, res) => {
     }
 
     if (auxiliar.idMedico !== idMedicoDoToken) {
-      return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para remover este auxiliar.' });
+      return res
+        .status(403)
+        .json({ message: 'Acesso negado. Você não tem permissão para remover este auxiliar.' });
     }
 
     await Auxiliar.delete(idAuxiliar);
     res.status(200).json({ message: 'Auxiliar removido com sucesso!' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao remover auxiliar', error: error.message });
+  }
+};
+
+exports.deleteVariosAuxiliares = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const { id: idMedicoDoToken, perfil } = req.user;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Uma lista de IDs de auxiliares é necessária.' });
+    }
+
+    if (perfil === 'medico') {
+      const { rows: auxiliares } = await db.query(
+        'SELECT "idMedico" FROM auxiliar WHERE id = ANY($1::uuid[])',
+        [ids]
+      );
+      for (const aux of auxiliares) {
+        if (aux.idMedico !== idMedicoDoToken) {
+          return res
+            .status(403)
+            .json({ message: 'Acesso negado. Você só pode excluir seus próprios auxiliares.' });
+        }
+      }
+    }
+
+    await Auxiliar.deleteByIds(ids);
+    res.status(200).json({ message: `${ids.length} auxiliares foram excluídos com sucesso.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao remover auxiliares.', error: error.message });
   }
 };
 

@@ -21,3 +21,10 @@ export const createAuxiliar = (auxiliarData) => {
 export const deleteAuxiliar = (id) => {
   return api.delete(`/auxiliares/${id}`);
 };
+
+/**
+ * Deleta vários auxiliares pelos seus IDs
+ */
+export const deleteVariosAuxiliares = (ids) => {
+  return api.delete("/auxiliares", { data: { ids } });
+};
