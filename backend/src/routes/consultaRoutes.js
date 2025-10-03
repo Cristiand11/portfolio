@@ -6,7 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const {
   consultaViewAuth,
   medicoOuAuxiliarAuth,
-  pacienteAuth,
+  medicoAuth,
 } = require('../middleware/authorizationMiddleware');
 
 // Rota para POST consultas
@@ -17,6 +17,8 @@ router.get('/', authMiddleware, consultaViewAuth, consultaController.getAllConsu
 router.put('/:id', authMiddleware, consultaController.updateConsulta);
 // Rota para DELETE consultas
 router.delete('/:id', authMiddleware, consultaController.deleteConsulta);
+// Rota para deletar múltiplas consultas
+router.delete('/', authMiddleware, medicoAuth, consultaController.deleteVariasConsultas);
 // Rota para o paciente cancelar uma consulta
 router.post('/:id/cancelar', authMiddleware, consultaViewAuth, consultaController.cancelarConsulta);
 // Rota para o médico/auxiliar marcar uma consulta como concluída

@@ -145,6 +145,12 @@ Consulta.delete = async (id) => {
   return rowCount;
 };
 
+// Deleta múltiplas consultas com base em um array de IDs
+Consulta.deleteByIds = async (ids) => {
+  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = ANY($1::uuid[])', [ids]);
+  return rowCount;
+};
+
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
   const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];

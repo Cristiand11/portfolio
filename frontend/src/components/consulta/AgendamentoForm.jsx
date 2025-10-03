@@ -1,35 +1,37 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext";
 import { getMeusPacientes } from "../../services/pacienteService";
 import { createConsulta } from "../../services/consultaService";
 import toast from "react-hot-toast";
 
 export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
   const [pacientes, setPacientes] = useState([]);
-  const [selectedPaciente, setSelectedPaciente] = useState("");
-  const [observacoes, setObservacoes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Busca a lista de pacientes do médico para preencher o <select>
+  // 1. O estado agora inclui a data e hora, inicializadas com os dados recebidos (se existirem)
+  const [formData, setFormData] = useState({
+    idPaciente: "",
+    data: initialData?.data || "",
+    hora: initialData?.hora || "",
+    observacoes: "",
+  });
+
   useEffect(() => {
-    getMeusPacientes(1, 1000) // Pega até 1000 pacientes
+    getMeusPacientes(1, 1000)
       .then((res) => setPacientes(res.data.contents))
       .catch((err) => console.error("Erro ao buscar pacientes", err));
   }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const consultaData = {
-      idPaciente: selectedPaciente,
-      data: initialData.data,
-      hora: initialData.hora,
-      observacoes: observacoes,
-    };
-
     try {
-      await createConsulta(consultaData);
+      await createConsulta(formData);
       toast.success("Consulta proposta com sucesso!");
       onSuccess();
     } catch (err) {
@@ -40,17 +42,57 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
       setIsLoading(false);
     }
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <p className="text-sm font-medium text-gray-700">
-          Data: <span className="font-normal">{initialData.data}</span>
-        </p>
-        <p className="text-sm font-medium text-gray-700">
-          Hora: <span className="font-normal">{initialData.hora}</span>
-        </p>
-      </div>
+      {initialData ? (
+        // Se veio do calendário, mostra a data/hora como texto
+        <div>
+          <p className="text-sm font-medium text-gray-700">
+            Data: <span className="font-normal">{initialData.data}</span>
+          </p>
+          <p className="text-sm font-medium text-gray-700">
+            Hora: <span className="font-normal">{initialData.hora}</span>
+          </p>
+        </div>
+      ) : (
+        // Se veio do botão "Marcar Consulta", mostra os inputs de data e hora
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="data"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Data
+            </label>
+            <input
+              type="date"
+              name="data"
+              id="data"
+              value={formData.data}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="hora"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Hora
+            </label>
+            <input
+              type="time"
+              name="hora"
+              id="hora"
+              value={formData.hora}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+            />
+          </div>
+        </div>
+      )}
       <div>
         <label
           htmlFor="paciente"
@@ -60,8 +102,9 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
         </label>
         <select
           id="paciente"
-          value={selectedPaciente}
-          onChange={(e) => setSelectedPaciente(e.target.value)}
+          name="idPaciente"
+          value={formData.idPaciente}
+          onChange={handleChange}
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         >
@@ -82,8 +125,9 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
         </label>
         <textarea
           id="observacoes"
-          value={observacoes}
-          onChange={(e) => setObservacoes(e.target.value)}
+          name="observacoes"
+          value={formData.observacoes}
+          onChange={handleChange}
           rows="3"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         />

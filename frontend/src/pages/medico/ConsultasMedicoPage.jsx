@@ -1,11 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getMinhasConsultas,
+  deleteVariasConsultas,
   confirmarConsulta,
   cancelarConsultaAdmin,
   concluirConsulta,
+  aceitarRemarcacao,
+  rejeitarRemarcacao,
 } from "../../services/consultaService";
 import ActionsDropdown from "../../components/ActionsDropdown";
+import Modal from "../../components/Modal";
+import AgendamentoForm from "../../components/consulta/AgendamentoForm";
+import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
+import ConfirmModal from "../../components/ConfirmModal";
 import toast from "react-hot-toast";
 
 const SortIcon = ({ direction }) => {
@@ -85,6 +92,18 @@ export default function ConsultasMedicoPage() {
     paciente: "",
     data: "",
   });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isAgendamentoModalOpen, setIsAgendamentoModalOpen] = useState(false);
+  const [remarcacaoModalState, setRemarcacaoModalState] = useState({
+    isOpen: false,
+    consulta: null,
+  });
+  const [confirmModalState, setConfirmModalState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Monta a string de filtro no formato que o backend espera: "campo op 'valor' AND campo2 op 'valor2'"
   const buildFilterString = (applied) => {
@@ -130,6 +149,39 @@ export default function ConsultasMedicoPage() {
     });
   };
 
+  const handleSelectOne = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(consultas.map((c) => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setConfirmModalState({
+      isOpen: true,
+      title: `Excluir ${selectedIds.length} Consultas`,
+      message: `Tem certeza de que deseja excluir permanentemente as ${selectedIds.length} consultas selecionadas?`,
+      onConfirm: async () => {
+        try {
+          await deleteVariasConsultas(selectedIds);
+          toast.success("Consultas excluídas com sucesso!");
+          setSelectedIds([]);
+          fetchConsultas();
+        } catch (err) {
+          toast.error("Não foi possível excluir as consultas.");
+        }
+        setConfirmModalState({ isOpen: false });
+      },
+    });
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -154,16 +206,23 @@ export default function ConsultasMedicoPage() {
     }
   };
 
-  const handleCancel = async (id) => {
-    if (window.confirm("Tem certeza? A ação notificará o paciente.")) {
-      try {
-        await cancelarConsultaAdmin(id);
-        toast.success("Consulta cancelada!");
-        fetchConsultas();
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Erro ao cancelar.");
-      }
-    }
+  const handleCancel = (id) => {
+    setConfirmModalState({
+      isOpen: true,
+      title: "Confirmar Cancelamento",
+      message:
+        "Tem certeza de que deseja cancelar esta consulta? O paciente será notificado.",
+      onConfirm: async () => {
+        try {
+          await cancelarConsultaAdmin(id);
+          toast.success("Consulta cancelada!");
+          fetchConsultas();
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Erro ao cancelar.");
+        }
+        setConfirmModalState({ isOpen: false });
+      },
+    });
   };
 
   const handleConcluir = async (id) => {
@@ -179,18 +238,47 @@ export default function ConsultasMedicoPage() {
   };
 
   const handleIniciarRemarcacao = (consulta) => {
-    toast("Funcionalidade de remarcação a ser implementada.");
-    console.log("Remarcar:", consulta);
+    setRemarcacaoModalState({ isOpen: true, consulta: consulta });
   };
 
-  const handleAceitarRemarcacao = (id) => {
-    toast("Funcionalidade de aceitar remarcação a ser implementada.");
-    console.log("Aceitar remarcação da consulta:", id);
+  const handleAceitarRemarcacao = async (id) => {
+    try {
+      await aceitarRemarcacao(id);
+      toast.success("Remarcação aceita com sucesso!");
+      fetchConsultas();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao aceitar remarcação.");
+    }
   };
 
   const handleRejeitarRemarcacao = (id) => {
-    toast("Funcionalidade de rejeitar remarcação a ser implementada.");
-    console.log("Rejeitar remarcação da consulta:", id);
+    setConfirmModalState({
+      isOpen: true,
+      title: "Confirmar Rejeição",
+      message:
+        "Tem certeza de que deseja rejeitar esta proposta de remarcação?",
+      onConfirm: async () => {
+        try {
+          await rejeitarRemarcacao(id);
+          toast.success("Remarcação rejeitada com sucesso!");
+          fetchConsultas();
+        } catch (err) {
+          toast.error(
+            err.response?.data?.message || "Erro ao rejeitar remarcação."
+          );
+        }
+        setConfirmModalState({ isOpen: false });
+      },
+    });
+  };
+
+  const handleCloseModal = () => {
+    setRemarcacaoModalState({ isOpen: false, consulta: null });
+  };
+
+  const handleSuccess = () => {
+    handleCloseModal();
+    fetchConsultas();
   };
 
   const getActionsForConsulta = (consulta) => {
@@ -267,9 +355,61 @@ export default function ConsultasMedicoPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800">
-        Gerenciar Consultas
-      </h1>
+      <Modal
+        isOpen={isAgendamentoModalOpen}
+        onClose={() => setIsAgendamentoModalOpen(false)}
+        title="Marcar Nova Consulta"
+      >
+        <AgendamentoForm
+          initialData={null}
+          onSuccess={() => {
+            setIsAgendamentoModalOpen(false);
+            fetchConsultas();
+          }}
+          onClose={() => setIsAgendamentoModalOpen(false)}
+        />
+      </Modal>
+      <Modal
+        isOpen={remarcacaoModalState.isOpen}
+        onClose={handleCloseModal}
+        title="Solicitar Remarcação"
+      >
+        <RemarcacaoForm
+          consulta={{ extendedProps: remarcacaoModalState.consulta }}
+          onClose={handleCloseModal}
+          onSuccess={handleSuccess}
+        />
+      </Modal>
+      <ConfirmModal
+        isOpen={confirmModalState.isOpen}
+        title={confirmModalState.title}
+        message={confirmModalState.message}
+        onConfirm={confirmModalState.onConfirm}
+        onClose={() => setConfirmModalState({ isOpen: false })}
+      />
+
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Gerenciar Consultas
+          </h1>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsAgendamentoModalOpen(true)}
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+          >
+            Marcar Consulta
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={selectedIds.length === 0}
+            className="bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-md hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            Excluir
+          </button>
+        </div>
+      </div>
 
       <div className="mt-4 bg-white shadow-md rounded-lg">
         <div
@@ -374,10 +514,22 @@ export default function ConsultasMedicoPage() {
           </div>
         )}
       </div>
+
       <div className="mt-6 bg-white shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-4 py-3 w-16 text-center rounded-tl-lg">
+                <input
+                  type="checkbox"
+                  onChange={handleSelectAll}
+                  checked={
+                    consultas.length > 0 &&
+                    selectedIds.length === consultas.length
+                  }
+                  className="h-4 w-4 rounded"
+                />
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider rounded-tl-lg">
                 <button
                   onClick={() => handleSort("nomePaciente")}
@@ -452,8 +604,24 @@ export default function ConsultasMedicoPage() {
               </tr>
             ) : (
               consultas.map((consulta, index) => (
-                <tr key={consulta.id}>
-                  {/* Célula do Paciente com arredondamento condicional */}
+                <tr
+                  key={consulta.id}
+                  className={
+                    selectedIds.includes(consulta.id) ? "bg-indigo-50" : ""
+                  }
+                >
+                  <td
+                    className={`px-4 py-4 w-16 text-center ${
+                      index === consultas.length - 1 ? "rounded-bl-lg" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(consulta.id)}
+                      onChange={() => handleSelectOne(consulta.id)}
+                      className="h-4 w-4 rounded"
+                    />
+                  </td>
                   <td
                     className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ${
                       index === consultas.length - 1 ? "rounded-bl-lg" : ""

@@ -78,3 +78,24 @@ export const concluirConsulta = (consultaId) => {
 export const updateConsulta = (id, data) => {
   return api.put(`/consultas/${id}`, data);
 };
+
+/**
+ * Deleta múltiplas consultas com base em um array de IDs.
+ */
+export const deleteVariasConsultas = (ids) => {
+  return api.delete("/consultas", { data: { ids } });
+};
+
+/**
+ * Aceita uma proposta de remarcação.
+ */
+export const aceitarRemarcacao = (consultaId) => {
+  return api.post(`/consultas/${consultaId}/aceitar-remarcacao`);
+};
+
+/**
+ * Rejeita uma proposta de remarcação.
+ */
+export const rejeitarRemarcacao = (consultaId) => {
+  return api.post(`/consultas/${consultaId}/rejeitar-remarcacao`);
+};
