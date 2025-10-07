@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
+import DatePicker from "../../components/DatePicker";
 import {
   getMinhasConsultas,
-  deleteVariasConsultas,
   confirmarConsulta,
   cancelarConsultaAdmin,
   concluirConsulta,
@@ -105,7 +106,6 @@ export default function ConsultasMedicoPage() {
     onConfirm: () => {},
   });
 
-  // Monta a string de filtro no formato que o backend espera: "campo op 'valor' AND campo2 op 'valor2'"
   const buildFilterString = (applied) => {
     const parts = [];
     if (applied.status) parts.push(`status eq '${applied.status}'`);
@@ -139,7 +139,6 @@ export default function ConsultasMedicoPage() {
     fetchConsultas();
   }, [fetchConsultas]);
 
-  // Simples toggle: se clicar na mesma coluna alterna asc <-> desc; se coluna nova seta asc
   const handleSort = (key) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -163,6 +162,8 @@ export default function ConsultasMedicoPage() {
     }
   };
 
+  /*
+  Removida por solicitação da professora
   const handleBulkDelete = () => {
     setConfirmModalState({
       isOpen: true,
@@ -181,10 +182,16 @@ export default function ConsultasMedicoPage() {
       },
     });
   };
+  */
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateFilterChange = (date) => {
+    const formattedDate = date ? format(date, "yyyy-MM-dd") : "";
+    setFilters((prev) => ({ ...prev, data: formattedDate }));
   };
 
   const handleApplyFilters = () => {
@@ -242,13 +249,34 @@ export default function ConsultasMedicoPage() {
   };
 
   const handleAceitarRemarcacao = async (id) => {
-    try {
-      await aceitarRemarcacao(id);
-      toast.success("Remarcação aceita com sucesso!");
-      fetchConsultas();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Erro ao aceitar remarcação.");
-    }
+    const consultaParaRemarcar = consultas.find((c) => c.id === id);
+    if (!consultaParaRemarcar) return;
+
+    const dataAntiga = new Date(consultaParaRemarcar.data).toLocaleDateString(
+      "pt-BR",
+      { timeZone: "UTC" }
+    );
+    const dataNova = new Date(
+      consultaParaRemarcar.dataRemarcacaoSugerida
+    ).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
+    setConfirmModalState({
+      isOpen: true,
+      title: "Confirmar Remarcação",
+      message: `Aceitar a proposta de remarcação do paciente ${consultaParaRemarcar.nomePaciente}? De: ${dataAntiga} às ${consultaParaRemarcar.hora}. Para: ${dataNova} às ${consultaParaRemarcar.horaRemarcacaoSugerida}.`,
+      onConfirm: async () => {
+        try {
+          await aceitarRemarcacao(id);
+          toast.success("Remarcação aceita com sucesso!");
+          fetchConsultas();
+        } catch (err) {
+          toast.error(
+            err.response?.data?.message || "Erro ao aceitar remarcação."
+          );
+        }
+        setConfirmModalState({ isOpen: false });
+      },
+    });
   };
 
   const handleRejeitarRemarcacao = (id) => {
@@ -256,7 +284,7 @@ export default function ConsultasMedicoPage() {
       isOpen: true,
       title: "Confirmar Rejeição",
       message:
-        "Tem certeza de que deseja rejeitar esta proposta de remarcação?",
+        "Tem certeza de que deseja rejeitar esta proposta de remarcação? A consulta voltará ao seu horário original.",
       onConfirm: async () => {
         try {
           await rejeitarRemarcacao(id);
@@ -267,6 +295,7 @@ export default function ConsultasMedicoPage() {
             err.response?.data?.message || "Erro ao rejeitar remarcação."
           );
         }
+        // Fecha o modal após a ação ser concluída
         setConfirmModalState({ isOpen: false });
       },
     });
@@ -401,13 +430,6 @@ export default function ConsultasMedicoPage() {
           >
             Marcar Consulta
           </button>
-          <button
-            onClick={handleBulkDelete}
-            disabled={selectedIds.length === 0}
-            className="bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-md hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-          >
-            Excluir
-          </button>
         </div>
       </div>
 
@@ -435,7 +457,7 @@ export default function ConsultasMedicoPage() {
           </svg>
         </div>
         {isFilterOpen && (
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label
@@ -460,13 +482,9 @@ export default function ConsultasMedicoPage() {
                 >
                   Data
                 </label>
-                <input
-                  type="date"
-                  name="data"
-                  id="data"
+                <DatePicker
                   value={filters.data}
-                  onChange={handleFilterChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  onChange={handleDateFilterChange}
                 />
               </div>
 
@@ -492,8 +510,15 @@ export default function ConsultasMedicoPage() {
                   <option value="Aguardando Confirmação do Paciente">
                     Aguardando Paciente
                   </option>
+                  <option value="Cancelada">Cancelada</option>
                   <option value="Concluída">Concluída</option>
                   <option value="Expirada">Expirada</option>
+                  <option value="Remarcação Solicitada Pelo Médico">
+                    Remarcação solicitada pelo Médico
+                  </option>
+                  <option value="Remarcação Solicitada Pelo Paciente">
+                    Remarcação solicitada pelo Paciente
+                  </option>
                 </select>
               </div>
             </div>

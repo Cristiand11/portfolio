@@ -280,4 +280,23 @@ Medico.createLink = async (medicoId, pacienteId) => {
   await db.query(query, [medicoId, pacienteId]);
 };
 
+// Função para verificar o horário disponível do médico
+Medico.isHorarioDisponivel = async (medicoId, data, hora, duracao) => {
+  const dataObj = new Date(`${data}T${hora}`);
+  const diaSemana = dataObj.getDay(); // Usamos getUTCDay para ser consistente
+
+  const horaFimProposta = `(TIME '${hora}' + INTERVAL '${duracao} minutes')`;
+
+  const { rows } = await db.query(
+    `SELECT COUNT(*) FROM HORARIO_TRABALHO 
+      WHERE medico_id = $1 
+        AND dia_semana = $2 
+        AND $3::time >= hora_inicio 
+        AND ${horaFimProposta} <= hora_fim`,
+    [medicoId, diaSemana, hora]
+  );
+
+  return parseInt(rows[0].count, 10) > 0;
+};
+
 module.exports = Medico;

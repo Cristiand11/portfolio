@@ -1,9 +1,21 @@
 const db = require('../config/database');
-const { formatarData } = require('../utils/dateUtils');
-const { formatarApenasData } = require('../utils/dateUtils');
+const { formatarData, formatarApenasData } = require('../utils/dateUtils');
 
 const Consulta = {};
 const MINUTOS_ENTRE_CONSULTAS = 5;
+
+function formatarConsulta(consulta) {
+  if (!consulta) return null;
+
+  consulta.data = formatarApenasData(consulta.data);
+  consulta.dataRemarcacaoSugerida = formatarApenasData(consulta.dataRemarcacaoSugerida);
+  consulta.createdDate = formatarData(consulta.createdDate);
+  consulta.lastModifiedDate = formatarData(consulta.lastModifiedDate);
+
+  delete consulta.senha;
+
+  return consulta;
+}
 
 // --- CREATE ---
 Consulta.create = async (consultaData) => {
@@ -139,17 +151,21 @@ Consulta.update = async (id, consultaData) => {
   return rows[0];
 };
 
+/*
+Removida por solicitação da professora
 // --- DELETE ---
 Consulta.delete = async (id) => {
   const { rowCount } = await db.query('DELETE FROM consulta WHERE id = $1', [id]);
   return rowCount;
 };
 
+Removida por solicitação da professora
 // Deleta múltiplas consultas com base em um array de IDs
 Consulta.deleteByIds = async (ids) => {
   const { rowCount } = await db.query('DELETE FROM consulta WHERE id = ANY($1::uuid[])', [ids]);
   return rowCount;
 };
+*/
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
@@ -318,6 +334,36 @@ Consulta.updateStatus = async (id, novoStatus) => {
     [novoStatus, id]
   );
   return rows[0];
+};
+
+// --- FUNÇÃO PARA ACEITAR A REMARCAÇÃO DA CONSULTA ---
+Consulta.aceitarRemarcacao = async (id, novaData, novaHora) => {
+  const { rows } = await db.query(
+    `UPDATE consulta SET 
+            status = 'Confirmada',
+            data = $1,
+            hora = $2,
+            "dataRemarcacaoSugerida" = NULL,
+            "horaRemarcacaoSugerida" = NULL,
+            "lastModifiedDate" = NOW()
+         WHERE id = $3 RETURNING *`,
+    [novaData, novaHora, id]
+  );
+  return formatarConsulta(rows[0]);
+};
+
+// --- FUNÇÃO PARA REJEITAR A REMARCAÇÃO DA CONSULTA (VOLTA P/ O STATUS E DATA EM QUE SE ENCONTRAVA) ---
+Consulta.rejeitarRemarcacao = async (id) => {
+  const { rows } = await db.query(
+    `UPDATE consulta SET 
+            status = 'Confirmada',
+            "dataRemarcacaoSugerida" = NULL,
+            "horaRemarcacaoSugerida" = NULL,
+            "lastModifiedDate" = NOW()
+         WHERE id = $1 RETURNING *`,
+    [id]
+  );
+  return formatarConsulta(rows[0]);
 };
 
 module.exports = Consulta;

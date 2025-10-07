@@ -8,9 +8,12 @@ import {
   solicitarRemarcacao,
   updateConsulta,
   cancelarConsultaAdmin,
+  aceitarRemarcacao,
+  rejeitarRemarcacao,
 } from "../../services/consultaService";
 import { getMeusHorarios } from "../../services/horarioService";
 import Modal from "../../components/Modal";
+import AgendaLegenda from "../../components/consulta/AgendaLegenda";
 import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import DetalhesConsulta from "../../components/consulta/DetalhesConsulta";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
@@ -30,16 +33,9 @@ const getEventStyleAndTitle = (consulta) => {
       };
       break;
     case "Aguardando Confirmação do Paciente":
-      styleProps = {
-        title: `(Aguardando Paciente) - ${baseTitle}`,
-        backgroundColor: "#f59e0b",
-        borderColor: "#f59e0b",
-        textColor: "white",
-      };
-      break;
     case "Aguardando Confirmação do Médico":
       styleProps = {
-        title: `(Aguardando Aprovação) - ${baseTitle}`,
+        title: `(Pendente) - ${baseTitle}`,
         backgroundColor: "#f59e0b",
         borderColor: "#f59e0b",
         textColor: "white",
@@ -62,8 +58,18 @@ const getEventStyleAndTitle = (consulta) => {
         textColor: "white",
       };
       break;
+    case "Cancelada":
+    case "Expirada":
+      styleProps = {
+        title: `(Cancelada) - ${baseTitle}`,
+        backgroundColor: "#f3f4f6",
+        borderColor: "#e5e7eb",
+        textColor: "#9ca3af",
+        className: "line-through",
+      };
+      break;
     default:
-      styleProps = { display: "none" };
+      styleProps = { title: `(Status: ${consulta.status}) - ${baseTitle}` };
   }
   return styleProps;
 };
@@ -239,8 +245,8 @@ export default function AgendamentoPage() {
   const handleConfirmarMudanca = async () => {
     const { id, newStart } = confirmChangeState.eventInfo;
     try {
-      const novaData = newStart.toISOString().slice(0, 10);
-      const novaHora = newStart.toTimeString().slice(0, 8);
+      const novaData = newStart.toLocaleDateString("en-CA");
+      const novaHora = newStart.toLocaleTimeString("pt-BR", { hour12: false });
 
       await solicitarRemarcacao(id, novaData, novaHora);
       toast.success("Solicitação de remarcação enviada ao paciente!");
@@ -282,6 +288,34 @@ export default function AgendamentoPage() {
   const handleIniciarRemarcacao = (consulta) => {
     setDetalhesModalState({ isOpen: false, consulta: null });
     setRemarcacaoModalState({ isOpen: true, consulta: consulta });
+  };
+
+  const handleAceitarRemarcacao = async (id) => {
+    try {
+      await aceitarRemarcacao(id);
+      toast.success("Remarcação aceita com sucesso!");
+      handleSuccess();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao aceitar remarcação.");
+    }
+  };
+
+  const handleRejeitarRemarcacao = async (id) => {
+    if (
+      window.confirm(
+        "Tem certeza de que deseja rejeitar esta proposta de remarcação?"
+      )
+    ) {
+      try {
+        await rejeitarRemarcacao(id);
+        toast.success("Remarcação rejeitada com sucesso!");
+        handleSuccess();
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Erro ao rejeitar remarcação."
+        );
+      }
+    }
   };
 
   if (isLoading) {
@@ -431,11 +465,14 @@ export default function AgendamentoPage() {
             onCancelar={(consultaId) =>
               setCancelConfirmState({ isOpen: true, consultaId: consultaId })
             }
+            onAceitarRemarcacao={handleAceitarRemarcacao}
+            onRejeitarRemarcacao={handleRejeitarRemarcacao}
           />
         </Modal>
       )}
 
       <h1 className="text-2xl font-semibold text-gray-800">Minha Agenda</h1>
+      <AgendaLegenda />
       <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
