@@ -33,20 +33,18 @@ const getEventStyleAndTitle = (consulta) => {
       };
       break;
     case "Aguardando Confirmação do Paciente":
-    case "Aguardando Confirmação do Médico":
       styleProps = {
-        title: `(Pendente) - ${baseTitle}`,
-        backgroundColor: "#f59e0b",
-        borderColor: "#f59e0b",
+        title: `(Pendente Paciente) - ${baseTitle}`,
+        backgroundColor: "#d99706",
+        borderColor: "#d99706",
         textColor: "white",
       };
       break;
-    case "Remarcação Solicitada Pelo Médico":
-    case "Remarcação Solicitada Pelo Paciente":
+    case "Aguardando Confirmação do Médico":
       styleProps = {
-        title: `(Remarcação Pendente) - ${baseTitle}`,
-        backgroundColor: "#d97706",
-        borderColor: "#d97706",
+        title: `(Pendente Médico) - ${baseTitle}`,
+        backgroundColor: "#f59e0b",
+        borderColor: "#f59e0b",
         textColor: "white",
       };
       break;
@@ -98,6 +96,10 @@ export default function AgendamentoPage() {
     isOpen: false,
     consultaId: null,
   });
+  const [rejectConfirmState, setRejectConfirmState] = useState({
+    isOpen: false,
+    consultaId: null,
+  });
 
   const fetchAgendaData = useCallback(async () => {
     setIsLoading(true);
@@ -145,6 +147,7 @@ export default function AgendamentoPage() {
             startEditable: styleAndTitle.display !== "none",
           };
         });
+
       setEvents(consultasEvents);
 
       const horariosFormatados = horariosRes.data.map((horario) => ({
@@ -166,11 +169,22 @@ export default function AgendamentoPage() {
   }, [fetchAgendaData]);
 
   const handleDateClick = (arg) => {
+    // Exemplo de arg.dateStr:
+    // - "2025-10-07T14:00:00-03:00" → modo Semana/Dia
+    // - "2025-10-07" → modo Mês
+
+    const dateStr = arg.dateStr;
+    const [datePart, timePartRaw] = dateStr.split("T");
+
+    // Se tiver parte de hora (timePartRaw), extrai as horas e minutos;
+    // senão, deixa vazio para o input permitir edição.
+    const hora = timePartRaw ? timePartRaw.substring(0, 5) : "";
+
     setModalState({
       isOpen: true,
       initialData: {
-        data: arg.dateStr.slice(0, 10),
-        hora: arg.date.toTimeString().slice(0, 8),
+        data: datePart,
+        hora: hora,
       },
     });
   };
@@ -271,6 +285,11 @@ export default function AgendamentoPage() {
     handleCloseModal();
   };
 
+  const handleAbrirModalCancelamento = (consultaId) => {
+    setDetalhesModalState({ isOpen: false, consulta: null });
+    setCancelConfirmState({ isOpen: true, consultaId: consultaId });
+  };
+
   const executeCancel = async () => {
     const consultaId = cancelConfirmState.consultaId;
     try {
@@ -300,21 +319,21 @@ export default function AgendamentoPage() {
     }
   };
 
-  const handleRejeitarRemarcacao = async (id) => {
-    if (
-      window.confirm(
-        "Tem certeza de que deseja rejeitar esta proposta de remarcação?"
-      )
-    ) {
-      try {
-        await rejeitarRemarcacao(id);
-        toast.success("Remarcação rejeitada com sucesso!");
-        handleSuccess();
-      } catch (err) {
-        toast.error(
-          err.response?.data?.message || "Erro ao rejeitar remarcação."
-        );
-      }
+  const handleAbrirModalRejeicao = (consultaId) => {
+    setDetalhesModalState({ isOpen: false, consulta: null });
+    setRejectConfirmState({ isOpen: true, consultaId: consultaId });
+  };
+
+  const handleRejeitarRemarcacao = async () => {
+    const consultaId = rejectConfirmState.consultaId;
+    try {
+      await rejeitarRemarcacao(consultaId);
+      toast.success("Remarcação rejeitada com sucesso!");
+      handleSuccess();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Erro ao rejeitar remarcação."
+      );
     }
   };
 
@@ -449,6 +468,36 @@ export default function AgendamentoPage() {
           </div>
         </div>
       </Modal>
+      <Modal
+        isOpen={rejectConfirmState.isOpen}
+        onClose={() =>
+          setRejectConfirmState({ isOpen: false, consultaId: null })
+        }
+        title="Confirmar Rejeição de Remarcação"
+      >
+        <div>
+          <p className="text-gray-600">
+            Tem certeza de que deseja <strong>rejeitar</strong> esta remarcação?
+            O paciente será notificado.
+          </p>
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              onClick={() =>
+                setRejectConfirmState({ isOpen: false, consultaId: null })
+              }
+              className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
+            >
+              Voltar
+            </button>
+            <button
+              onClick={handleRejeitarRemarcacao}
+              className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700"
+            >
+              Sim, Rejeitar Remarcação
+            </button>
+          </div>
+        </div>
+      </Modal>
       {detalhesModalState.consulta && (
         <Modal
           isOpen={detalhesModalState.isOpen}
@@ -462,11 +511,9 @@ export default function AgendamentoPage() {
             onRemarcar={() =>
               handleIniciarRemarcacao(detalhesModalState.consulta)
             }
-            onCancelar={(consultaId) =>
-              setCancelConfirmState({ isOpen: true, consultaId: consultaId })
-            }
+            onCancelar={handleAbrirModalCancelamento}
             onAceitarRemarcacao={handleAceitarRemarcacao}
-            onRejeitarRemarcacao={handleRejeitarRemarcacao}
+            onRejeitarRemarcacao={handleAbrirModalRejeicao}
           />
         </Modal>
       )}

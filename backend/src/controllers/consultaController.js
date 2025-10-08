@@ -286,13 +286,25 @@ exports.cancelarConsulta = async (req, res) => {
     const { id: idUsuarioLogado, perfil } = req.user;
 
     const consulta = await Consulta.findById(consultaId);
+    const paciente = await Paciente.findById(consulta.paciente_id);
+    const medico = await Medico.findById(consulta.medico_id);
+
     if (!consulta) {
       return res.status(404).json({ message: 'Consulta não encontrada.' });
     }
 
     const agora = new Date();
     const dataHoraConsulta = new Date(`${consulta.data}T${consulta.hora}`);
-    if (agora > dataHoraConsulta) {
+    const antecedenciaMinimaHoras = medico.cancelamentoAntecedenciaHoras;
+
+    if (agora < dataHoraConsulta) {
+      const diffEmHoras = (dataHoraConsulta - agora) / (1000 * 60 * 60);
+      if (diffEmHoras < antecedenciaMinimaHoras) {
+        return res.status(403).json({
+          message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.`,
+        });
+      }
+    } else if (agora > dataHoraConsulta) {
       return res
         .status(403)
         .json({ message: 'Não é possível cancelar uma consulta que já aconteceu.' });
@@ -314,28 +326,21 @@ exports.cancelarConsulta = async (req, res) => {
         .json({ message: 'Acesso negado. Você não tem permissão para cancelar esta consulta.' });
     }
 
-    let novoStatus = 'Cancelada';
+    if (!medico) {
+      return res
+        .status(500)
+        .json({ message: 'Erro interno: Médico associado à consulta não foi encontrado.' });
+    }
+
     let notificacaoPara = null;
-    const medico = await Medico.findById(consulta.medico_id);
-    const paciente = await Paciente.findById(consulta.paciente_id);
 
     if (isPacienteDono) {
-      const antecedenciaMinimaHoras = medico.cancelamentoAntecedenciaHoras;
-      const agora = new Date();
-      const dataConsulta = new Date(`${consulta.data}T${consulta.hora}`);
-      const diffEmHoras = (dataConsulta - agora) / (1000 * 60 * 60);
-
-      if (diffEmHoras < antecedenciaMinimaHoras) {
-        return res.status(403).json({
-          message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.`,
-        });
-      }
       notificacaoPara = 'medico';
     } else if (isMedicoDono || isAuxiliarDoMedico) {
       notificacaoPara = 'paciente';
     }
 
-    const consultaCancelada = await Consulta.cancelar(consultaId, novoStatus);
+    const consultaCancelada = await Consulta.cancelar(consultaId, 'Cancelada');
 
     if (notificacaoPara === 'medico' && medico && paciente) {
       const assunto = `Consulta Cancelada: ${paciente.nome}`;
@@ -566,6 +571,7 @@ exports.solicitarRemarcacao = async (req, res) => {
     // Validação de permissão: o usuário precisa ser o paciente ou o médico/auxiliar da consulta
     const isOwner = perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id;
     const isProvider = perfil === 'medico' && idUsuarioLogado === consulta.medico_id;
+
     // (A lógica para auxiliar seria mais complexa aqui, vamos simplificar por enquanto)
     if (!isOwner && !isProvider) {
       return res
@@ -619,8 +625,8 @@ exports.solicitarRemarcacao = async (req, res) => {
     // Define o novo status com base em quem solicitou
     const novoStatus =
       perfil === 'paciente'
-        ? 'Remarcação Solicitada Pelo Paciente'
-        : 'Remarcação Solicitada Pelo Médico';
+        ? 'Aguardando Confirmação do Médico'
+        : 'Aguardando Confirmação do Paciente';
 
     const solicitacao = await Consulta.solicitarRemarcacao(
       consultaId,

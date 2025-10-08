@@ -213,22 +213,31 @@ export default function ConsultasMedicoPage() {
     }
   };
 
+  const executeCancel = async () => {
+    const consultaId = confirmModalState.onConfirm;
+    try {
+      await cancelarConsultaAdmin(consultaId);
+      toast.success("Consulta cancelada!");
+      fetchConsultas();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao cancelar.");
+    } finally {
+      setConfirmModalState({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => {},
+      });
+    }
+  };
+
   const handleCancel = (id) => {
     setConfirmModalState({
       isOpen: true,
       title: "Confirmar Cancelamento",
       message:
         "Tem certeza de que deseja cancelar esta consulta? O paciente será notificado.",
-      onConfirm: async () => {
-        try {
-          await cancelarConsultaAdmin(id);
-          toast.success("Consulta cancelada!");
-          fetchConsultas();
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Erro ao cancelar.");
-        }
-        setConfirmModalState({ isOpen: false });
-      },
+      onConfirm: id,
     });
   };
 
@@ -362,23 +371,6 @@ export default function ConsultasMedicoPage() {
       });
     }
 
-    // Se o paciente solicitou uma remarcação
-    if (
-      consulta.status === "Remarcação Solicitada Pelo Paciente" &&
-      agora < dataHoraConsulta
-    ) {
-      actions.push({
-        label: "Aceitar Remarcação",
-        onClick: () => handleAceitarRemarcacao(consulta.id),
-        className: "text-green-700",
-      });
-      actions.push({
-        label: "Rejeitar Remarcação",
-        onClick: () => handleRejeitarRemarcacao(consulta.id),
-        className: "text-red-700",
-      });
-    }
-
     return actions;
   };
 
@@ -413,7 +405,7 @@ export default function ConsultasMedicoPage() {
         isOpen={confirmModalState.isOpen}
         title={confirmModalState.title}
         message={confirmModalState.message}
-        onConfirm={confirmModalState.onConfirm}
+        onConfirm={executeCancel}
         onClose={() => setConfirmModalState({ isOpen: false })}
       />
 
@@ -513,12 +505,6 @@ export default function ConsultasMedicoPage() {
                   <option value="Cancelada">Cancelada</option>
                   <option value="Concluída">Concluída</option>
                   <option value="Expirada">Expirada</option>
-                  <option value="Remarcação Solicitada Pelo Médico">
-                    Remarcação solicitada pelo Médico
-                  </option>
-                  <option value="Remarcação Solicitada Pelo Paciente">
-                    Remarcação solicitada pelo Paciente
-                  </option>
                 </select>
               </div>
             </div>

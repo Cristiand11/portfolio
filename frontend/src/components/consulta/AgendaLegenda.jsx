@@ -1,8 +1,8 @@
 export default function AgendaLegenda() {
   const legendas = [
     { cor: "bg-indigo-600", texto: "Confirmada" },
-    { cor: "bg-yellow-500", texto: "Pendente" },
-    { cor: "bg-yellow-600", texto: "Remarcação" },
+    { cor: "bg-yellow-500", texto: "Pendente de Confirmação do Médico" },
+    { cor: "bg-yellow-600", texto: "Pendente de Confirmação do Paciente" },
     { cor: "bg-gray-500", texto: "Concluída" },
     { cor: "bg-gray-200", texto: "Cancelada" },
   ];

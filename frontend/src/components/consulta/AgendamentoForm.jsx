@@ -69,68 +69,45 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
       setIsLoading(false);
     }
   };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {initialData ? (
-        // Se veio do calendário, mostra a data/hora como texto
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-700">
-            Data: <span className="font-normal">{initialData.data}</span>
-          </p>
-          <p className="text-sm font-medium text-gray-700">
-            Hora: <span className="font-normal">{initialData.hora}</span>
-          </p>
-        </div>
-      ) : (
-        // Se veio do botão "Marcar Consulta", mostra os inputs de data e hora
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <label
-              htmlFor="data"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Data
-            </label>
+          <label
+            htmlFor="data"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Data
+          </label>
+          {initialData?.data ? (
+            <p className="mt-1 font-semibold">
+              {new Date(initialData.data + "T00:00:00").toLocaleDateString(
+                "pt-BR"
+              )}
+            </p>
+          ) : (
             <input
-              type="text"
+              type="date"
+              name="data"
               id="data"
-              value={
-                formData.data
-                  ? new Date(formData.data + "T00:00:00").toLocaleDateString(
-                      "pt-BR"
-                    )
-                  : ""
-              }
-              readOnly
-              onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-              placeholder="Selecione uma data"
+              value={formData.data}
+              onChange={handleChange}
+              required
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 cursor-pointer"
             />
-            {isCalendarOpen && (
-              <div
-                ref={calendarRef}
-                className="absolute top-full left-0 mt-2 z-20 bg-white shadow-lg rounded-md"
-              >
-                <Calendar
-                  onChange={handleDateChange}
-                  value={
-                    formData.data
-                      ? new Date(formData.data + "T00:00:00")
-                      : new Date()
-                  }
-                  locale="pt-BR"
-                />
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="hora"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Hora
-            </label>
+          )}
+        </div>
+        <div>
+          <label
+            htmlFor="hora"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Hora
+          </label>
+          {initialData?.hora ? (
+            <p className="mt-1 font-semibold">{initialData.hora}</p>
+          ) : (
             <input
               type="time"
               name="hora"
@@ -138,11 +115,11 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
               value={formData.hora}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 cursor-pointer"
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
       <div>
         <label
           htmlFor="paciente"
@@ -158,7 +135,7 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         >
-          <option value="">Selecione um paciente...</option>
+          <option value="">Selecione um paciente:</option>
           {pacientes.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nome}
