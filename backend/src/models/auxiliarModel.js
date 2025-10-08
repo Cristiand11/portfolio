@@ -146,4 +146,11 @@ Auxiliar.delete = async (id) => {
   return rowCount;
 };
 
+// Deleta múltiplos auxiliares com base em um array de IDs
+Auxiliar.deleteByIds = async (ids) => {
+  // A sintaxe '= ANY($1)' permite que o PostgreSQL compare com uma lista de valores
+  const { rowCount } = await db.query('DELETE FROM auxiliar WHERE id = ANY($1::uuid[])', [ids]);
+  return rowCount;
+};
+
 module.exports = Auxiliar;

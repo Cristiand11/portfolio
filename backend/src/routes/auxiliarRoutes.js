@@ -3,7 +3,12 @@ const router = express.Router();
 const auxiliarController = require('../controllers/auxiliarController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const { auxiliarAuth, auxiliarUpdateAuth, medicoAuth, pacienteAuth } = require('../middleware/authorizationMiddleware');
+const {
+  auxiliarAuth,
+  auxiliarUpdateAuth,
+  medicoAuth,
+  pacienteAuth,
+} = require('../middleware/authorizationMiddleware');
 
 // Rota para POST Auxiliares
 router.post('/', authMiddleware, medicoAuth, auxiliarController.createAuxiliar);
@@ -13,7 +18,9 @@ router.get('/me', authMiddleware, auxiliarAuth, auxiliarController.getMe);
 router.get('/', authMiddleware, pacienteAuth, auxiliarController.getAllAuxiliares);
 // Rota para PUT Auxiliares
 router.put('/:id', authMiddleware, auxiliarUpdateAuth, auxiliarController.updateAuxiliar);
-// Rota para DELETE Auxiliares
-router.delete('/:id', authMiddleware, medicoAuth, auxiliarController.deleteAuxiliar);
+// Rota para deletar um único auxiliar
+router.delete('/:id', authMiddleware, auxiliarUpdateAuth, auxiliarController.deleteAuxiliar);
+// Rota para deletar múltiplos auxiliares
+router.delete('/', authMiddleware, medicoAuth, auxiliarController.deleteVariosAuxiliares);
 
 module.exports = router;

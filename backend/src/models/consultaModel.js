@@ -1,9 +1,21 @@
 const db = require('../config/database');
-const { formatarData } = require('../utils/dateUtils');
-const { formatarApenasData } = require('../utils/dateUtils');
+const { formatarData, formatarApenasData } = require('../utils/dateUtils');
 
 const Consulta = {};
 const MINUTOS_ENTRE_CONSULTAS = 5;
+
+function formatarConsulta(consulta) {
+  if (!consulta) return null;
+
+  consulta.data = formatarApenasData(consulta.data);
+  consulta.dataRemarcacaoSugerida = formatarApenasData(consulta.dataRemarcacaoSugerida);
+  consulta.createdDate = formatarData(consulta.createdDate);
+  consulta.lastModifiedDate = formatarData(consulta.lastModifiedDate);
+
+  delete consulta.senha;
+
+  return consulta;
+}
 
 // --- CREATE ---
 Consulta.create = async (consultaData) => {
@@ -28,11 +40,18 @@ const allowedFilterFields = {
   idPaciente: 'c.paciente_id',
   'medico.nome': 'm.nome', // Filtro por nome do médico
   'paciente.nome': 'p.nome', // Filtro por nome do paciente
+  nomePaciente: 'p.nome',
 };
 
 const operatorMap = { eq: '=', co: 'ILIKE' };
 
-Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
+const colunasOrdenaveis = {
+  data: 'c.data',
+  status: 'c.status',
+  nomePaciente: 'p.nome',
+};
+
+Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
   const offset = (page - 1) * size;
   let whereClauses = [];
   const values = [];
@@ -40,7 +59,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   if (filterString) {
     const filters = filterString.split(' AND ');
     filters.forEach((filter) => {
-      const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
+      const match = filter.match(/([\w\.]+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
         if (Object.keys(allowedFilterFields).includes(field)) {
@@ -57,11 +76,12 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-  const baseQuery = `
-        FROM consulta c
-        LEFT JOIN medico m ON c.medico_id = m.id
-        LEFT JOIN paciente p ON c.paciente_id = p.id
-    `;
+  const sortKey = options.sort || 'data';
+  const sortOrder = options.order || 'asc';
+  const orderByClause = colunasOrdenaveis[sortKey] || colunasOrdenaveis.data;
+  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+  const baseQuery = `FROM consulta c LEFT JOIN paciente p ON c.paciente_id = p.id`;
 
   const countQuery = `SELECT COUNT(c.id) ${baseQuery} ${whereClause}`;
   const countResult = await db.query(countQuery, values);
@@ -70,14 +90,12 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '') => {
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
   const dataQuery = `
-        SELECT 
-            c.*, 
-            m.nome as "nomeMedico", 
-            p.nome as "nomePaciente"
-        ${baseQuery} 
-        ${whereClause} 
-        ORDER BY c.data, c.hora DESC 
-        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    SELECT c.*, p.nome as "nomePaciente"
+    ${baseQuery} 
+    ${whereClause} 
+    ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
 
@@ -133,11 +151,21 @@ Consulta.update = async (id, consultaData) => {
   return rows[0];
 };
 
+/*
+Removida por solicitação da professora
 // --- DELETE ---
 Consulta.delete = async (id) => {
   const { rowCount } = await db.query('DELETE FROM consulta WHERE id = $1', [id]);
   return rowCount;
 };
+
+Removida por solicitação da professora
+// Deleta múltiplas consultas com base em um array de IDs
+Consulta.deleteByIds = async (ids) => {
+  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = ANY($1::uuid[])', [ids]);
+  return rowCount;
+};
+*/
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
@@ -306,6 +334,36 @@ Consulta.updateStatus = async (id, novoStatus) => {
     [novoStatus, id]
   );
   return rows[0];
+};
+
+// --- FUNÇÃO PARA ACEITAR A REMARCAÇÃO DA CONSULTA ---
+Consulta.aceitarRemarcacao = async (id, novaData, novaHora) => {
+  const { rows } = await db.query(
+    `UPDATE consulta SET 
+            status = 'Confirmada',
+            data = $1,
+            hora = $2,
+            "dataRemarcacaoSugerida" = NULL,
+            "horaRemarcacaoSugerida" = NULL,
+            "lastModifiedDate" = NOW()
+         WHERE id = $3 RETURNING *`,
+    [novaData, novaHora, id]
+  );
+  return formatarConsulta(rows[0]);
+};
+
+// --- FUNÇÃO PARA REJEITAR A REMARCAÇÃO DA CONSULTA (VOLTA P/ O STATUS E DATA EM QUE SE ENCONTRAVA) ---
+Consulta.rejeitarRemarcacao = async (id) => {
+  const { rows } = await db.query(
+    `UPDATE consulta SET 
+            status = 'Confirmada',
+            "dataRemarcacaoSugerida" = NULL,
+            "horaRemarcacaoSugerida" = NULL,
+            "lastModifiedDate" = NOW()
+         WHERE id = $1 RETURNING *`,
+    [id]
+  );
+  return formatarConsulta(rows[0]);
 };
 
 module.exports = Consulta;

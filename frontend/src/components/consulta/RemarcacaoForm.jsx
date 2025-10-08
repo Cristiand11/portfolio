@@ -1,11 +1,17 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { solicitarRemarcacao } from "../../services/consultaService";
+import { format } from "date-fns";
+import DatePicker from "../DatePicker";
 
 export default function RemarcacaoForm({ consulta, onClose, onSuccess }) {
   const [novaData, setNovaData] = useState("");
   const [novaHora, setNovaHora] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleDateChange = (date) => {
+    setNovaData(format(date, "yyyy-MM-dd"));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,7 +19,7 @@ export default function RemarcacaoForm({ consulta, onClose, onSuccess }) {
     try {
       await solicitarRemarcacao(consulta.extendedProps.id, novaData, novaHora);
       toast.success("Solicitação de remarcação enviada!");
-      onSuccess(); // Fecha os modais e recarrega o calendário
+      onSuccess();
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
@@ -28,7 +34,7 @@ export default function RemarcacaoForm({ consulta, onClose, onSuccess }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-gray-600">
         Proponha uma nova data e hora para a consulta de{" "}
-        <strong>{consulta.title}</strong>.
+        <strong>{consulta.extendedProps.nomePaciente}</strong>.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -38,14 +44,7 @@ export default function RemarcacaoForm({ consulta, onClose, onSuccess }) {
           >
             Nova Data
           </label>
-          <input
-            type="date"
-            id="novaData"
-            value={novaData}
-            onChange={(e) => setNovaData(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-          />
+          <DatePicker value={novaData} onChange={handleDateChange} />
         </div>
         <div>
           <label

@@ -6,7 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const {
   consultaViewAuth,
   medicoOuAuxiliarAuth,
-  pacienteAuth,
+  medicoAuth,
 } = require('../middleware/authorizationMiddleware');
 
 // Rota para POST consultas
@@ -15,8 +15,10 @@ router.post('/', authMiddleware, consultaController.createConsulta);
 router.get('/', authMiddleware, consultaViewAuth, consultaController.getAllConsultas);
 // Rota para PUT consultas
 router.put('/:id', authMiddleware, consultaController.updateConsulta);
-// Rota para DELETE consultas
-router.delete('/:id', authMiddleware, consultaController.deleteConsulta);
+// Rota para DELETE consultas - removida
+// router.delete('/:id', authMiddleware, consultaController.deleteConsulta);
+// Rota para deletar múltiplas consultas
+// router.delete('/', authMiddleware, medicoAuth, consultaController.deleteVariasConsultas);
 // Rota para o paciente cancelar uma consulta
 router.post('/:id/cancelar', authMiddleware, consultaViewAuth, consultaController.cancelarConsulta);
 // Rota para o médico/auxiliar marcar uma consulta como concluída
@@ -41,6 +43,20 @@ router.post(
   authMiddleware,
   consultaViewAuth,
   consultaController.solicitarRemarcacao
+);
+// Rota para o médico/auxiliar/paciente aceitar uma solicitação de remarcação de consulta
+router.post(
+  '/:id/aceitar-remarcacao',
+  authMiddleware,
+  consultaViewAuth,
+  consultaController.aceitarRemarcacao
+);
+// Rota para o médico/auxiliar/paciente rejeitar uma solicitação de remarcação de consulta
+router.post(
+  '/:id/rejeitar-remarcacao',
+  authMiddleware,
+  consultaViewAuth,
+  consultaController.rejeitarRemarcacao
 );
 
 module.exports = router;

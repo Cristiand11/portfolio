@@ -1,5 +1,5 @@
 const NotificationService = require('../services/notificationService');
-
+const db = require('../config/database');
 const { formatarDataParaEmail } = require('../utils/dateUtils');
 
 const Consulta = require('../models/consultaModel');
@@ -55,6 +55,13 @@ exports.createConsulta = async (req, res) => {
       return res.status(404).json({ message: 'Médico para agendamento não encontrado.' });
     }
     const duracaoConsulta = medico.duracaoPadraoConsultaMinutos;
+
+    const isDisponivel = await Medico.isHorarioDisponivel(idMedico, data, hora, duracaoConsulta);
+    if (!isDisponivel) {
+      return res
+        .status(409)
+        .json({ message: 'O horário solicitado está fora do expediente do médico.' });
+    }
 
     const medicoconflictExists = await Consulta.checkConflict(
       idMedico,
@@ -149,7 +156,7 @@ exports.createConsulta = async (req, res) => {
 // Função para listar todas as consultas
 exports.getAllConsultas = async (req, res) => {
   try {
-    const { page, size, filter } = req.query;
+    const { page, size, filter, sort, order } = req.query;
     const { id: idUsuarioLogado, perfil } = req.user;
 
     const pageNum = parseInt(page || '1', 10);
@@ -171,14 +178,16 @@ exports.getAllConsultas = async (req, res) => {
       securityFilter = `idMedico eq '${auxiliar.idMedico}'`;
     }
 
-    // Combina o filtro de segurança com os filtros opcionais do usuário
     let finalFilterString = securityFilter;
     if (filter) {
       const userFilter = Array.isArray(filter) ? filter.join(' AND ') : filter;
       finalFilterString = `${securityFilter} AND ${userFilter}`;
     }
 
-    const result = await Consulta.findPaginated(pageNum, sizeNum, finalFilterString);
+    const result = await Consulta.findPaginated(pageNum, sizeNum, finalFilterString, {
+      sort,
+      order,
+    });
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar consultas', error: error.message });
@@ -223,6 +232,8 @@ exports.updateConsulta = async (req, res) => {
   }
 };
 
+/* 
+Removida por solicitação da professora
 // Função para excluir uma consulta
 exports.deleteConsulta = async (req, res) => {
   try {
@@ -237,6 +248,37 @@ exports.deleteConsulta = async (req, res) => {
   }
 };
 
+Removida por solicitação da professora
+// Função para excluir várias consultas
+exports.deleteVariasConsultas = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const { id: idUsuarioLogado, perfil } = req.user;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Uma lista de IDs de consultas é necessária.' });
+    }
+
+    const { rows: consultas } = await db.query(
+      'SELECT medico_id FROM consulta WHERE id = ANY($1::uuid[])',
+      [ids]
+    );
+    for (const c of consultas) {
+      if (c.medico_id !== idUsuarioLogado) {
+        return res
+          .status(403)
+          .json({ message: 'Acesso negado. Você só pode excluir suas próprias consultas.' });
+      }
+    }
+
+    await Consulta.deleteByIds(ids);
+    res.status(200).json({ message: `${ids.length} consultas foram excluídas com sucesso.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao remover consultas.', error: error.message });
+  }
+};
+*/
+
 // Função para cancelar uma consulta
 exports.cancelarConsulta = async (req, res) => {
   try {
@@ -244,13 +286,25 @@ exports.cancelarConsulta = async (req, res) => {
     const { id: idUsuarioLogado, perfil } = req.user;
 
     const consulta = await Consulta.findById(consultaId);
+    const paciente = await Paciente.findById(consulta.paciente_id);
+    const medico = await Medico.findById(consulta.medico_id);
+
     if (!consulta) {
       return res.status(404).json({ message: 'Consulta não encontrada.' });
     }
 
     const agora = new Date();
     const dataHoraConsulta = new Date(`${consulta.data}T${consulta.hora}`);
-    if (agora > dataHoraConsulta) {
+    const antecedenciaMinimaHoras = medico.cancelamentoAntecedenciaHoras;
+
+    if (agora < dataHoraConsulta) {
+      const diffEmHoras = (dataHoraConsulta - agora) / (1000 * 60 * 60);
+      if (diffEmHoras < antecedenciaMinimaHoras) {
+        return res.status(403).json({
+          message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.`,
+        });
+      }
+    } else if (agora > dataHoraConsulta) {
       return res
         .status(403)
         .json({ message: 'Não é possível cancelar uma consulta que já aconteceu.' });
@@ -272,30 +326,21 @@ exports.cancelarConsulta = async (req, res) => {
         .json({ message: 'Acesso negado. Você não tem permissão para cancelar esta consulta.' });
     }
 
-    let novoStatus = '';
+    if (!medico) {
+      return res
+        .status(500)
+        .json({ message: 'Erro interno: Médico associado à consulta não foi encontrado.' });
+    }
+
     let notificacaoPara = null;
-    const medico = await Medico.findById(consulta.medico_id);
-    const paciente = await Paciente.findById(consulta.paciente_id);
 
     if (isPacienteDono) {
-      const antecedenciaMinimaHoras = medico.cancelamentoAntecedenciaHoras;
-      const agora = new Date();
-      const dataConsulta = new Date(`${consulta.data}T${consulta.hora}`);
-      const diffEmHoras = (dataConsulta - agora) / (1000 * 60 * 60);
-
-      if (diffEmHoras < antecedenciaMinimaHoras) {
-        return res.status(403).json({
-          message: `O cancelamento não é permitido. É necessário cancelar com pelo menos ${antecedenciaMinimaHoras} horas de antecedência.`,
-        });
-      }
-      novoStatus = 'Cancelada Pelo Paciente';
       notificacaoPara = 'medico';
     } else if (isMedicoDono || isAuxiliarDoMedico) {
-      novoStatus = 'Cancelada Pelo Medico/Auxiliar';
       notificacaoPara = 'paciente';
     }
 
-    const consultaCancelada = await Consulta.cancelar(consultaId, novoStatus);
+    const consultaCancelada = await Consulta.cancelar(consultaId, 'Cancelada');
 
     if (notificacaoPara === 'medico' && medico && paciente) {
       const assunto = `Consulta Cancelada: ${paciente.nome}`;
@@ -327,7 +372,7 @@ exports.concluirConsulta = async (req, res) => {
     const nonCompletableStatuses = [
       'Concluída',
       'Cancelada Pelo Paciente',
-      'Cancelada Pelo Medico/Auxiliar',
+      'Cancelada Pelo Médico/Auxiliar',
       'Expirada',
     ];
     if (nonCompletableStatuses.includes(consulta.status)) {
@@ -513,6 +558,7 @@ exports.solicitarRemarcacao = async (req, res) => {
     const consulta = await Consulta.findById(consultaId);
     if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
 
+    const duracao = consulta.duracaoMinutos;
     const agora = new Date();
     const dataHoraConsulta = new Date(`${consulta.data}T${consulta.hora}`);
 
@@ -525,6 +571,7 @@ exports.solicitarRemarcacao = async (req, res) => {
     // Validação de permissão: o usuário precisa ser o paciente ou o médico/auxiliar da consulta
     const isOwner = perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id;
     const isProvider = perfil === 'medico' && idUsuarioLogado === consulta.medico_id;
+
     // (A lógica para auxiliar seria mais complexa aqui, vamos simplificar por enquanto)
     if (!isOwner && !isProvider) {
       return res
@@ -539,8 +586,26 @@ exports.solicitarRemarcacao = async (req, res) => {
         .json({ message: `Não é possível remarcar uma consulta com status "${consulta.status}".` });
     }
 
+    // Validação para verificar se pertence ao horário de atendimento do traba
+    const isDisponivel = await Medico.isHorarioDisponivel(
+      consulta.medico_id,
+      novaData,
+      novaHora,
+      duracao
+    );
+    if (!isDisponivel) {
+      return res
+        .status(409)
+        .json({ message: 'O novo horário proposto está fora do expediente do médico.' });
+    }
+
     // Validação de conflito para a NOVA data/hora
-    const medicoConflict = await Consulta.checkConflict(consulta.medico_id, novaData, novaHora);
+    const medicoConflict = await Consulta.checkConflict(
+      consulta.medico_id,
+      novaData,
+      novaHora,
+      duracao
+    );
     if (medicoConflict)
       return res
         .status(409)
@@ -549,7 +614,8 @@ exports.solicitarRemarcacao = async (req, res) => {
     const pacienteConflict = await Consulta.checkPatientConflict(
       consulta.paciente_id,
       novaData,
-      novaHora
+      novaHora,
+      duracao
     );
     if (pacienteConflict)
       return res
@@ -559,8 +625,8 @@ exports.solicitarRemarcacao = async (req, res) => {
     // Define o novo status com base em quem solicitou
     const novoStatus =
       perfil === 'paciente'
-        ? 'Remarcação Solicitada Pelo Paciente'
-        : 'Remarcação Solicitada Pelo Médico';
+        ? 'Aguardando Confirmação do Médico'
+        : 'Aguardando Confirmação do Paciente';
 
     const solicitacao = await Consulta.solicitarRemarcacao(
       consultaId,
@@ -626,5 +692,92 @@ exports.solicitarRemarcacao = async (req, res) => {
       .json({ message: 'Solicitação de remarcação enviada com sucesso!', data: solicitacao });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao solicitar remarcação.', error: error.message });
+  }
+};
+
+// Função para aceitar uma solicitação de remarcação de consulta
+exports.aceitarRemarcacao = async (req, res) => {
+  try {
+    const { id: consultaId } = req.params;
+    const { id: idUsuarioLogado, perfil } = req.user;
+
+    const consulta = await Consulta.findById(consultaId);
+    if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
+
+    // Validação de permissão
+    const isPacienteAceitando =
+      perfil === 'paciente' &&
+      consulta.status === 'Remarcação Solicitada Pelo Médico' &&
+      idUsuarioLogado === consulta.paciente_id;
+    const isMedicoAceitando =
+      perfil === 'medico' &&
+      consulta.status === 'Remarcação Solicitada Pelo Paciente' &&
+      idUsuarioLogado === consulta.medico_id;
+
+    if (!isPacienteAceitando && !isMedicoAceitando) {
+      return res
+        .status(403)
+        .json({ message: 'Você não tem permissão para aceitar esta remarcação agora.' });
+    }
+
+    const novaData = consulta.dataRemarcacaoSugerida;
+    const novaHora = consulta.horaRemarcacaoSugerida;
+    const duracao = consulta.duracaoMinutos;
+
+    const medicoConflict = await Consulta.checkConflict(
+      consulta.medico_id,
+      novaData,
+      novaHora,
+      duracao,
+      consultaId
+    );
+    if (medicoConflict) {
+      await Consulta.rejeitarRemarcacao(consultaId);
+      return res.status(409).json({
+        message: 'Não foi possível aceitar a remarcação. O novo horário já está ocupado.',
+      });
+    }
+
+    const consultaConfirmada = await Consulta.aceitarRemarcacao(consultaId, novaData, novaHora);
+    res
+      .status(200)
+      .json({ message: 'Remarcação aceita e consulta confirmada!', data: consultaConfirmada });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao aceitar remarcação.', error: error.message });
+  }
+};
+
+// Função para rejeitar uma solicitação de remarcação de consulta
+exports.rejeitarRemarcacao = async (req, res) => {
+  try {
+    const { id: consultaId } = req.params;
+    const { id: idUsuarioLogado, perfil } = req.user;
+
+    const consulta = await Consulta.findById(consultaId);
+    if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
+
+    // Validação de permissão (idêntica à de aceitar)
+    const isPacienteRejeitando =
+      perfil === 'paciente' &&
+      consulta.status === 'Remarcação Solicitada Pelo Médico' &&
+      idUsuarioLogado === consulta.paciente_id;
+    const isMedicoRejeitando =
+      perfil === 'medico' &&
+      consulta.status === 'Remarcação Solicitada Pelo Paciente' &&
+      idUsuarioLogado === consulta.medico_id;
+
+    if (!isPacienteRejeitando && !isMedicoRejeitando) {
+      return res
+        .status(403)
+        .json({ message: 'Você não tem permissão para rejeitar esta remarcação.' });
+    }
+
+    const consultaRejeitada = await Consulta.rejeitarRemarcacao(consultaId);
+    res.status(200).json({
+      message: 'Remarcação rejeitada. A consulta voltou ao horário original.',
+      data: consultaRejeitada,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao rejeitar remarcação.', error: error.message });
   }
 };

@@ -11,6 +11,8 @@ export default function DetalhesConsulta({
   onSuccess,
   onRemarcar,
   onCancelar,
+  onAceitarRemarcacao,
+  onRejeitarRemarcacao,
 }) {
   const handleConfirmar = async () => {
     try {
@@ -48,7 +50,7 @@ export default function DetalhesConsulta({
     if (
       agora > dataHoraConsulta &&
       status !== "Cancelada Pelo Paciente" &&
-      status !== "Cancelada Pelo Medico/Auxiliar" &&
+      status !== "Cancelada Pelo Médico/Auxiliar" &&
       status !== "Expirada"
     ) {
       return (
@@ -94,6 +96,25 @@ export default function DetalhesConsulta({
             className="bg-yellow-100 text-yellow-800 font-semibold py-2 px-4 rounded-md hover:bg-yellow-200"
           >
             Solicitar Remarcação
+          </button>
+        </>
+      );
+    }
+
+    if (status === "Remarcação Solicitada Pelo Paciente") {
+      return (
+        <>
+          <button
+            onClick={() => onRejeitarRemarcacao(consulta.extendedProps.id)}
+            className="bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-md hover:bg-red-200"
+          >
+            Rejeitar Proposta
+          </button>
+          <button
+            onClick={() => onAceitarRemarcacao(consulta.extendedProps.id)}
+            className="bg-green-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-700"
+          >
+            Aceitar Proposta
           </button>
         </>
       );
