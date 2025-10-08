@@ -15,15 +15,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      // Decodifica o token e armazena os dados do usuário no estado
-      const decodedUser = jwtDecode(token);
-      setUser(decodedUser);
+      try {
+        const decodedUser = jwtDecode(token);
+        setUser(decodedUser);
+      } catch (error) {
+        console.error("Token inválido ou expirado:", error);
+        localStorage.removeItem("authToken");
+        setToken(null);
+        setUser(null);
+      }
+    } else {
+      delete api.defaults.headers.common["Authorization"];
+      setUser(null);
     }
   }, [token]);
 
   const selectProfile = (perfil) => {
     setSelectedProfile(perfil);
-    navigate("/login"); // Navega para a tela de login após selecionar
+    navigate("/login");
   };
 
   const login = async (email, senha, perfil) => {
@@ -32,10 +41,13 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       const data = await loginService(email, senha, perfil);
-      localStorage.setItem("authToken", data.token);
-      setToken(data.token);
+
       const decodedToken = jwtDecode(data.token);
       const userProfile = decodedToken.perfil;
+
+      localStorage.setItem("authToken", data.token);
+      setToken(data.token);
+
       if (userProfile === "medico") {
         navigate("/medico/dashboard");
       } else if (userProfile === "paciente") {

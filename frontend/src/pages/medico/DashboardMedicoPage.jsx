@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { getMinhasConsultas } from "../../services/consultaService";
 
-// Exemplo inicial, sem dados reais ainda
 export default function DashboardMedicoPage() {
   const [consultasHoje, setConsultasHoje] = useState([]);
   const [proximaConsulta, setProximaConsulta] = useState(null);

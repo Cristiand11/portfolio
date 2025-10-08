@@ -6,7 +6,9 @@ const Medico = {};
 
 // Função para criar um médico
 Medico.create = async (medicoData) => {
-  const { nome, crm, email, telefone, especialidade, senha, ativo } = medicoData;
+  const { nome, crm, email, telefone, especialidade, senha } = medicoData;
+
+  const ativo = medicoData.ativo !== undefined ? medicoData.ativo : true;
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
@@ -297,6 +299,21 @@ Medico.isHorarioDisponivel = async (medicoId, data, hora, duracao) => {
   );
 
   return parseInt(rows[0].count, 10) > 0;
+};
+
+// Conta o total de médicos com status 'ativo'
+Medico.countAtivos = async () => {
+  const { rows } = await db.query('SELECT COUNT(*) FROM medico WHERE ativo = true');
+  return parseInt(rows[0].count, 10);
+};
+
+// Conta as solicitações de inativação feitas nos últimos X dias
+Medico.countSolicitacoesInativacaoRecentes = async (startDate) => {
+  const { rows } = await db.query(
+    'SELECT COUNT(*) FROM medico WHERE "inativacaoSolicitadaEm" >= $1',
+    [startDate]
+  );
+  return parseInt(rows[0].count, 10);
 };
 
 module.exports = Medico;
