@@ -16,8 +16,9 @@ const navLinks = {
     { label: "Auxiliares", to: "/medico/auxiliares", indent: true },
     { label: "Consultas", to: "/medico/consultas", indent: true },
     { label: "Pacientes", to: "/medico/pacientes", indent: true },
-    { type: "divider", isSpacer: true },
-    { label: "Meu Perfil", to: "/medico/meu-perfil" },
+    { type: "divider", label: "Dados Pessoais" },
+    { label: "Meu Perfil", to: "/medico/meu-perfil", indent: true },
+    { label: "Meus Horários", to: "/medico/horarios", indent: true },
   ],
   paciente: [
     { label: "Minhas Consultas", to: "/paciente/consultas" },
