@@ -1,4 +1,4 @@
-# 🏥 Agenda Médica - Sistema de Agendamento Inteligente de Consultas
+# 🏥 AgendaMed - Sistema de Agendamento Inteligente de Consultas
 
 Sistema web para o agendamento inteligente de consultas médicas. O projeto visa **otimizar o gerenciamento de agendas** de clínicas, médicos e pacientes, evitando sobrecargas e reduzindo o absenteísmo.
 
