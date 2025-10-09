@@ -6,14 +6,16 @@ const Medico = {};
 
 // Função para criar um médico
 Medico.create = async (medicoData) => {
-  const { nome, crm, email, telefone, especialidade, senha, ativo } = medicoData;
+  const { nome, crm, email, telefone, especialidade, senha } = medicoData;
+
+  const status = medicoData.status !== undefined ? medicoData.status : 'Ativo';
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
 
   const { rows } = await db.query(
-    'INSERT INTO medico (nome, crm, email, telefone, especialidade, senha, ativo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-    [nome, crm, email, telefone, especialidade, hash, ativo]
+    'INSERT INTO medico (nome, crm, email, telefone, especialidade, senha, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    [nome, crm, email, telefone, especialidade, hash, status]
   );
 
   delete rows[0].senha;
@@ -32,9 +34,10 @@ const allowedFilterFields = {
   email: 'email',
   telefone: 'telefone',
   especialidade: 'especialidade',
-  ativo: 'ativo',
+  status: 'status',
   createdDate: '"createdDate"',
   lastModifiedDate: '"lastModifiedDate"',
+  inativacaoSolicitadaEm: '"inativacaoSolicitadaEm"',
 };
 
 const operatorMap = {
@@ -43,6 +46,17 @@ const operatorMap = {
   gt: '>', // Greater than
   lt: '<', // Less than
   ne: '!=', // Not equal
+  isnotnull: 'IS NOT NULL', // Not null
+};
+
+const colunasOrdenaveis = {
+  nome: 'nome',
+  crm: 'crm',
+  email: 'email',
+  ultimaConsultaData: 'MAX(c.data)',
+  especialidade: 'especialidade',
+  status: 'status',
+  createdDate: '"createdDate"',
 };
 
 Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
@@ -54,48 +68,55 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
     const filters = filterString.split(' AND ');
 
     filters.forEach((filter) => {
-      const match = filter.match(/(\w+)\s+(eq|co|gt|lt|ne)\s+'([^']*)'/);
+      const match = filter.match(/([\w.]+)\s+(eq|co|isnotnull)\s*'?([^']*)'?/);
       if (match) {
         const [, field, operator, value] = match;
         if (Object.keys(allowedFilterFields).includes(field)) {
           const sqlField = allowedFilterFields[field];
           const sqlOperator = operatorMap[operator];
+
           if (sqlOperator) {
-            // Adiciona a condição ao array de cláusulas
-            whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
-            values.push(operator === 'co' ? `%${value}%` : value);
+            if (operator === 'isnotnull') {
+              whereClauses.push(`${sqlField} ${sqlOperator}`);
+            } else {
+              whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
+              values.push(operator === 'co' ? `%${value}%` : value);
+            }
           }
         }
       }
     });
   }
 
-  // Monta a cláusula WHERE final, se houver filtros
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
   const countQuery = `SELECT COUNT(*) FROM medico ${whereClause}`;
   const countResult = await db.query(countQuery, values);
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
+  const sortKey = options.sort || 'nome';
+  const sortOrder = options.order || 'asc';
+  const orderByClause = colunasOrdenaveis[sortKey] || colunasOrdenaveis.createdDate;
+  const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
   let selectColumns = '';
   if (options.perfil === 'paciente') {
     selectColumns = 'id, nome, crm, email, telefone, especialidade';
   } else {
     selectColumns =
-      'id, nome, crm, email, telefone, especialidade, ativo, "createdDate", "lastModifiedDate", "inativacaoSolicitadaEm"';
+      'id, nome, crm, email, telefone, especialidade, status, "createdDate", "lastModifiedDate", "inativacaoSolicitadaEm"';
   }
 
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
 
   const dataQuery = `
-    SELECT 
-      ${selectColumns} 
+    SELECT ${selectColumns} 
     FROM medico 
-      ${whereClause} 
-    ORDER BY nome ASC 
+    ${whereClause} 
+    ORDER BY ${orderByClause} ${orderDirection}
     LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-    `;
+  `;
 
   const { rows } = await db.query(dataQuery, queryValues);
 
@@ -179,8 +200,8 @@ Medico.delete = async (id) => {
 // Função para solicitar a inativação de um médico
 Medico.solicitarInativacao = async (id) => {
   const { rows } = await db.query(
-    'UPDATE medico SET "inativacaoSolicitadaEm" = NOW() WHERE id = $1 AND ativo = true AND "inativacaoSolicitadaEm" IS NULL RETURNING *',
-    [id]
+    'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NOW() WHERE id = $2 AND status = $3 RETURNING *',
+    ['Aguardando Inativação', id, 'Ativo']
   );
   rows[0].createdDate = formatarData(rows[0].createdDate);
   rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
@@ -191,8 +212,8 @@ Medico.solicitarInativacao = async (id) => {
 // Função para reverter a solicitação de inativação de um médico
 Medico.reverterInativacao = async (id) => {
   const { rows } = await db.query(
-    'UPDATE medico SET "inativacaoSolicitadaEm" = NULL WHERE id = $1 AND "inativacaoSolicitadaEm" IS NOT NULL RETURNING *',
-    [id]
+    'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NULL WHERE id = $2 AND status = $3 RETURNING *',
+    ['Ativo', id, 'Aguardando Inativação']
   );
   rows[0].createdDate = formatarData(rows[0].createdDate);
   rows[0].lastModifiedDate = formatarData(rows[0].lastModifiedDate);
@@ -218,12 +239,6 @@ Medico.findById = async (id) => {
   medico.inativacaoSolicitadaEm = formatarData(medico.inativacaoSolicitadaEm);
 
   return medico;
-};
-
-const colunasOrdenaveis = {
-  nome: 'p.nome',
-  email: 'p.email',
-  ultimaConsultaData: 'MAX(c.data)',
 };
 
 // Função para um médico visualizar os pacientes que ele já atendeu
@@ -297,6 +312,21 @@ Medico.isHorarioDisponivel = async (medicoId, data, hora, duracao) => {
   );
 
   return parseInt(rows[0].count, 10) > 0;
+};
+
+// Conta o total de médicos com status 'ativo'
+Medico.countAtivos = async () => {
+  const { rows } = await db.query('SELECT COUNT(*) FROM medico WHERE status = $1', ['Ativo']);
+  return parseInt(rows[0].count, 10);
+};
+
+// Conta as solicitações de inativação feitas nos últimos X dias
+Medico.countSolicitacoesInativacaoRecentes = async (startDate) => {
+  const { rows } = await db.query(
+    'SELECT COUNT(*) FROM medico WHERE "inativacaoSolicitadaEm" >= $1',
+    [startDate]
+  );
+  return parseInt(rows[0].count, 10);
 };
 
 module.exports = Medico;

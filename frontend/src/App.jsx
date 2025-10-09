@@ -1,15 +1,20 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+
 import LoginPage from "./pages/LoginPage";
 import ProfileSelectionPage from "./pages/ProfileSelectionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
+
 import DashboardMedicoPage from "./pages/medico/DashboardMedicoPage";
 import PacientesPage from "./pages/medico/PacientesPage";
 import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
 import MeuPerfilPage from "./pages/medico/MeuPerfilPage";
 import AgendamentoPage from "./pages/medico/AgendamentoPage";
 import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
+import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
+import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
+import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 
 function App() {
   return (
@@ -42,7 +47,9 @@ function App() {
           <Route path="/medico/meu-perfil" element={<MeuPerfilPage />} />
           <Route path="/medico/agendamento" element={<AgendamentoPage />} />
           <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
-          {/* Adicione as outras rotas de dashboard aqui */}
+          <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
+          <Route path="/admin/medicos" element={<MedicosAdminPage />} />
+          <Route path="/admin/solicitacoes" element={<SolicitacoesPage />} />
         </Route>
       </Routes>
     </>
