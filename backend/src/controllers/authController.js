@@ -71,6 +71,7 @@ exports.login = async (req, res) => {
 
     const payload = {
       id: user.id,
+      nome: user.nome,
       perfil: perfil.toLowerCase(),
     };
 
@@ -101,12 +102,10 @@ exports.forgotPassword = async (req, res) => {
     const userResult = await db.query(`SELECT * FROM ${tabela} WHERE email = $1`, [email]);
     if (userResult.rows.length === 0) {
       // Resposta genérica por segurança, mesmo que o usuário não exista
-      return res
-        .status(200)
-        .json({
-          message:
-            'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
-        });
+      return res.status(200).json({
+        message:
+          'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
+      });
     }
     const user = userResult.rows[0];
 
@@ -130,12 +129,10 @@ exports.forgotPassword = async (req, res) => {
 
     NotificationService.enviarEmail({ para: user.email, assunto, mensagemHtml });
 
-    res
-      .status(200)
-      .json({
-        message:
-          'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
-      });
+    res.status(200).json({
+      message:
+        'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
+    });
   } catch (error) {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
