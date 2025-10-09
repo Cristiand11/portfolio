@@ -19,14 +19,27 @@ exports.login = async (req, res) => {
       if (medicoResult.rows.length > 0) {
         const medico = medicoResult.rows[0];
 
-        // Se existe uma solicitação de inativação pendente
-        if (medico.inativacaoSolicitadaEm) {
+        // Regra 1: Se o status já for 'Inativo', bloqueia o login
+        if (medico.status === 'Inativo') {
+          return res
+            .status(403)
+            .json({ message: 'Acesso bloqueado. Esta conta de médico está inativa.' });
+        }
+
+        // Regra 2: Se a inativação estiver pendente, verifica o prazo
+        if (medico.status === 'Aguardando Inativação' && medico.inativacaoSolicitadaEm) {
           const diasUteisPassados = getDiasUteis(medico.inativacaoSolicitadaEm);
 
           if (diasUteisPassados > 5) {
-            // Inativa o médico permanentemente e nega o login
-            await db.query('UPDATE medico SET ativo = false, "inativacaoSolicitadaEm" = NULL WHERE id = $1', [medico.id]);
-            return res.status(403).json({ message: 'Acesso bloqueado. Sua conta foi inativada permanentemente.' });
+            // O prazo expirou. ATUALIZA o status para 'Inativo'
+            await db.query(
+              'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NULL WHERE id = $2',
+              ['Inativo', medico.id]
+            );
+            // E então bloqueia o login
+            return res
+              .status(403)
+              .json({ message: 'Acesso bloqueado. Sua conta foi inativada permanentemente.' });
           }
         }
       }
@@ -36,7 +49,7 @@ exports.login = async (req, res) => {
       medico: 'MEDICO',
       paciente: 'PACIENTE',
       auxiliar: 'AUXILIAR',
-      administrador: 'ADMINISTRADOR'
+      administrador: 'ADMINISTRADOR',
     };
 
     const tabela = tabelas[perfil.toLowerCase()];
@@ -58,13 +71,12 @@ exports.login = async (req, res) => {
 
     const payload = {
       id: user.id,
-      perfil: perfil.toLowerCase()
+      perfil: perfil.toLowerCase(),
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
     res.json({ message: 'Login bem-sucedido!', token });
-
   } catch (error) {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
@@ -80,7 +92,7 @@ exports.forgotPassword = async (req, res) => {
       medico: 'MEDICO',
       paciente: 'PACIENTE',
       auxiliar: 'AUXILIAR',
-      administrador: 'ADMINISTRADOR'
+      administrador: 'ADMINISTRADOR',
     };
 
     const tabela = tabelas[perfil.toLowerCase()];
@@ -89,7 +101,12 @@ exports.forgotPassword = async (req, res) => {
     const userResult = await db.query(`SELECT * FROM ${tabela} WHERE email = $1`, [email]);
     if (userResult.rows.length === 0) {
       // Resposta genérica por segurança, mesmo que o usuário não exista
-      return res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.' });
+      return res
+        .status(200)
+        .json({
+          message:
+            'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
+        });
     }
     const user = userResult.rows[0];
 
@@ -113,12 +130,16 @@ exports.forgotPassword = async (req, res) => {
 
     NotificationService.enviarEmail({ para: user.email, assunto, mensagemHtml });
 
-    res.status(200).json({ message: 'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.' });
+    res
+      .status(200)
+      .json({
+        message:
+          'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
+      });
   } catch (error) {
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
 };
-
 
 // --- FUNÇÃO PARA EFETIVAMENTE REDEFINIR A SENHA ---
 exports.resetPassword = async (req, res) => {
@@ -148,10 +169,13 @@ exports.resetPassword = async (req, res) => {
       medico: 'MEDICO',
       paciente: 'PACIENTE',
       auxiliar: 'AUXILIAR',
-      administrador: 'ADMINISTRADOR'
+      administrador: 'ADMINISTRADOR',
     };
     const tabela = tabelas[tokenData.perfil];
-    await db.query(`UPDATE ${tabela} SET senha = $1, "lastModifiedDate" = NOW() WHERE id = $2`, [novaSenhaHash, tokenData.user_id]);
+    await db.query(`UPDATE ${tabela} SET senha = $1, "lastModifiedDate" = NOW() WHERE id = $2`, [
+      novaSenhaHash,
+      tokenData.user_id,
+    ]);
 
     // 5. Deleta o token para que ele não possa ser usado novamente
     await db.query('DELETE FROM PASSWORD_RESET_TOKENS WHERE id = $1', [tokenData.id]);

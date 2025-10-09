@@ -21,3 +21,24 @@ export const getDashboardStats = () => {
 export const createMedico = (medicoData) => {
   return api.post("/medicos", medicoData);
 };
+
+/**
+ * Atualiza os dados de um médico específico.
+ */
+export const updateMedico = (id, medicoData) => {
+  return api.put(`/medicos/${id}`, medicoData);
+};
+
+/**
+ * Solicita a inativação de um médico
+ */
+export const solicitarInativacao = (medicoId) => {
+  return api.post(`/medicos/${medicoId}/solicitar-inativacao`);
+};
+
+/**
+ * Reverte a solicitação de inativação de um médico
+ */
+export const reverterInativacao = (medicoId) => {
+  return api.post(`/medicos/${medicoId}/reverter-inativacao`);
+};

@@ -27,7 +27,12 @@ exports.getAllMedicos = async (req, res) => {
       filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
     }
 
-    const result = await Medico.findPaginated(pageNum, sizeNum, filterString, { perfil });
+    const { sort, order } = req.query;
+    const result = await Medico.findPaginated(pageNum, sizeNum, filterString, {
+      perfil,
+      sort,
+      order,
+    });
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({

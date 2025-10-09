@@ -14,6 +14,7 @@ import AgendamentoPage from "./pages/medico/AgendamentoPage";
 import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
 import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
+import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
           <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
           <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/medicos" element={<MedicosAdminPage />} />
+          <Route path="/admin/solicitacoes" element={<SolicitacoesPage />} />
         </Route>
       </Routes>
     </>

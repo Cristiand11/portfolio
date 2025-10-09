@@ -1,19 +1,32 @@
-import { useState } from "react";
-import { createMedico } from "../../services/adminService";
+import { useState, useEffect } from "react";
+import { updateMedico } from "../../services/adminService";
 import toast from "react-hot-toast";
 import { InputMask } from "@react-input/mask";
 
-export default function AddMedicoForm({ onClose, onSuccess }) {
+// O formulário agora recebe o objeto 'medico' com os dados atuais
+export default function EditMedicoForm({ medico, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     nome: "",
     crm: "",
     email: "",
-    senha: "",
     telefone: "",
     especialidade: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Preenche o formulário com os dados do médico quando o componente é carregado
+  useEffect(() => {
+    if (medico) {
+      setFormData({
+        nome: medico.nome || "",
+        crm: medico.crm || "",
+        email: medico.email || "",
+        telefone: medico.telefone || "",
+        especialidade: medico.especialidade || "",
+      });
+    }
+  }, [medico]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,15 +37,13 @@ export default function AddMedicoForm({ onClose, onSuccess }) {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await createMedico(formData);
-      toast.success("Médico cadastrado com sucesso!");
+      await updateMedico(medico.id, formData);
+      toast.success("Dados do médico atualizados com sucesso!");
       onSuccess();
       onClose();
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Não foi possível cadastrar o médico.";
+        err.response?.data?.message || "Não foi possível atualizar os dados.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -41,44 +52,39 @@ export default function AddMedicoForm({ onClose, onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="nome"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Nome Completo
-          </label>
-          <input
-            type="text"
-            name="nome"
-            id="nome"
-            value={formData.nome}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="crm"
-            className="block text-sm font-medium text-gray-700"
-          >
-            CRM
-          </label>
-          <input
-            type="text"
-            name="crm"
-            id="crm"
-            value={formData.crm}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-            placeholder="12345/SC"
-          />
-        </div>
+      <div>
+        <label
+          htmlFor="nome"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Nome Completo
+        </label>
+        <input
+          type="text"
+          name="nome"
+          id="nome"
+          value={formData.nome}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+        />
       </div>
-
+      <div>
+        <label
+          htmlFor="crm"
+          className="block text-sm font-medium text-gray-700"
+        >
+          CRM
+        </label>
+        <input
+          type="text"
+          name="crm"
+          id="crm"
+          value={formData.crm}
+          readOnly
+          className="mt-1 block w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-2 px-3 cursor-not-allowed"
+        />
+      </div>
       <div>
         <label
           htmlFor="email"
@@ -102,18 +108,17 @@ export default function AddMedicoForm({ onClose, onSuccess }) {
           htmlFor="senha"
           className="block text-sm font-medium text-gray-700"
         >
-          Senha Provisória
+          Nova Senha
         </label>
         <div className="mt-1 relative">
           <input
             type={showPassword ? "text" : "password"}
             name="senha"
             id="senha"
-            value={formData.senha}
+            value={formData.senha || ""}
             onChange={handleChange}
-            required
             className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-            placeholder="••••••••"
+            placeholder="Digite uma nova senha..."
           />
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
             <button
@@ -175,9 +180,9 @@ export default function AddMedicoForm({ onClose, onSuccess }) {
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300"
+          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
         >
-          {isLoading ? "Salvando..." : "Salvar Médico"}
+          {isLoading ? "Salvando..." : "Salvar Alterações"}
         </button>
       </div>
     </form>
