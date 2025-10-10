@@ -87,10 +87,11 @@ export const updateConsulta = (id, data) => {
 
 /**
  * Deleta múltiplas consultas com base em um array de IDs.
- */
+
 export const deleteVariasConsultas = (ids) => {
   return api.delete("/consultas", { data: { ids } });
 };
+*/
 
 /**
  * Aceita uma proposta de remarcação.

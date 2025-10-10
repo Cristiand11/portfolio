@@ -38,8 +38,8 @@ const allowedFilterFields = {
   data: 'c.data',
   idMedico: 'c.medico_id',
   idPaciente: 'c.paciente_id',
-  'medico.nome': 'm.nome', // Filtro por nome do médico
-  'paciente.nome': 'p.nome', // Filtro por nome do paciente
+  'medico.nome': 'm.nome',
+  'paciente.nome': 'p.nome',
   nomePaciente: 'p.nome',
   nomeMedico: 'm.nome',
 };

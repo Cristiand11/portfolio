@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
+import DatePicker from "../../components/DatePicker";
 import {
   getMinhasConsultas,
   cancelarConsulta,
@@ -71,8 +73,23 @@ const SortIcon = ({ direction }) => {
 export default function ConsultasPacientePage() {
   const [consultas, setConsultas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({
+    key: "data",
+    direction: "asc",
+  });
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [filters, setFilters] = useState({
+    status: "",
+    medico: "",
+    data: "",
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: "",
+    medico: "",
+    data: "",
+  });
   const [remarcacaoModalState, setRemarcacaoModalState] = useState({
     isOpen: false,
     consulta: null,
@@ -83,10 +100,14 @@ export default function ConsultasPacientePage() {
     message: "",
     onConfirm: () => {},
   });
-  const [sortConfig, setSortConfig] = useState({
-    key: "data",
-    direction: "asc",
-  });
+
+  const buildFilterString = (applied) => {
+    const parts = [];
+    if (applied.status) parts.push(`status eq '${applied.status}'`);
+    if (applied.medico) parts.push(`nomeMedico co '${applied.medico}'`);
+    if (applied.data) parts.push(`data eq '${applied.data}'`);
+    return parts.length ? parts.join(" AND ") : undefined;
+  };
 
   const fetchConsultas = useCallback(async () => {
     setIsLoading(true);
@@ -96,7 +117,11 @@ export default function ConsultasPacientePage() {
         sort: sortConfig.key,
         order: sortConfig.direction,
       };
-      const response = await getMinhasConsultas({ params });
+
+      const filterString = buildFilterString(appliedFilters);
+      if (filterString) params.filter = filterString;
+
+      const response = await getMinhasConsultas(params);
       setConsultas(response.data.contents);
     } catch (err) {
       setError("Não foi possível carregar as suas consultas.");
@@ -104,7 +129,7 @@ export default function ConsultasPacientePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [sortConfig]);
+  }, [sortConfig, appliedFilters]);
 
   useEffect(() => {
     fetchConsultas();
@@ -128,6 +153,25 @@ export default function ConsultasPacientePage() {
       return;
     }
     setSortConfig({ key, direction: newDirection });
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateFilterChange = (date) => {
+    const formattedDate = date ? format(date, "yyyy-MM-dd") : "";
+    setFilters((prev) => ({ ...prev, data: formattedDate }));
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ status: "", medico: "", data: "" });
+    setAppliedFilters({ status: "", medico: "", data: "" });
   };
 
   // --- Funções de Ação ---
@@ -299,7 +343,108 @@ export default function ConsultasPacientePage() {
         </button>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg">
+      <div className="mt-4 bg-white shadow-md rounded-lg">
+        <div
+          className="p-4 flex justify-between items-center cursor-pointer"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+        >
+          <h2 className="font-semibold">Filtros</h2>
+          <svg
+            className={`h-6 w-6 transform transition-transform ${
+              isFilterOpen ? "rotate-180" : ""
+            }`}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+        {isFilterOpen && (
+          <div className="p-4 border-t space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label
+                  htmlFor="medico"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Médico
+                </label>
+                <input
+                  type="text"
+                  name="medico"
+                  id="medico"
+                  value={filters.medico}
+                  onChange={handleFilterChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="data"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Data
+                </label>
+                <DatePicker
+                  value={filters.data}
+                  onChange={handleDateFilterChange}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="status"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Status
+                </label>
+                <select
+                  name="status"
+                  id="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                >
+                  <option value="">Todos</option>
+                  <option value="Confirmada">Confirmada</option>
+                  <option value="Aguardando Confirmação do Paciente">
+                    Aguardando Aprovação
+                  </option>
+                  <option value="Aguardando Confirmação do Médico">
+                    Aguardando Médico
+                  </option>
+                  <option value="Cancelada">Cancelada</option>
+                  <option value="Concluída">Concluída</option>
+                  <option value="Expirada">Expirada</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={handleClearFilters}
+                className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+              >
+                Filtrar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 bg-white shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
