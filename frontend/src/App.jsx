@@ -12,6 +12,7 @@ import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
 import MeuPerfilPage from "./pages/medico/MeuPerfilPage";
 import AgendamentoPage from "./pages/medico/AgendamentoPage";
 import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
+import HorariosPage from "./pages/medico/HorariosPage";
 import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
@@ -47,6 +48,7 @@ function App() {
           <Route path="/medico/meu-perfil" element={<MeuPerfilPage />} />
           <Route path="/medico/agendamento" element={<AgendamentoPage />} />
           <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
+          <Route path="/medico/horarios" element={<HorariosPage />} />
           <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/medicos" element={<MedicosAdminPage />} />
           <Route path="/admin/solicitacoes" element={<SolicitacoesPage />} />
