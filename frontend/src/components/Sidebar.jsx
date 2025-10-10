@@ -24,8 +24,7 @@ const navLinks = {
     { label: "Dashboard", to: "/paciente/dashboard" },
     { type: "divider", label: "Consultas" },
     { label: "Minhas Consultas", to: "/paciente/consultas", indent: true },
-    { label: "Agendar Consulta", to: "/paciente/agendar", indent: true },
-    { type: "divider", isSpacer: true },
+    { type: "divider", label: "Dados Pessoais" },
     { label: "Meu Perfil", to: "/paciente/meu-perfil" },
   ],
   auxiliar: [

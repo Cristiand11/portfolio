@@ -24,6 +24,8 @@ export default function DatePicker({ value, onChange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const currentDate = value ? new Date(value + "T00:00:00") : null;
+
   return (
     <div className="relative" ref={datepickerRef}>
       <input
@@ -42,7 +44,7 @@ export default function DatePicker({ value, onChange }) {
         <div className="absolute top-full mt-2 z-20 bg-white border rounded-lg shadow-lg">
           <Calendar
             onChange={handleDateChange}
-            value={value ? new Date(value) : null}
+            value={currentDate}
             locale="pt-BR"
           />
         </div>

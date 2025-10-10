@@ -7,14 +7,40 @@ const Paciente = {};
 
 // Função para criar um paciente
 Paciente.create = async (pacienteData) => {
-  const { nome, cpf, dataNascimento, email, telefone, endereco, senha, cepCodigo, enderecoNumero, cidade, bairro, estado } = pacienteData;
+  const {
+    nome,
+    cpf,
+    dataNascimento,
+    email,
+    telefone,
+    endereco,
+    senha,
+    cepCodigo,
+    enderecoNumero,
+    cidade,
+    bairro,
+    estado,
+  } = pacienteData;
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(senha, salt);
 
   const { rows } = await db.query(
     'INSERT INTO paciente (nome, cpf, "dataNascimento", email, telefone, endereco, senha, "cepCodigo", "enderecoNumero", cidade, bairro, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
-    [nome, cpf, dataNascimento, email, telefone, endereco, hash, cepCodigo, enderecoNumero, cidade, bairro, estado]
+    [
+      nome,
+      cpf,
+      dataNascimento,
+      email,
+      telefone,
+      endereco,
+      hash,
+      cepCodigo,
+      enderecoNumero,
+      cidade,
+      bairro,
+      estado,
+    ]
   );
 
   delete rows[0].senha;
@@ -26,15 +52,15 @@ Paciente.create = async (pacienteData) => {
 
 // Função para buscar pacientes
 const allowedFilterFields = {
-  'id': 'id',
-  'nome': 'nome',
-  'cpf': 'cpf',
-  'email': 'email',
-  'telefone': 'telefone',
-  'cepCodigo': '"cepCodigo"',
-  'cidade': 'cidade',
-  'bairro': 'bairro',
-  'estado': 'estado'
+  id: 'id',
+  nome: 'nome',
+  cpf: 'cpf',
+  email: 'email',
+  telefone: 'telefone',
+  cepCodigo: '"cepCodigo"',
+  cidade: 'cidade',
+  bairro: 'bairro',
+  estado: 'estado',
 };
 
 const operatorMap = {
@@ -49,7 +75,7 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
 
   if (filterString) {
     const filters = filterString.split(' AND ');
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       const match = filter.match(/(\w+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
@@ -83,15 +109,17 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
         LIMIT $1 OFFSET $2
     `;
 
-  const dataQueryFinal = dataQuery.replace('$1', `$${paramIndex++}`).replace('$2', `$${paramIndex++}`);
+  const dataQueryFinal = dataQuery
+    .replace('$1', `$${paramIndex++}`)
+    .replace('$2', `$${paramIndex++}`);
 
   const { rows } = await db.query(dataQueryFinal, finalQueryValues);
 
-  const formattedRows = rows.map(row => ({
+  const formattedRows = rows.map((row) => ({
     ...row,
     dataNascimento: formatarApenasData(row.dataNascimento),
     createdDate: formatarData(row.createdDate),
-    lastModifiedDate: formatarData(row.lastModifiedDate)
+    lastModifiedDate: formatarData(row.lastModifiedDate),
   }));
 
   const totalPages = Math.ceil(totalElements / size);
@@ -99,7 +127,7 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
   return {
     totalPages,
     totalElements,
-    contents: formattedRows
+    contents: formattedRows,
   };
 };
 
@@ -125,9 +153,17 @@ Paciente.update = async (id, pacienteData) => {
 
   // Adiciona os outros campos à query dinamicamente
   for (const key in dadosSemSenha) {
-    if (dadosSemSenha[key] !== undefined) {
+    if (
+      dadosSemSenha[key] !== undefined &&
+      key !== 'id' &&
+      key !== 'createdDate' &&
+      key !== 'lastModifiedDate'
+    ) {
       // Usa aspas duplas para nomes de coluna em camelCase
-      const columnName = key === 'dataNascimento' || key === 'cepCodigo' || key === 'enderecoNumero' ? `"${key}"` : key;
+      const columnName =
+        key === 'dataNascimento' || key === 'cepCodigo' || key === 'enderecoNumero'
+          ? `"${key}"`
+          : key;
       querySetParts.push(`${columnName} = $${paramIndex++}`);
       values.push(dadosSemSenha[key]);
     }
@@ -156,7 +192,7 @@ Paciente.update = async (id, pacienteData) => {
 
   if (rows[0]) {
     delete rows[0].senha;
-  };
+  }
 
   rows[0].dataNascimento = formatarApenasData(rows[0].dataNascimento);
   rows[0].createdDate = formatarData(rows[0].createdDate);

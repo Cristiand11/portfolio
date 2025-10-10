@@ -22,4 +22,16 @@ export const createPaciente = (pacienteData) => {
   return api.post("/pacientes", pacienteData);
 };
 
-// Futuramente, a função de criar paciente também virá para cá.
+/**
+ * Busca os dados do perfil do paciente logado.
+ */
+export const getMeuPerfil = () => {
+  return api.get("/pacientes/me");
+};
+
+/**
+ * Atualiza os dados do perfil do paciente logado.
+ */
+export const updateMeuPerfil = (idPaciente, pacienteData) => {
+  return api.put(`/pacientes/${idPaciente}`, pacienteData);
+};

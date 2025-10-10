@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { getMinhasConsultas } from "../../services/consultaService";
 import toast from "react-hot-toast";
+import Modal from "../../components/Modal";
+import DetalhesConsultaPaciente from "../../components/paciente/DetalhesConsultaPaciente";
 
 export default function DashboardPacientePage() {
   const [proximasConsultas, setProximasConsultas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [consultaSelecionada, setConsultaSelecionada] = useState(null);
 
   const fetchConsultas = useCallback(async () => {
     setIsLoading(true);
     try {
-      // O backend já filtra automaticamente para o paciente logado.
-      // Pedimos as próximas 100 consultas.
       const response = await getMinhasConsultas({ size: 100 });
-
-      // Filtra no frontend para pegar apenas consultas futuras com status relevante
       const agora = new Date();
       const consultasFuturas = response.data.contents
         .filter((c) => {
@@ -22,13 +22,15 @@ export default function DashboardPacientePage() {
           const dataConsulta = new Date(`${c.data}T${c.hora}`);
           return (
             dataConsulta > agora &&
-            (c.status === "Confirmada" || c.status.includes("Aguardando"))
+            (c.status === "Confirmada" ||
+              c.status.includes("Aguardando") ||
+              c.status.includes("Remarcação"))
           );
         })
         .sort(
           (a, b) =>
             new Date(`${a.data}T${a.hora}`) - new Date(`${b.data}T${b.hora}`)
-        ); // Ordena da mais próxima para a mais distante
+        );
 
       setProximasConsultas(consultasFuturas);
     } catch (err) {
@@ -44,6 +46,21 @@ export default function DashboardPacientePage() {
     fetchConsultas();
   }, [fetchConsultas]);
 
+  const handleVerDetalhes = (consulta) => {
+    setConsultaSelecionada(consulta);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setConsultaSelecionada(null);
+  };
+
+  const handleSuccess = () => {
+    handleCloseModal();
+    fetchConsultas();
+  };
+
   if (isLoading) {
     return <div>A carregar o seu dashboard...</div>;
   }
@@ -52,10 +69,27 @@ export default function DashboardPacientePage() {
     return <div className="text-red-600">{error}</div>;
   }
 
-  const proximaConsulta = proximasConsultas[0]; // A primeira da lista ordenada é a próxima
+  const proximaConsulta = proximasConsultas[0];
 
   return (
     <div>
+      {consultaSelecionada && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          title="Detalhes da Consulta"
+        >
+          <DetalhesConsultaPaciente
+            consulta={consultaSelecionada}
+            onClose={handleCloseModal}
+            onSuccess={handleSuccess}
+            onRemarcar={() =>
+              toast.error("Função de remarcação ainda não implementada.")
+            } // Placeholder
+          />
+        </Modal>
+      )}
+
       <h1 className="text-2xl font-semibold text-gray-800">Meu Dashboard</h1>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card de Próximas Consultas */}
@@ -94,7 +128,10 @@ export default function DashboardPacientePage() {
                 {proximaConsulta.status}
               </span>
               <div className="text-right mt-4">
-                <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                <button
+                  onClick={() => handleVerDetalhes(proximaConsulta)}
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                >
                   Ver Detalhes
                 </button>
               </div>
