@@ -13,6 +13,9 @@ import MeuPerfilPage from "./pages/medico/MeuPerfilPage";
 import AgendamentoPage from "./pages/medico/AgendamentoPage";
 import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
 import HorariosPage from "./pages/medico/HorariosPage";
+import DashboardPacientePage from "./pages/paciente/DashboardPacientePage";
+import ConsultasPacientePage from "./pages/paciente/ConsultasPacientePage";
+import MeuPerfilPacientePage from "./pages/paciente/MeuPerfilPacientePage";
 import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
@@ -42,6 +45,7 @@ function App() {
             </ProtectedRoute>
           }
         >
+          {/* Rotas do perfil Médico */}
           <Route path="/medico/dashboard" element={<DashboardMedicoPage />} />
           <Route path="/medico/auxiliares" element={<AuxiliaresPage />} />
           <Route path="/medico/pacientes" element={<PacientesPage />} />
@@ -49,6 +53,20 @@ function App() {
           <Route path="/medico/agendamento" element={<AgendamentoPage />} />
           <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
           <Route path="/medico/horarios" element={<HorariosPage />} />
+          {/* Rotas do perfil Paciente */}
+          <Route
+            path="/paciente/dashboard"
+            element={<DashboardPacientePage />}
+          />
+          <Route
+            path="/paciente/consultas"
+            element={<ConsultasPacientePage />}
+          />
+          <Route
+            path="/paciente/meu-perfil"
+            element={<MeuPerfilPacientePage />}
+          />
+          {/* Rotas do perfil Administrador */}
           <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/medicos" element={<MedicosAdminPage />} />
           <Route path="/admin/solicitacoes" element={<SolicitacoesPage />} />

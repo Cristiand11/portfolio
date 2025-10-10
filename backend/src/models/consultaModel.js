@@ -41,6 +41,7 @@ const allowedFilterFields = {
   'medico.nome': 'm.nome', // Filtro por nome do médico
   'paciente.nome': 'p.nome', // Filtro por nome do paciente
   nomePaciente: 'p.nome',
+  nomeMedico: 'm.nome',
 };
 
 const operatorMap = { eq: '=', co: 'ILIKE' };
@@ -49,6 +50,7 @@ const colunasOrdenaveis = {
   data: 'c.data',
   status: 'c.status',
   nomePaciente: 'p.nome',
+  nomeMedico: 'm.nome',
 };
 
 Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
@@ -81,7 +83,11 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options 
   const orderByClause = colunasOrdenaveis[sortKey] || colunasOrdenaveis.data;
   const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-  const baseQuery = `FROM consulta c LEFT JOIN paciente p ON c.paciente_id = p.id`;
+  const baseQuery = `
+    FROM consulta c 
+    LEFT JOIN paciente p ON c.paciente_id = p.id
+    LEFT JOIN medico m ON c.medico_id = m.id
+  `;
 
   const countQuery = `SELECT COUNT(c.id) ${baseQuery} ${whereClause}`;
   const countResult = await db.query(countQuery, values);
@@ -90,7 +96,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options 
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
   const dataQuery = `
-    SELECT c.*, p.nome as "nomePaciente"
+    SELECT c.*, p.nome as "nomePaciente", m.nome as "nomeMedico"
     ${baseQuery} 
     ${whereClause} 
     ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
