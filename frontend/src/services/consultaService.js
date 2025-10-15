@@ -35,7 +35,6 @@ export const getMinhasConsultas = (params) => {
 
 /**
  * Cria/propõe uma nova consulta.
- * O token do médico/auxiliar logado é enviado automaticamente.
  */
 export const createConsulta = (consultaData) => {
   return api.post("/consultas", consultaData);
@@ -45,6 +44,13 @@ export const createConsulta = (consultaData) => {
  * Médico ou auxiliar cancela uma consulta.
  */
 export const cancelarConsultaAdmin = (consultaId) => {
+  return api.post(`/consultas/${consultaId}/cancelar`);
+};
+
+/**
+ * Paciente cancela uma consulta
+ */
+export const cancelarConsulta = (consultaId) => {
   return api.post(`/consultas/${consultaId}/cancelar`);
 };
 
@@ -81,10 +87,11 @@ export const updateConsulta = (id, data) => {
 
 /**
  * Deleta múltiplas consultas com base em um array de IDs.
- */
+
 export const deleteVariasConsultas = (ids) => {
   return api.delete("/consultas", { data: { ids } });
 };
+*/
 
 /**
  * Aceita uma proposta de remarcação.

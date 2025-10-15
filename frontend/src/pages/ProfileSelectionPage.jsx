@@ -16,7 +16,7 @@ export default function ProfileSelectionPage() {
       <div className="grid grid-cols-2 gap-4">
         {perfis.map((perfil) => (
           <button
-            key={perfil}
+            key={perfil.apiValue}
             onClick={() => selectProfile(perfil.apiValue)}
             className="p-6 bg-white rounded-lg shadow-md text-center font-semibold text-gray-700 hover:bg-indigo-500 hover:text-white transition-colors"
           >

@@ -18,7 +18,6 @@ export default function MeuPerfilPage() {
           setPerfilData(response.data);
         })
         .catch((err) => {
-          console.error("Erro ao buscar perfil:", err);
           setError("Não foi possível carregar os dados do perfil.");
         })
         .finally(() => {
@@ -105,6 +104,22 @@ export default function MeuPerfilPage() {
             </div>
             <div>
               <label
+                htmlFor="senha"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Nova Senha
+              </label>
+              <input
+                type="password"
+                name="senha"
+                id="senha"
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                placeholder="Deixe em branco para não alterar"
+              />
+            </div>
+            <div>
+              <label
                 htmlFor="crm"
                 className="block text-sm font-medium text-gray-700"
               >
@@ -145,10 +160,11 @@ export default function MeuPerfilPage() {
               >
                 Telefone
               </label>
-              <input
-                type="tel"
-                name="telefone"
+              <InputMask
+                mask="(__) _____-____"
+                replacement={{ _: /\d/ }}
                 id="telefone"
+                name="telefone"
                 value={perfilData?.telefone || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"

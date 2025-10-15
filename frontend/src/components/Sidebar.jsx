@@ -21,10 +21,11 @@ const navLinks = {
     { label: "Meus Horários", to: "/medico/horarios", indent: true },
   ],
   paciente: [
-    { label: "Minhas Consultas", to: "/paciente/consultas" },
-    { label: "Agendar Consulta", to: "/paciente/agendar" }, // Rota futura
-    { type: "divider", isSpacer: true },
-    { label: "Meu Perfil", to: "/paciente/meu-perfil" }, // Rota futura
+    { label: "Dashboard", to: "/paciente/dashboard" },
+    { type: "divider", label: "Consultas" },
+    { label: "Minhas Consultas", to: "/paciente/consultas", indent: true },
+    { type: "divider", label: "Dados Pessoais" },
+    { label: "Meu Perfil", to: "/paciente/meu-perfil" },
   ],
   auxiliar: [
     { label: "Dashboard", to: "/auxiliar/dashboard" },
