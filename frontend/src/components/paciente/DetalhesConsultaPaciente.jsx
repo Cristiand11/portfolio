@@ -25,10 +25,6 @@ export default function DetalhesConsultaPaciente({
   };
 
   const handleCancelar = async () => {
-    if (
-      !window.confirm("Tem a certeza de que deseja solicitar o cancelamento?")
-    )
-      return;
     try {
       await cancelarConsulta(consulta.id);
       toast.success("Cancelamento solicitado com sucesso!");
@@ -53,8 +49,6 @@ export default function DetalhesConsultaPaciente({
   };
 
   const handleRejeitar = async () => {
-    if (!window.confirm("Tem a certeza de que deseja rejeitar a proposta?"))
-      return;
     try {
       await rejeitarRemarcacao(consulta.id);
       toast.success("Proposta de remarcação rejeitada.");
@@ -107,7 +101,7 @@ export default function DetalhesConsultaPaciente({
               Cancelar
             </button>
             <button
-              onClick={onRemarcar}
+              onClick={() => onRemarcar(consulta)}
               className="bg-yellow-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-yellow-600"
             >
               Solicitar Remarcação

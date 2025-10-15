@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getMinhasConsultas } from "../../services/consultaService";
+import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import DetalhesConsultaPaciente from "../../components/paciente/DetalhesConsultaPaciente";
@@ -10,6 +11,10 @@ export default function DashboardPacientePage() {
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [consultaSelecionada, setConsultaSelecionada] = useState(null);
+  const [remarcacaoModalState, setRemarcacaoModalState] = useState({
+    isOpen: false,
+    consulta: null,
+  });
 
   const fetchConsultas = useCallback(async () => {
     setIsLoading(true);
@@ -56,8 +61,18 @@ export default function DashboardPacientePage() {
     setConsultaSelecionada(null);
   };
 
+  const handleIniciarRemarcacao = (consulta) => {
+    setRemarcacaoModalState({ isOpen: true, consulta: consulta });
+  };
+
+  const handleCloseRemarcacaoModal = () => {
+    setRemarcacaoModalState({ isOpen: false, consulta: null });
+  };
+
   const handleSuccess = () => {
-    handleCloseModal();
+    setIsModalOpen(false);
+    setConsultaSelecionada(null);
+    setRemarcacaoModalState({ isOpen: false, consulta: null });
     fetchConsultas();
   };
 
@@ -83,12 +98,21 @@ export default function DashboardPacientePage() {
             consulta={consultaSelecionada}
             onClose={handleCloseModal}
             onSuccess={handleSuccess}
-            onRemarcar={() =>
-              toast.error("Função de remarcação ainda não implementada.")
-            } // Placeholder
+            onRemarcar={handleIniciarRemarcacao}
           />
         </Modal>
       )}
+      <Modal
+        isOpen={remarcacaoModalState.isOpen}
+        onClose={handleCloseRemarcacaoModal}
+        title="Solicitar Remarcação"
+      >
+        <RemarcacaoForm
+          consulta={{ extendedProps: remarcacaoModalState.consulta }}
+          onClose={handleCloseRemarcacaoModal}
+          onSuccess={handleSuccess}
+        />
+      </Modal>
 
       <h1 className="text-2xl font-semibold text-gray-800">Meu Dashboard</h1>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
