@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMeuPerfil, updateMeuPerfil } from "../../services/medicoService";
+import { InputMask } from "@react-input/mask";
 import toast from "react-hot-toast";
 
 export default function MeuPerfilPage() {
