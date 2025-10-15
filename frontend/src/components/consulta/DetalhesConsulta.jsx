@@ -157,7 +157,7 @@ export default function DetalhesConsulta({
       </div>
 
       {/* Ações possíveis para a consulta */}
-      <div className="flex justify-end gap-4 pt-4 border-t">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
         {renderizarAcoes()}
       </div>
     </div>

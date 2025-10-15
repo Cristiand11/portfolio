@@ -159,7 +159,7 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         />
       </div>
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onClose}

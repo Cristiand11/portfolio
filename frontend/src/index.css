@@ -6,8 +6,8 @@
 
 /* Controla o tamanho máximo do calendário e a fonte */
 .react-calendar {
-  width: 100%;
-  max-width: 300px; /* <-- Altere este valor para deixar maior ou menor */
+  width: 300px;
+  max-width: 100%; /* <-- Altere este valor para deixar maior ou menor */
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   font-family: inherit;
