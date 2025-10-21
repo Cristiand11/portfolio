@@ -42,7 +42,7 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => navigate("/selecionar-perfil")}
-          className="w-1/3 text-center text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 py-2 px-4 rounded-md transition-colors mb-4"
+          className="w-full sm:w-1/3 text-center text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 py-2 px-4 rounded-md transition-colors mb-4"
         >
           Trocar Perfil
         </button>

@@ -227,11 +227,11 @@ export default function MeuPerfilPage() {
         </div>
 
         {/* --- BOTÃO DE SALVAR --- */}
-        <div className="flex justify-end pt-6 border-t">
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-6 border-t">
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400"
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 w-full sm:w-auto"
           >
             {isLoading ? "Salvando..." : "Salvar Alterações"}
           </button>

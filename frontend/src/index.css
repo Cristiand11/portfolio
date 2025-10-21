@@ -33,3 +33,30 @@
   padding: 0.5em 0.25em;
   font-size: 0.8em;
 }
+
+/* Aplica estas regras apenas em telas menores que 768px (breakpoint 'md' do Tailwind) */
+@media (max-width: 767px) {
+  /* Alvo: Todos os botões dentro do cabeçalho do FullCalendar */
+  .fc .fc-header-toolbar .fc-button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    min-height: auto;
+    line-height: 1.2;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem;
+    line-height: 1.3;
+    margin: 0 0.5rem;
+    min-width: 0;
+  }
+
+  .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+    text-align: center;
+    flex-grow: 1;
+  }
+
+  .fc .fc-header-toolbar .fc-toolbar-chunk {
+    flex-shrink: 0;
+  }
+}

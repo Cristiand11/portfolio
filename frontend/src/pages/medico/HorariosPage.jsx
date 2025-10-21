@@ -105,7 +105,7 @@ export default function HorariosPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Meus Horários
@@ -117,7 +117,7 @@ export default function HorariosPage() {
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto flex-shrink-0"
         >
           {isLoading ? "Salvando..." : "Salvar Alterações"}
         </button>
@@ -165,7 +165,7 @@ export default function HorariosPage() {
                   {dia.slots.map((slot, slotIndex) => (
                     <div
                       key={slotIndex}
-                      className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-3"
+                      className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr_auto] items-center gap-2 sm:gap-3"
                     >
                       <input
                         type="time"
@@ -180,7 +180,9 @@ export default function HorariosPage() {
                         }
                         className="w-full border-gray-300 rounded-md shadow-sm p-2"
                       />
-                      <span className="text-gray-500 text-sm">até</span>
+                      <span className="hidden sm:inline text-gray-500 text-sm">
+                        até
+                      </span>
                       <input
                         type="time"
                         value={slot.hora_fim}
@@ -196,7 +198,7 @@ export default function HorariosPage() {
                       />
                       <button
                         onClick={() => handleRemoveSlot(diaIndex, slotIndex)}
-                        className="text-gray-400 hover:text-red-500 p-1"
+                        className="text-gray-400 hover:text-red-500 p-1 self-end sm:self-center"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
