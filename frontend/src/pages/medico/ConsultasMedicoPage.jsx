@@ -409,7 +409,7 @@ export default function ConsultasMedicoPage() {
         onClose={() => setConfirmModalState({ isOpen: false })}
       />
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Gerenciar Consultas
@@ -418,7 +418,7 @@ export default function ConsultasMedicoPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setIsAgendamentoModalOpen(true)}
-            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"
           >
             Marcar Consulta
           </button>
@@ -508,7 +508,7 @@ export default function ConsultasMedicoPage() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-4">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <button
                 onClick={handleClearFilters}
                 className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
@@ -526,7 +526,7 @@ export default function ConsultasMedicoPage() {
         )}
       </div>
 
-      <div className="mt-6 bg-white shadow-md rounded-lg">
+      <div className="mt-6 bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

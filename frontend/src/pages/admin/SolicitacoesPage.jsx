@@ -76,7 +76,7 @@ export default function SolicitacoesPage() {
         Solicitações de Inativação
       </h1>
 
-      <div className="mt-6 bg-white shadow-md rounded-lg">
+      <div className="mt-6 overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

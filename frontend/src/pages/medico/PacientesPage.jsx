@@ -132,7 +132,7 @@ export default function PacientesPage() {
         />
       </Modal>
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Meus Pacientes
@@ -140,14 +140,14 @@ export default function PacientesPage() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"
         >
           Adicionar Paciente
         </button>
       </div>
 
       {/* Tabela de Pacientes */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

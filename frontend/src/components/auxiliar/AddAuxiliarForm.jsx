@@ -108,7 +108,7 @@ export default function AddAuxiliarForm({ onClose, onSuccess }) {
         />
       </div>
 
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onClose}

@@ -193,7 +193,7 @@ export default function AuxiliaresPage() {
             Tem certeza de que deseja excluir este auxiliar? Esta ação não
             poderá ser desfeita.
           </p>
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
             <button
               onClick={() =>
                 setConfirmDeleteState({ isOpen: false, auxiliarId: null })
@@ -212,30 +212,30 @@ export default function AuxiliaresPage() {
         </div>
       </Modal>
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Meus Auxiliares
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"
           >
             Adicionar
           </button>
           <button
             onClick={handleBulkDelete}
             disabled={selectedIds.length === 0}
-            className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
+            className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             Excluir
           </button>
         </div>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-x-auto">
         {isLoading ? (
           <p className="p-10 text-center text-gray-500">Carregando...</p>
         ) : error ? (

@@ -13,7 +13,7 @@ export default function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div>
         <p className="text-gray-600">{message}</p>
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
           <button
             onClick={onClose}
             className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"

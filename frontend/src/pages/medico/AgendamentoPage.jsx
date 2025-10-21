@@ -12,6 +12,7 @@ import {
   rejeitarRemarcacao,
 } from "../../services/consultaService";
 import { getMeusHorarios } from "../../services/horarioService";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import Modal from "../../components/Modal";
 import AgendaLegenda from "../../components/consulta/AgendaLegenda";
 import AgendamentoForm from "../../components/consulta/AgendamentoForm";
@@ -100,6 +101,8 @@ export default function AgendamentoPage() {
     isOpen: false,
     consultaId: null,
   });
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
 
   const fetchAgendaData = useCallback(async () => {
     setIsLoading(true);
@@ -337,6 +340,60 @@ export default function AgendamentoPage() {
     }
   };
 
+  const calendarOptions = {
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    // Altera a visão inicial para 'Dia' no mobile
+    initialView: isMobile ? "timeGridDay" : "timeGridWeek",
+    // Simplifica o cabeçalho no mobile
+    headerToolbar: isMobile
+      ? {
+          left: "prev,next",
+          center: "title",
+          right: "today",
+        }
+      : {
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay",
+        },
+    events: events,
+    businessHours: businessHours,
+    editable: true,
+    selectable: true,
+    selectMirror: true,
+    dayMaxEvents: true,
+    weekends: true,
+    dateClick: handleDateClick,
+    eventClick: handleEventClick,
+    eventDrop: handleEventDrop,
+    eventResize: handleEventResize,
+    locale: "pt-br",
+    buttonText: {
+      today: "Hoje",
+      month: "Mês",
+      week: "Semana",
+      day: "Dia",
+    },
+    allDaySlot: false,
+    // Altura mais adequada para mobile
+    height: isMobile ? "auto" : "auto",
+    // Tamanho da fonte menor no mobile ajuda
+    eventTimeFormat: {
+      // Formato da hora nos eventos
+      hour: "2-digit",
+      minute: "2-digit",
+      meridiem: false, // usa 24h
+      hourCycle: "h23",
+    },
+    slotLabelFormat: {
+      // Formato da hora na coluna lateral
+      hour: "2-digit",
+      minute: "2-digit",
+      meridiem: false,
+      hourCycle: "h23",
+    },
+  };
+
   if (isLoading) {
     return <div>Carregando agenda...</div>;
   }
@@ -398,7 +455,6 @@ export default function AgendamentoPage() {
                 </div>
               </div>
             ) : (
-              // Conteúdo para Redimensionar (eventResize)
               <div>
                 <p>
                   Deseja alterar a duração da consulta de{" "}
@@ -417,7 +473,7 @@ export default function AgendamentoPage() {
               </div>
             )}
 
-            <div className="flex justify-end gap-4 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
               <button
                 onClick={handleCancelarMudanca}
                 className="bg-gray-200  text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
@@ -450,7 +506,7 @@ export default function AgendamentoPage() {
             Tem certeza de que deseja cancelar esta consulta? O paciente será
             notificado.
           </p>
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
             <button
               onClick={() =>
                 setCancelConfirmState({ isOpen: false, consultaId: null })
@@ -480,7 +536,7 @@ export default function AgendamentoPage() {
             Tem certeza de que deseja <strong>rejeitar</strong> esta remarcação?
             O paciente será notificado.
           </p>
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
             <button
               onClick={() =>
                 setRejectConfirmState({ isOpen: false, consultaId: null })
@@ -521,34 +577,7 @@ export default function AgendamentoPage() {
       <h1 className="text-2xl font-semibold text-gray-800">Minha Agenda</h1>
       <AgendaLegenda />
       <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
-          }}
-          events={events}
-          businessHours={businessHours}
-          editable={true}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          weekends={true}
-          dateClick={handleDateClick}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
-          locale="pt-br"
-          buttonText={{
-            today: "Hoje",
-            month: "Mês",
-            week: "Semana",
-            day: "Dia",
-          }}
-          allDaySlot={false}
-        />
+        <FullCalendar {...calendarOptions} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 // 1. Define os links para cada perfil em um objeto central
@@ -42,19 +42,25 @@ const activeLinkStyle = {
   color: "white",
 };
 
-export default function Sidebar() {
-  // 2. Pega o usuário (com o perfil) do nosso AuthContext
+export default function Sidebar({ isMobileMenuOpen }) {
   const { user } = useAuth();
-
-  // 3. Escolhe o conjunto de links correto com base no perfil
   const links = user?.perfil ? navLinks[user.perfil] : [];
 
+  // NOVO: Lógica para aplicar classes dinamicamente com base no estado e tamanho da tela
+  const sidebarClasses = `
+    w-64 bg-gray-800 text-white p-4 flex flex-col  
+    fixed inset-y-0 left-0 z-30                      
+    transform transition-transform duration-300 ease-in-out 
+    ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} 
+    md:relative md:translate-x-0                      
+  `;
+
   return (
-    <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+    // ALTERADO: Usando a tag <aside> para semântica e aplicando as classes dinâmicas
+    <aside className={sidebarClasses}>
       <h2 className="text-2xl font-bold mb-6 text-center">AgendaMed</h2>
       <nav>
         <ul>
-          {/* 4. Renderiza os links dinamicamente */}
           {links.map((link, index) => {
             if (link.type === "divider") {
               if (link.isSpacer)
@@ -77,7 +83,6 @@ export default function Sidebar() {
               <li key={index} className={`mb-1 ${link.indent ? "pl-4" : ""}`}>
                 <NavLink
                   to={link.to}
-                  // Aplica o estilo se a rota estiver ativa
                   style={({ isActive }) =>
                     isActive ? activeLinkStyle : undefined
                   }
@@ -90,6 +95,6 @@ export default function Sidebar() {
           })}
         </ul>
       </nav>
-    </div>
+    </aside>
   );
 }

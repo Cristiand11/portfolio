@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMeuPerfil, updateMeuPerfil } from "../../services/medicoService";
+import { InputMask } from "@react-input/mask";
 import toast from "react-hot-toast";
 
 export default function MeuPerfilPage() {
@@ -206,11 +207,11 @@ export default function MeuPerfilPage() {
         </div>
 
         {/* Botão de Salvar */}
-        <div className="flex justify-end pt-4">
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4">
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400"
+            className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 w-full sm:w-auto"
           >
             {isLoading ? "Salvando..." : "Salvar Alterações"}
           </button>

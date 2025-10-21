@@ -68,7 +68,12 @@ export default function ActionsDropdown({ actions }) {
       </div>
 
       {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+        <div
+          className="
+            fixed bottom-0 left-0 w-full z-20 bg-white rounded-t-lg shadow-lg
+            md:absolute md:origin-top-right md:right-0 md:mt-2 md:w-56 md:rounded-md md:bottom-auto md:left-auto
+          "
+        >
           <div className="py-1">
             {actions.map((action, index) => (
               <button
