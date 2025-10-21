@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../config/database');
 const { getDiasUteis } = require('../utils/dateUtils');
-const NotificationService = require('../services/notificationService');
+const { enviarEmail } = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -19,24 +19,19 @@ exports.login = async (req, res) => {
       if (medicoResult.rows.length > 0) {
         const medico = medicoResult.rows[0];
 
-        // Regra 1: Se o status já for 'Inativo', bloqueia o login
         if (medico.status === 'Inativo') {
           return res
             .status(403)
             .json({ message: 'Acesso bloqueado. Esta conta de médico está inativa.' });
         }
 
-        // Regra 2: Se a inativação estiver pendente, verifica o prazo
         if (medico.status === 'Aguardando Inativação' && medico.inativacaoSolicitadaEm) {
           const diasUteisPassados = getDiasUteis(medico.inativacaoSolicitadaEm);
-
           if (diasUteisPassados > 5) {
-            // O prazo expirou. ATUALIZA o status para 'Inativo'
             await db.query(
               'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NULL WHERE id = $2',
               ['Inativo', medico.id]
             );
-            // E então bloqueia o login
             return res
               .status(403)
               .json({ message: 'Acesso bloqueado. Sua conta foi inativada permanentemente.' });
@@ -64,17 +59,11 @@ exports.login = async (req, res) => {
 
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(senha, user.senha);
-
     if (!isMatch) {
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
 
-    const payload = {
-      id: user.id,
-      nome: user.nome,
-      perfil: perfil.toLowerCase(),
-    };
-
+    const payload = { id: user.id, nome: user.nome, perfil: perfil.toLowerCase() };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 
     res.json({ message: 'Login bem-sucedido!', token });
@@ -88,7 +77,6 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email, perfil } = req.body;
 
-    // 1. Encontra o usuário na tabela correta
     const tabelas = {
       medico: 'MEDICO',
       paciente: 'PACIENTE',
@@ -109,25 +97,20 @@ exports.forgotPassword = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // 2. Gera um token de reset seguro
     const resetToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-    // 3. Define a data de expiração (ex: 1 hora a partir de agora)
     const expiresAt = new Date(Date.now() + 3600000); // 1 hora em milissegundos
 
-    // 4. Salva o token HASHED no banco de dados
     await db.query(
       'INSERT INTO PASSWORD_RESET_TOKENS (user_id, perfil, token_hash, expires_at) VALUES ($1, $2, $3, $4)',
       [user.id, perfil.toLowerCase(), tokenHash, expiresAt]
     );
 
-    // 5. Envia o e-mail para o usuário com o token original (NÃO o hash)
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`; // URL do seu frontend
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
     const assunto = 'Recuperação de Senha - AgendaMed';
-    const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Por favor, clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link irá expirar em 1 hora.</p>`;
+    const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link expira em 1 hora.</p>`;
 
-    NotificationService.enviarEmail({ para: user.email, assunto, mensagemHtml });
+    await enviarEmail({ para: user.email, assunto, mensagemHtml });
 
     res.status(200).json({
       message:
@@ -143,10 +126,8 @@ exports.resetPassword = async (req, res) => {
   try {
     const { token, novaSenha } = req.body;
 
-    // 1. Cria o hash do token recebido para compará-lo com o do banco
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    // 2. Busca o token no banco
     const tokenResult = await db.query(
       'SELECT * FROM PASSWORD_RESET_TOKENS WHERE token_hash = $1 AND expires_at > NOW()',
       [tokenHash]
@@ -156,12 +137,9 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Token inválido ou expirado.' });
     }
     const tokenData = tokenResult.rows[0];
-
-    // 3. Criptografa a nova senha
     const salt = await bcrypt.genSalt(10);
     const novaSenhaHash = await bcrypt.hash(novaSenha, salt);
 
-    // 4. Atualiza a senha na tabela correta do usuário
     const tabelas = {
       medico: 'MEDICO',
       paciente: 'PACIENTE',
@@ -174,7 +152,6 @@ exports.resetPassword = async (req, res) => {
       tokenData.user_id,
     ]);
 
-    // 5. Deleta o token para que ele não possa ser usado novamente
     await db.query('DELETE FROM PASSWORD_RESET_TOKENS WHERE id = $1', [tokenData.id]);
 
     res.status(200).json({ message: 'Senha redefinida com sucesso!' });

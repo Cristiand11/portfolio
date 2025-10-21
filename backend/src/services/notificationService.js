@@ -1,27 +1,31 @@
-const { Resend } = require('resend');
-require('dotenv').config();
+const nodemailer = require('nodemailer');
 
-// Inicializa o cliente do Resend com a chave do .env
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.BREVO_SMTP || 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.BREVO_EMAIL, // pode manter seu Gmail aqui
+    pass: process.env.BREVO_SMTP_KEY, // ⚠️ troque para a SMTP key nova
+  },
+});
 
-const NotificationService = {};
-
-/**
- * Função genérica para enviar e-mails.
- * Usamos um try...catch aqui para que uma falha no envio de e-mail
- * não quebre a aplicação inteira. Apenas registramos o erro no console.
- */
-NotificationService.enviarEmail = async ({ para, assunto, mensagemHtml }) => {
+async function enviarEmail({ para, assunto, mensagemHtml }) {
   try {
-    await resend.emails.send({
-      from: 'AgendaMed <onboarding@resend.dev>',
+    console.log('📨 Tentando autenticar no SMTP da Brevo com:', process.env.BREVO_EMAIL);
+    const info = await transporter.sendMail({
+      from: `"AgendaMed" <cristiandomingues.15@gmail.com>`,
       to: para,
       subject: assunto,
       html: mensagemHtml,
     });
+    console.log('E-mail enviado com sucesso:', info.messageId);
+    return info;
   } catch (error) {
-    console.error(`Erro ao enviar e-mail para ${para}:`, error);
+    console.error('Erro ao enviar e-mail:', error.message);
+    console.error('Detalhes SMTP:', error.response);
+    throw error;
   }
-};
+}
 
-module.exports = NotificationService;
+module.exports = { enviarEmail };
