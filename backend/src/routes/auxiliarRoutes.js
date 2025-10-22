@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const auxiliarController = require('../controllers/auxiliarController');
 const authMiddleware = require('../middleware/authMiddleware');
-
 const {
   auxiliarAuth,
   auxiliarUpdateAuth,
@@ -14,6 +13,8 @@ const {
 router.post('/', authMiddleware, medicoAuth, auxiliarController.createAuxiliar);
 // Rota para o auxiliar logado buscar seus próprios dados
 router.get('/me', authMiddleware, auxiliarAuth, auxiliarController.getMe);
+// Rota para GET médicos que o auxiliar está vinculado
+router.get('/meu-medico', authMiddleware, auxiliarAuth, auxiliarController.getMeuMedicoVinculado);
 // Rota para GET Auxiliares
 router.get('/', authMiddleware, pacienteAuth, auxiliarController.getAllAuxiliares);
 // Rota para PUT Auxiliares

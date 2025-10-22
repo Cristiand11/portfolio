@@ -129,3 +129,30 @@ exports.getMe = async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar dados do auxiliar.', error: error.message });
   }
 };
+
+exports.getMeuMedicoVinculado = async (req, res) => {
+  try {
+    const auxiliarId = req.user.id;
+
+    const auxResult = await db.query('SELECT "idMedico" FROM AUXILIAR WHERE id = $1', [auxiliarId]);
+
+    if (auxResult.rows.length === 0 || !auxResult.rows[0].idMedico) {
+      return res.status(404).json({ message: 'Auxiliar sem médico vinculado ou não encontrado.' });
+    }
+    const medicoId = auxResult.rows[0].idMedico;
+
+    const medicoResult = await db.query(
+      'SELECT id, nome, crm, email, telefone, especialidade FROM MEDICO WHERE id = $1',
+      [medicoId]
+    );
+
+    if (medicoResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Médico vinculado não encontrado.' });
+    }
+
+    res.status(200).json(medicoResult.rows[0]);
+  } catch (error) {
+    console.error('Erro ao buscar médico vinculado:', error);
+    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+  }
+};

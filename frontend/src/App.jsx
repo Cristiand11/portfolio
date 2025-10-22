@@ -19,6 +19,7 @@ import MeuPerfilPacientePage from "./pages/paciente/MeuPerfilPacientePage";
 import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
+import DashboardAuxiliarPage from "./pages/auxiliar/DashboardAuxiliarPage";
 
 function App() {
   return (
@@ -70,6 +71,11 @@ function App() {
           <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
           <Route path="/admin/medicos" element={<MedicosAdminPage />} />
           <Route path="/admin/solicitacoes" element={<SolicitacoesPage />} />
+          {/* Rotas do perfil Auxiliar */}
+          <Route
+            path="/auxiliar/dashboard"
+            element={<DashboardAuxiliarPage />}
+          />
         </Route>
       </Routes>
     </>

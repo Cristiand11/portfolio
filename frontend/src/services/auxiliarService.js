@@ -28,3 +28,19 @@ export const deleteAuxiliar = (id) => {
 export const deleteVariosAuxiliares = (ids) => {
   return api.delete("/auxiliares", { data: { ids } });
 };
+
+/**
+ * Busca pelo médico que o auxiliar está vinculado
+ */
+export const getMeuMedicoVinculado = async () => {
+  try {
+    const response = await api.get("/auxiliares/meu-medico");
+    return response;
+  } catch (error) {
+    console.error(
+      "Erro ao buscar médico vinculado:",
+      error.response?.data || error.message
+    );
+    throw error.response?.data || new Error("Erro ao buscar dados do médico.");
+  }
+};
