@@ -1,38 +1,30 @@
-// src/pages/auxiliar/AgendaPage.jsx
-
 import { useState, useEffect, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { useWindowSize } from "../../hooks/useWindowSize"; // Hook para responsividade
-
-// Serviços
-import { getMeuMedicoVinculado } from "../../services/auxiliarService"; // Para buscar o médico vinculado
+import { useWindowSize } from "../../hooks/useWindowSize";
+import { getMeuMedicoVinculado } from "../../services/auxiliarService";
 import {
-  getConsultas,
+  getMinhasConsultas,
   createConsulta,
   updateConsulta,
   cancelarConsultaAdmin,
   aceitarRemarcacao,
   rejeitarRemarcacao,
   solicitarRemarcacao,
-} from "../../services/consultaService"; // Consultas gerais (com filtro)
-import { getHorariosByMedicoId } from "../../services/horarioService"; // Buscar horários do médico específico
-
-// Componentes Reutilizáveis
+} from "../../services/consultaService";
+import { getHorariosByMedicoId } from "../../services/horarioService";
 import Modal from "../../components/Modal";
 import AgendaLegenda from "../../components/consulta/AgendaLegenda";
 import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import DetalhesConsulta from "../../components/consulta/DetalhesConsulta";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
-import ConfirmModal from "../../components/ConfirmModal"; // Renomeado ou usar o genérico
+import ConfirmModal from "../../components/ConfirmModal";
 import toast from "react-hot-toast";
 import { format, parseISO } from "date-fns";
 
-// Função auxiliar para estilizar eventos (igual à do Médico)
 const getEventStyleAndTitle = (consulta) => {
-  // ... (copie a função getEventStyleAndTitle da AgendamentoPage do Médico aqui)
   const baseTitle = consulta.nomePaciente;
   let styleProps = {};
 
@@ -91,8 +83,6 @@ export default function AgendaPage() {
   const [businessHours, setBusinessHours] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Estados dos Modais (reutilizados da AgendamentoPage do Médico)
   const [modalState, setModalState] = useState({
     isOpen: false,
     initialData: null,
@@ -117,7 +107,6 @@ export default function AgendaPage() {
     isOpen: false,
     consultaId: null,
   });
-
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
@@ -153,7 +142,7 @@ export default function AgendaPage() {
       };
 
       const [consultasRes, horariosRes] = await Promise.all([
-        getConsultas(paramsConsultas), // Usar getConsultas com filtro
+        getMinhasConsultas(paramsConsultas), // Usar getMinhasConsultas com filtro
         getHorariosByMedicoId(medicoId), // Função para buscar horários por ID do médico
       ]);
 
@@ -180,7 +169,6 @@ export default function AgendaPage() {
         });
       setEvents(consultasEvents);
 
-      // Mapear horários (igual ao AgendamentoPage)
       const horariosFormatados = horariosRes.data.map((h) => ({
         daysOfWeek: [h.dia_semana],
         startTime: h.hora_inicio,
@@ -188,7 +176,7 @@ export default function AgendaPage() {
       }));
       setBusinessHours(horariosFormatados);
     } catch (err) {
-      console.error("Erro ao carregar dados da agenda do auxiliar:", err);
+      console.error("Erro ao carregar dados da agenda:", err);
       setError("Não foi possível carregar os dados da agenda.");
       toast.error(
         err.message || "Não foi possível carregar os dados da agenda."
@@ -196,18 +184,13 @@ export default function AgendaPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []); // Dependência vazia, busca uma vez
+  }, []);
 
   useEffect(() => {
     fetchAgendaData();
   }, [fetchAgendaData]);
 
-  // --- Handlers (Copiar/Adaptar da AgendamentoPage do Médico) ---
-  // Certifique-se de que as chamadas de API (createConsulta, updateConsulta, etc.)
-  // funcionem corretamente quando chamadas pelo Auxiliar (backend deve permitir).
-
   const handleDateClick = (arg) => {
-    // Mesma lógica da AgendamentoPage
     const dateStr = arg.dateStr;
     const [datePart, timePartRaw] = dateStr.split("T");
     const hora = timePartRaw ? timePartRaw.substring(0, 5) : "";
@@ -218,7 +201,6 @@ export default function AgendaPage() {
   };
 
   const handleEventClick = (clickInfo) => {
-    // Mesma lógica da AgendamentoPage
     const eventoCompleto = events.find((e) => e.id === clickInfo.event.id);
     if (eventoCompleto) {
       setDetalhesModalState({ isOpen: true, consulta: clickInfo.event });
@@ -226,7 +208,6 @@ export default function AgendaPage() {
   };
 
   const handleCloseModal = () => {
-    // Mesma lógica da AgendamentoPage
     setModalState({ isOpen: false, initialData: null });
     setDetalhesModalState({ isOpen: false, consulta: null });
     setConfirmChangeState({ isOpen: false, eventInfo: null });
@@ -236,14 +217,11 @@ export default function AgendaPage() {
   };
 
   const handleSuccess = () => {
-    // Mesma lógica da AgendamentoPage
     handleCloseModal();
-    fetchAgendaData(); // Recarrega os dados
+    fetchAgendaData();
   };
 
-  // --- Handlers para Drag & Drop e Resize (Copiar da AgendamentoPage) ---
   const handleEventDrop = (dropInfo) => {
-    /* ... lógica AgendamentoPage ... */
     setConfirmChangeState({
       isOpen: true,
       eventInfo: {
@@ -256,7 +234,6 @@ export default function AgendaPage() {
     });
   };
   const handleEventResize = (resizeInfo) => {
-    /* ... lógica AgendamentoPage ... */
     const oldDuration =
       (resizeInfo.oldEvent.end - resizeInfo.oldEvent.start) / 60000;
     const newDuration = (resizeInfo.event.end - resizeInfo.event.start) / 60000;
@@ -272,99 +249,97 @@ export default function AgendaPage() {
     });
   };
   const handleConfirmarResize = async () => {
-    /* ... lógica AgendamentoPage ... */
     const { id, newDuration } = confirmChangeState.eventInfo;
     try {
-      await updateConsulta(id, { duracaoMinutos: newDuration }); // Auxiliar precisa ter permissão
-      toast.success("Duração da consulta atualizada!");
+      await updateConsulta(id, { duracaoMinutos: newDuration });
+      toast.success("Duração da consulta atualizada com sucesso!");
       handleSuccess();
     } catch (error) {
-      /* ... tratamento de erro ... */
       toast.error(
-        error.response?.data?.message || "Erro ao atualizar duração."
+        error.response?.data?.message || "Não foi possível atualizar a duração."
       );
       confirmChangeState.eventInfo.revert();
       handleCloseModal();
     }
   };
   const handleConfirmarMudanca = async () => {
-    /* ... lógica AgendamentoPage ... */
     const { id, newStart } = confirmChangeState.eventInfo;
     try {
-      const novaData = format(newStart, "yyyy-MM-dd");
-      const novaHora = format(newStart, "HH:mm:ss"); // Ajuste formato se backend esperar diferente
-      await solicitarRemarcacao(id, novaData, novaHora); // Usar solicitarRemarcacao aqui? Ou update direto? Verificar backend.
-      toast.success("Remarcação enviada!"); // Ou "Consulta atualizada"
+      const novaData = newStart.toLocaleDateString("en-CA");
+      const novaHora = newStart.toLocaleTimeString("pt-BR", { hour12: false });
+
+      await solicitarRemarcacao(id, novaData, novaHora);
+      toast.success("Solicitação de remarcação enviada ao paciente!");
       handleSuccess();
     } catch (error) {
-      /* ... tratamento de erro ... */
       toast.error(error.response?.data?.message || "Erro ao remarcar.");
       confirmChangeState.eventInfo.revert();
       handleCloseModal();
     }
   };
   const handleCancelarMudanca = () => {
-    /* ... lógica AgendamentoPage ... */
-    if (confirmChangeState.eventInfo?.revert) {
+    if (
+      confirmChangeState.eventInfo &&
+      typeof confirmChangeState.eventInfo.revert === "function"
+    ) {
       confirmChangeState.eventInfo.revert();
     }
     handleCloseModal();
   };
 
-  // --- Handlers Ações do Modal Detalhes (Copiar/Adaptar da AgendamentoPage) ---
   const handleAbrirModalCancelamento = (consultaId) => {
-    /* ... */
     setDetalhesModalState({ isOpen: false, consulta: null });
     setCancelConfirmState({ isOpen: true, consultaId: consultaId });
   };
+
   const executeCancel = async () => {
-    /* ... */
     const consultaId = cancelConfirmState.consultaId;
     try {
-      await cancelarConsultaAdmin(consultaId); // Auxiliar usa a rota de admin? Verificar permissão backend.
-      toast.success("Consulta cancelada!");
+      await cancelarConsultaAdmin(consultaId);
+      toast.success("Consulta cancelada com sucesso!");
       handleSuccess();
     } catch (err) {
-      /* ... tratamento de erro ... */
-      toast.error(err.response?.data?.message || "Erro ao cancelar.");
-      handleCloseModal(); // Fechar o modal de confirmação
-    }
-  };
-  const handleIniciarRemarcacao = (consulta) => {
-    /* ... */
-    setDetalhesModalState({ isOpen: false, consulta: null });
-    setRemarcacaoModalState({ isOpen: true, consulta: consulta });
-  };
-  const handleAceitarRemarcacao = async (id) => {
-    /* ... */
-    try {
-      await aceitarRemarcacao(id);
-      toast.success("Remarcação aceita!");
-      handleSuccess();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Erro.");
-    }
-  };
-  const handleAbrirModalRejeicao = (consultaId) => {
-    /* ... */
-    setDetalhesModalState({ isOpen: false, consulta: null });
-    setRejectConfirmState({ isOpen: true, consultaId: consultaId });
-  };
-  const handleRejeitarRemarcacao = async () => {
-    /* ... */
-    const consultaId = rejectConfirmState.consultaId;
-    try {
-      await rejeitarRemarcacao(consultaId);
-      toast.success("Remarcação rejeitada!");
-      handleSuccess();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Erro.");
+      toast.error(
+        err.response?.data?.message || "Não foi possível cancelar a consulta."
+      );
+      handleCloseModal();
     }
   };
 
-  // Configurações responsivas do FullCalendar (igual à AgendamentoPage)
+  const handleIniciarRemarcacao = (consulta) => {
+    setDetalhesModalState({ isOpen: false, consulta: null });
+    setRemarcacaoModalState({ isOpen: true, consulta: consulta });
+  };
+
+  const handleAceitarRemarcacao = async (id) => {
+    try {
+      await aceitarRemarcacao(id);
+      toast.success("Remarcação aceita com sucesso!");
+      handleSuccess();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erro ao aceitar remarcação.");
+    }
+  };
+
+  const handleAbrirModalRejeicao = (consultaId) => {
+    setDetalhesModalState({ isOpen: false, consulta: null });
+    setRejectConfirmState({ isOpen: true, consultaId: consultaId });
+  };
+
+  const handleRejeitarRemarcacao = async () => {
+    const consultaId = rejectConfirmState.consultaId;
+    try {
+      await rejeitarRemarcacao(consultaId);
+      toast.success("Remarcação rejeitada com sucesso!");
+      handleSuccess();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Erro ao rejeitar remarcação."
+      );
+    }
+  };
+
   const calendarOptions = {
-    /* ... copie as opções responsivas aqui ... */
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: isMobile ? "timeGridDay" : "timeGridWeek",
     headerToolbar: isMobile
@@ -388,7 +363,7 @@ export default function AgendaPage() {
     locale: "pt-br",
     buttonText: { today: "Hoje", month: "Mês", week: "Semana", day: "Dia" },
     allDaySlot: false,
-    height: "auto",
+    height: isMobile ? "auto" : "auto",
     eventTimeFormat: {
       hour: "2-digit",
       minute: "2-digit",
@@ -447,7 +422,6 @@ export default function AgendaPage() {
         >
           <div>
             {" "}
-            {/* Conteúdo igual AgendamentoPage */}
             {confirmChangeState.eventInfo.newStart ? (
               <div>
                 <p>
@@ -489,7 +463,6 @@ export default function AgendaPage() {
             )}
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
               {" "}
-              {/* Botões Padronizados */}
               <button
                 onClick={handleCancelarMudanca}
                 className="bg-gray-200  text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"

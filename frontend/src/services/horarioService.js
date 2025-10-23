@@ -1,7 +1,7 @@
 import api from "./api";
 
 /**
- * Busca os horários de trabalho do médico logado.
+ * Médico busca os seus horários de trabalho.
  */
 export const getMeusHorarios = () => {
   return api.get("/medicos/me/horarios");
@@ -13,4 +13,14 @@ export const getMeusHorarios = () => {
  */
 export const updateMeusHorarios = (horarios) => {
   return api.put("/medicos/me/horarios", horarios);
+};
+
+/**
+ * Qualquer usuário busca o horário de trabalho de um médico
+ */
+export const getHorariosByMedicoId = async (medicoId, queryParams = {}) => {
+  if (!medicoId) {
+    throw new Error("ID do médico é obrigatório para buscar horários.");
+  }
+  return api.get(`/medicos/${medicoId}/horarios`, { params: queryParams });
 };

@@ -20,6 +20,7 @@ import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import DashboardAuxiliarPage from "./pages/auxiliar/DashboardAuxiliarPage";
+import AgendaPage from "./pages/auxiliar/AgendaPage";
 
 function App() {
   return (
@@ -76,6 +77,7 @@ function App() {
             path="/auxiliar/dashboard"
             element={<DashboardAuxiliarPage />}
           />
+          <Route path="/auxiliar/agenda" element={<AgendaPage />} />
         </Route>
       </Routes>
     </>
