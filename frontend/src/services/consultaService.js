@@ -34,6 +34,13 @@ export const getMinhasConsultas = (params) => {
 };
 
 /**
+ * Busca as consultas pelo ID do médico
+ */
+export const getConsultasByMedicoId = async (medicoId, queryParams = {}) => {
+  return api.get(`/medicos/${medicoId}/consultas`, { params: queryParams });
+};
+
+/**
  * Cria/propõe uma nova consulta.
  */
 export const createConsulta = (consultaData) => {

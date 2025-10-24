@@ -7,9 +7,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
 
 import DashboardMedicoPage from "./pages/medico/DashboardMedicoPage";
-import PacientesPage from "./pages/medico/PacientesPage";
+import PacientesMedicoPage from "./pages/medico/PacientesPage";
 import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
-import MeuPerfilPage from "./pages/medico/MeuPerfilPage";
+import MeuPerfilMedicoPage from "./pages/medico/MeuPerfilPage";
 import AgendamentoPage from "./pages/medico/AgendamentoPage";
 import ConsultasMedicoPage from "./pages/medico/ConsultasMedicoPage";
 import HorariosPage from "./pages/medico/HorariosPage";
@@ -20,7 +20,8 @@ import DashboardAdminPage from "./pages/admin/DashboardAdminPage";
 import MedicosAdminPage from "./pages/admin/MedicosAdminPage";
 import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import DashboardAuxiliarPage from "./pages/auxiliar/DashboardAuxiliarPage";
-import AgendaPage from "./pages/auxiliar/AgendaPage";
+import AgendaAuxiliarPage from "./pages/auxiliar/AgendaPage";
+import PacientesAuxiliarPage from "./pages/auxiliar/PacientesPage";
 
 function App() {
   return (
@@ -50,8 +51,8 @@ function App() {
           {/* Rotas do perfil Médico */}
           <Route path="/medico/dashboard" element={<DashboardMedicoPage />} />
           <Route path="/medico/auxiliares" element={<AuxiliaresPage />} />
-          <Route path="/medico/pacientes" element={<PacientesPage />} />
-          <Route path="/medico/meu-perfil" element={<MeuPerfilPage />} />
+          <Route path="/medico/pacientes" element={<PacientesMedicoPage />} />
+          <Route path="/medico/meu-perfil" element={<MeuPerfilMedicoPage />} />
           <Route path="/medico/agendamento" element={<AgendamentoPage />} />
           <Route path="/medico/consultas" element={<ConsultasMedicoPage />} />
           <Route path="/medico/horarios" element={<HorariosPage />} />
@@ -77,7 +78,11 @@ function App() {
             path="/auxiliar/dashboard"
             element={<DashboardAuxiliarPage />}
           />
-          <Route path="/auxiliar/agenda" element={<AgendaPage />} />
+          <Route path="/auxiliar/agenda" element={<AgendaAuxiliarPage />} />
+          <Route
+            path="/auxiliar/pacientes"
+            element={<PacientesAuxiliarPage />}
+          />
         </Route>
       </Routes>
     </>

@@ -6,7 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { getMeuMedicoVinculado } from "../../services/auxiliarService";
 import {
-  getMinhasConsultas,
+  getConsultasByMedicoId,
   createConsulta,
   updateConsulta,
   cancelarConsultaAdmin,
@@ -142,8 +142,8 @@ export default function AgendaPage() {
       };
 
       const [consultasRes, horariosRes] = await Promise.all([
-        getMinhasConsultas(paramsConsultas), // Usar getMinhasConsultas com filtro
-        getHorariosByMedicoId(medicoId), // Função para buscar horários por ID do médico
+        getConsultasByMedicoId(paramsConsultas),
+        getHorariosByMedicoId(medicoId),
       ]);
 
       // Mapear consultas para eventos do FullCalendar (igual ao AgendamentoPage)
