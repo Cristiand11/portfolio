@@ -192,11 +192,11 @@ export default function MedicosAdminPage() {
     setConfirmModalState({
       isOpen: true,
       title: "Confirmar Solicitação",
-      message: `Tem a certeza de que deseja solicitar a inativação do médico ${medico.nome}? Ele terá 5 dias úteis para a reversão.`,
+      message: `Tem a certeza de que deseja solicitar a inativação do médico ${medico.nome}? Ele terá 5 dias úteis para requerer a reversão.`,
       onConfirm: async () => {
         try {
           await solicitarInativacao(medico.id);
-          toast.success("Solicitação de inativação registada!");
+          toast.success("Solicitação de inativação registrada!");
           fetchMedicos();
         } catch (err) {
           toast.error(

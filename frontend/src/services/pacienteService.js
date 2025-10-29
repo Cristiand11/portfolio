@@ -1,7 +1,7 @@
 import api from "./api";
 
 /**
- * Busca a lista paginada de pacientes atendidos pelo médico logado.
+ * Médico busca a lista paginada de pacientes atendidos pelo médico logado.
  */
 export const getMeusPacientes = (page = 1, size = 10, sortConfig) => {
   return api.get("/medicos/me/pacientes", {
@@ -12,6 +12,34 @@ export const getMeusPacientes = (page = 1, size = 10, sortConfig) => {
       order: sortConfig?.direction, // ex: 'asc'
     },
   });
+};
+
+/**
+ * Auxiliar busca a lista paginada de pacientes atendidos pelo médico vinculado
+ */
+export const getPacientesByMedicoId = async (
+  medicoId,
+  page = 0,
+  size = 10,
+  sortConfig = { key: "nome", direction: "asc" }
+) => {
+  try {
+    const params = {
+      page: page,
+      size: size,
+      sort: sortConfig?.key || "nome",
+      order: sortConfig?.direction || "asc",
+    };
+    return api.get(`/medicos/${medicoId}/pacientes`, { params: params });
+  } catch (error) {
+    console.error(
+      `Erro ao buscar pacientes para o médico ${medicoId}:`,
+      error.response?.data || error.message
+    );
+    throw (
+      error.response?.data || new Error("Erro ao buscar pacientes do médico.")
+    );
+  }
 };
 
 /**

@@ -8,6 +8,7 @@ const {
   adminOuMedicoDonoAuth,
   adminOuPacienteAuth,
   medicoAuth,
+  medicoOuAuxiliarAuth,
 } = require('../middleware/authorizationMiddleware');
 
 // Rota POST /api/medicos
@@ -55,5 +56,21 @@ router.get('/me/horarios', authMiddleware, medicoAuth, medicoController.getMeusH
 
 // Rota para qualquer usuário logado ver os horários de trabalho de um médico específico
 router.get('/:id/horarios', authMiddleware, medicoController.getHorariosByMedicoId);
+
+// Rota GET para o médico ou auxiliar visualizar os pacientes atendidos
+router.get(
+  '/:id/pacientes',
+  authMiddleware,
+  medicoOuAuxiliarAuth,
+  medicoController.getPacientesByMedicoId
+);
+
+// Rota GET para o médico ou auxiliar visualizar as consultas pelo ID do médico
+router.get(
+  '/:id/consultas',
+  authMiddleware,
+  medicoOuAuxiliarAuth,
+  medicoController.getConsultasByMedicoId
+);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { parseFilter } = require('../utils/queryUtils');
 const { getDiasUteis } = require('../utils/dateUtils');
 
 const Medico = require('../models/medicoModel');
@@ -284,5 +285,103 @@ exports.getMeusHorarios = async (req, res) => {
     res
       .status(500)
       .json({ message: 'Erro ao buscar seus horários de trabalho.', error: error.message });
+  }
+};
+
+exports.getPacientesByMedicoId = async (req, res) => {
+  try {
+    const { id: medicoId } = req.params;
+    if (!medicoId) {
+      return res.status(400).json({ message: 'ID do médico é obrigatório.' });
+    }
+
+    const page = parseInt(req.query.page, 10) || 1;
+    const size = parseInt(req.query.size, 10) || 10;
+    const sort = req.query.sort;
+    const order = req.query.order;
+    const pacientesPaginados = await Medico.findPacientesAtendidos(
+      medicoId,
+      page,
+      size,
+      sort,
+      order
+    );
+
+    res.status(200).json(pacientesPaginados);
+  } catch (error) {
+    console.error(`Erro ao buscar pacientes para o médico ${req.params.id}:`, error);
+    res
+      .status(500)
+      .json({ message: 'Erro no servidor ao buscar pacientes.', error: error.message });
+  }
+};
+
+exports.getConsultasByMedicoId = async (req, res) => {
+  try {
+    const { id: medicoId } = req.params;
+    const { size = 1000, sort = 'data', order = 'asc', filter } = req.query;
+    const page = 0;
+    const offset = page * size;
+
+    const validSortColumns = {
+      data: 'c.data',
+      hora: 'c.hora',
+      status: 'c.status',
+      nomePaciente: 'p.nome',
+    };
+    const sortKey = validSortColumns[sort] ? sort : 'data';
+    const sortColumn = validSortColumns[sortKey] || validSortColumns.data;
+    const sortOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+    let whereClause = 'WHERE c.medico_id = $1';
+    const queryParams = [medicoId];
+
+    if (filter) {
+      try {
+        const { clause, params } = parseFilter(filter, queryParams.length + 1, {
+          nomePaciente: 'p.nome',
+        });
+        if (clause) {
+          whereClause += ` AND (${clause})`;
+          queryParams.push(...params);
+        }
+      } catch (parseError) {
+        return res.status(400).json({ message: 'Filtro inválido.', error: parseError.message });
+      }
+    }
+
+    queryParams.push(size);
+    queryParams.push(offset);
+
+    // --- Query SQL ---
+    const query = `
+      SELECT
+        c.id,
+        c.data,
+        c.hora,
+        c."duracaoMinutos",
+        c.status,
+        p.nome AS "nomePaciente",
+        c.observacoes,
+        c.paciente_id AS "pacienteId"
+      FROM consulta c
+      JOIN PACIENTE p ON c.paciente_id = p.id 
+      ${whereClause}
+      ORDER BY ${sortColumn} ${sortOrder}, c.hora ${sortOrder} -- Ordena pela coluna correta (p.nome se for o caso)
+      LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length};
+    `;
+
+    // Executa a query principal
+    const consultaResult = await db.query(query, queryParams);
+    const consultas = consultaResult.rows;
+
+    res.status(200).json({
+      contents: consultas,
+    });
+  } catch (error) {
+    console.error(`Erro ao buscar consultas para o médico ${req.params.id}:`, error);
+    res
+      .status(500)
+      .json({ message: 'Erro no servidor ao buscar consultas.', error: error.message });
   }
 };
