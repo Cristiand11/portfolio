@@ -12,14 +12,12 @@ const transporter = nodemailer.createTransport({
 
 async function enviarEmail({ para, assunto, mensagemHtml }) {
   try {
-    console.log('📨 Tentando autenticar no SMTP da Brevo com:', process.env.BREVO_EMAIL);
     const info = await transporter.sendMail({
       from: `"AgendaMed" <cristiandomingues.15@gmail.com>`,
       to: para,
       subject: assunto,
       html: mensagemHtml,
     });
-    console.log('E-mail enviado com sucesso:', info.messageId);
     return info;
   } catch (error) {
     throw error;

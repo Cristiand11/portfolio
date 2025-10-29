@@ -76,7 +76,10 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
           const sqlOperator = operatorMap[operator];
 
           if (sqlOperator) {
-            if (operator === 'isnotnull') {
+            if (field === 'createdDate' && operator === 'eq') {
+              whereClauses.push(`DATE(${sqlField}) = $${values.length + 1}`);
+              values.push(value);
+            } else if (operator === 'isnotnull') {
               whereClauses.push(`${sqlField} ${sqlOperator}`);
             } else {
               whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
