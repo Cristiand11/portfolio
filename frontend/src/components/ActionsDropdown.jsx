@@ -1,21 +1,76 @@
 import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 
 export default function ActionsDropdown({ actions }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPositionStyles, setMenuPositionStyles] = useState({});
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
 
-  // Fecha o dropdown se o usuário clicar fora dele
+  // Função para calcular a posição
+  const calculatePosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuHeightEstimate = actions.length * 35 + 20;
+
+      let top, bottom;
+      let transformOrigin;
+
+      // Decide se abre para cima ou para baixo
+      if (spaceBelow < menuHeightEstimate && spaceAbove > spaceBelow) {
+        // Abre para cima
+        bottom = window.innerHeight - rect.top + 8;
+        transformOrigin = "bottom right";
+      } else {
+        // Abre para baixo (padrão)
+        top = rect.bottom + 8;
+        transformOrigin = "top right";
+      }
+
+      // Define os estilos inline para posicionamento absoluto relativo à janela
+      setMenuPositionStyles({
+        position: "fixed",
+        top: top !== undefined ? `${top}px` : "auto",
+        bottom: bottom !== undefined ? `${bottom}px` : "auto",
+        right: `${window.innerWidth - rect.right}px`,
+        transformOrigin: transformOrigin,
+        zIndex: 50,
+      });
+    }
+  };
+
+  const toggleDropdown = () => {
+    if (!isOpen) {
+      calculatePosition();
+    }
+    setIsOpen(!isOpen);
+  };
+
+  // Recalcula posição se a janela for redimensionada enquanto aberto
+  useEffect(() => {
+    if (isOpen) {
+      const handleResize = () => calculatePosition();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [isOpen]);
+
+  // Fecha com clique fora
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   if (!actions || actions.length === 0) {
     return (
@@ -43,12 +98,41 @@ export default function ActionsDropdown({ actions }) {
     );
   }
 
+  const DropdownMenu = () => (
+    <div
+      // Aplica os estilos de posição calculados
+      style={menuPositionStyles}
+      // Classes de aparência (ajuste a largura se necessário)
+      className={`w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5`}
+      //onClick={(e) => e.stopPropagation()} // Impede que clique no menu feche ele mesmo (se necessário)
+    >
+      <div className="py-1" role="menu" aria-orientation="vertical">
+        {actions.map((action, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              action.onClick();
+              setIsOpen(false);
+            }}
+            className={`${
+              action.className || "text-gray-700"
+            } w-full text-left block px-4 py-2 text-sm hover:bg-gray-100`}
+            role="menuitem"
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <div>
         <button
+          ref={buttonRef}
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={toggleDropdown}
           className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
         >
           Ações
@@ -69,12 +153,14 @@ export default function ActionsDropdown({ actions }) {
 
       {isOpen && (
         <div
-          className="
-            fixed bottom-0 left-0 w-full z-20 bg-white rounded-t-lg shadow-lg
-            md:absolute md:origin-top-right md:right-0 md:mt-2 md:w-56 md:rounded-md md:bottom-auto md:left-auto
-          "
+          className={`absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20 ${menuPositionStyles}`}
         >
-          <div className="py-1">
+          <div
+            className="py-1"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="options-menu"
+          >
             {actions.map((action, index) => (
               <button
                 key={index}
@@ -85,6 +171,7 @@ export default function ActionsDropdown({ actions }) {
                 className={`${
                   action.className || "text-gray-700"
                 } w-full text-left block px-4 py-2 text-sm hover:bg-gray-100`}
+                role="menuitem"
               >
                 {action.label}
               </button>

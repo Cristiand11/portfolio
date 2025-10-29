@@ -155,7 +155,7 @@ export default function PacientesPage() {
                   onClick={() => handleSort("nome")}
                   className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Nome{" "}
+                  Nome
                   <SortIcon
                     direction={
                       sortConfig.key === "nome" ? sortConfig.direction : null
@@ -168,7 +168,7 @@ export default function PacientesPage() {
                   onClick={() => handleSort("email")}
                   className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Email{" "}
+                  Email
                   <SortIcon
                     direction={
                       sortConfig.key === "email" ? sortConfig.direction : null
@@ -184,7 +184,7 @@ export default function PacientesPage() {
                   onClick={() => handleSort("ultimaConsultaData")}
                   className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Última Consulta{" "}
+                  Última Consulta
                   <SortIcon
                     direction={
                       sortConfig.key === "ultimaConsultaData"
