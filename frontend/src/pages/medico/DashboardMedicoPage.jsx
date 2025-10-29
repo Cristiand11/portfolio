@@ -32,7 +32,6 @@ export default function DashboardMedicoPage() {
         });
         setProximaConsulta(proxima);
       } catch (err) {
-        console.error("Erro ao buscar consultas:", err);
         setError("Não foi possível carregar os dados da agenda.");
       } finally {
         setIsLoading(false);

@@ -116,8 +116,10 @@ export default function AgendaPage() {
     try {
       // 1. Buscar o médico vinculado
       const medicoRes = await getMeuMedicoVinculado();
-      setMedicoVinculado(medicoRes.data);
-      const medicoId = medicoRes.data?.id;
+      const medicoData = medicoRes.data;
+      setMedicoVinculado(medicoData);
+
+      const medicoId = medicoData?.id;
 
       if (!medicoId) {
         throw new Error("Médico vinculado não encontrado.");
@@ -142,7 +144,7 @@ export default function AgendaPage() {
       };
 
       const [consultasRes, horariosRes] = await Promise.all([
-        getConsultasByMedicoId(paramsConsultas),
+        getConsultasByMedicoId(medicoId, paramsConsultas),
         getHorariosByMedicoId(medicoId),
       ]);
 
@@ -176,7 +178,6 @@ export default function AgendaPage() {
       }));
       setBusinessHours(horariosFormatados);
     } catch (err) {
-      console.error("Erro ao carregar dados da agenda:", err);
       setError("Não foi possível carregar os dados da agenda.");
       toast.error(
         err.message || "Não foi possível carregar os dados da agenda."

@@ -6,6 +6,8 @@ const Consulta = require('../models/consultaModel');
 const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
 const Paciente = require('../models/pacienteModel');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {
@@ -571,9 +573,19 @@ exports.solicitarRemarcacao = async (req, res) => {
     // Validação de permissão: o usuário precisa ser o paciente ou o médico/auxiliar da consulta
     const isOwner = perfil === 'paciente' && idUsuarioLogado === consulta.paciente_id;
     const isProvider = perfil === 'medico' && idUsuarioLogado === consulta.medico_id;
+    let isAuxiliarOfProvider = false;
 
-    // (A lógica para auxiliar seria mais complexa aqui, vamos simplificar por enquanto)
-    if (!isOwner && !isProvider) {
+    if (perfil === 'auxiliar') {
+      const auxResult = await db.query('SELECT "idMedico" FROM AUXILIAR WHERE id = $1', [
+        idUsuarioLogado,
+      ]);
+      if (auxResult.rows.length > 0 && auxResult.rows[0].idMedico === consulta.medico_id) {
+        isAuxiliarOfProvider = true;
+      }
+    }
+
+    // Verifica se tem permissão (Paciente OU Médico da consulta OU Auxiliar do Médico da consulta)
+    if (!isOwner && !isProvider && !isAuxiliarOfProvider) {
       return res
         .status(403)
         .json({ message: 'Você não tem permissão para alterar esta consulta.' });
@@ -638,7 +650,6 @@ exports.solicitarRemarcacao = async (req, res) => {
     if (perfil === 'paciente') {
       const medico = await Medico.findById(consulta.medico_id);
       const paciente = await Paciente.findById(idUsuarioLogado);
-
       if (medico && paciente) {
         // Monta a mensagem do e-mail
         const assunto = `Nova Solicitação de Remarcação de Consulta: ${paciente.nome}`;
@@ -660,10 +671,9 @@ exports.solicitarRemarcacao = async (req, res) => {
           mensagemHtml: mensagemHtml,
         });
       }
-    } else if (perfil === 'medico') {
-      const medico = await Medico.findById(idUsuarioLogado);
+    } else if (perfil === 'medico' || perfil === 'auxiliar') {
+      const medico = await Medico.findById(consulta.medico_id);
       const paciente = await Paciente.findById(consulta.paciente_id);
-
       if (medico && paciente) {
         // Monta a mensagem do e-mail
         const assunto = `Nova Solicitação de Remarcação de Consulta: ${medico.nome}`;

@@ -95,7 +95,6 @@ export default function AuxiliaresPage() {
         const response = await getMeusAuxiliares(params);
         setAuxiliares(response.data.contents);
       } catch (err) {
-        console.error("Erro ao buscar auxiliares:", err);
         setError("Não foi possível carregar a lista de auxiliares.");
       } finally {
         setIsLoading(false);
@@ -163,7 +162,6 @@ export default function AuxiliaresPage() {
       setRefetchTrigger((prev) => prev + 1);
     } catch (err) {
       toast.error("Não foi possível excluir o auxiliar.");
-      console.error("Erro ao excluir auxiliar:", err);
     } finally {
       setConfirmDeleteState({ isOpen: false, auxiliarId: null });
     }

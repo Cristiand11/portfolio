@@ -62,7 +62,6 @@ export default function DashboardAuxiliarPage() {
       setProximaConsulta(proxima);
       setConsultasRestantes(restantes);
     } catch (err) {
-      console.error("Erro ao carregar dashboard do auxiliar:", err);
       setError("Não foi possível carregar os dados do dashboard.");
       toast.error(
         err.message || "Não foi possível carregar os dados do dashboard."

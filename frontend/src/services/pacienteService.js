@@ -32,10 +32,6 @@ export const getPacientesByMedicoId = async (
     };
     return api.get(`/medicos/${medicoId}/pacientes`, { params: params });
   } catch (error) {
-    console.error(
-      `Erro ao buscar pacientes para o médico ${medicoId}:`,
-      error.response?.data || error.message
-    );
     throw (
       error.response?.data || new Error("Erro ao buscar pacientes do médico.")
     );

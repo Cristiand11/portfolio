@@ -37,10 +37,6 @@ export const getMeuMedicoVinculado = async () => {
     const response = await api.get("/auxiliares/meu-medico");
     return response;
   } catch (error) {
-    console.error(
-      "Erro ao buscar médico vinculado:",
-      error.response?.data || error.message
-    );
     throw error.response?.data || new Error("Erro ao buscar dados do médico.");
   }
 };

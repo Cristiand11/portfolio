@@ -53,7 +53,6 @@ export default function LoginPage() {
       toast.success(
         "Se o e-mail estiver cadastrado, um link de recuperação foi enviado."
       );
-      console.error("Erro no 'Esqueci a senha':", err);
       setIsForgotPassword(false);
       setResetEmail("");
     } finally {

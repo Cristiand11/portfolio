@@ -12,11 +12,6 @@ export const requestPasswordReset = async (email, perfil) => {
 
     return response.data;
   } catch (error) {
-    console.error(
-      "Erro ao solicitar redefinição de senha:",
-      error.response?.data || error.message
-    );
-
     if (error.response && error.response.data) {
       throw error.response.data;
     } else {
@@ -33,10 +28,6 @@ export const resetPassword = async (token, novaSenha) => {
     const response = await api.post("/auth/reset-password", payload);
     return response.data;
   } catch (error) {
-    console.error(
-      "Erro ao redefinir a senha:",
-      error.response?.data || error.message
-    );
     if (error.response && error.response.data) {
       throw error.response.data;
     } else {

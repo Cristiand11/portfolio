@@ -41,7 +41,6 @@ export default function DashboardPacientePage() {
     } catch (err) {
       setError("Não foi possível carregar as suas consultas.");
       toast.error("Não foi possível carregar as suas consultas.");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }

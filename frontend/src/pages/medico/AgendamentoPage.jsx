@@ -160,7 +160,6 @@ export default function AgendamentoPage() {
       }));
       setBusinessHours(horariosFormatados);
     } catch (error) {
-      console.error("Erro ao carregar dados da agenda:", error);
       toast.error("Não foi possível carregar os dados da agenda.");
     } finally {
       setIsLoading(false);

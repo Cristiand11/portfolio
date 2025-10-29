@@ -22,8 +22,6 @@ async function enviarEmail({ para, assunto, mensagemHtml }) {
     console.log('E-mail enviado com sucesso:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Erro ao enviar e-mail:', error.message);
-    console.error('Detalhes SMTP:', error.response);
     throw error;
   }
 }

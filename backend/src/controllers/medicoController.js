@@ -309,7 +309,6 @@ exports.getPacientesByMedicoId = async (req, res) => {
 
     res.status(200).json(pacientesPaginados);
   } catch (error) {
-    console.error(`Erro ao buscar pacientes para o médico ${req.params.id}:`, error);
     res
       .status(500)
       .json({ message: 'Erro no servidor ao buscar pacientes.', error: error.message });
@@ -379,7 +378,6 @@ exports.getConsultasByMedicoId = async (req, res) => {
       contents: consultas,
     });
   } catch (error) {
-    console.error(`Erro ao buscar consultas para o médico ${req.params.id}:`, error);
     res
       .status(500)
       .json({ message: 'Erro no servidor ao buscar consultas.', error: error.message });

@@ -46,7 +46,6 @@ export default function MeuPerfilPage() {
       setPerfilData(response.data.data); // Atualiza o estado com os dados retornados
       toast.success("Perfil atualizado com sucesso!");
     } catch (err) {
-      console.error("Erro ao atualizar perfil:", err);
       toast.error(
         err.response?.data?.message || "Não foi possível atualizar o perfil."
       );

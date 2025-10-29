@@ -152,7 +152,6 @@ exports.getMeuMedicoVinculado = async (req, res) => {
 
     res.status(200).json(medicoResult.rows[0]);
   } catch (error) {
-    console.error('Erro ao buscar médico vinculado:', error);
     res.status(500).json({ message: 'Erro no servidor', error: error.message });
   }
 };
