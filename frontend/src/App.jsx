@@ -5,7 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfileSelectionPage from "./pages/ProfileSelectionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
-
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardMedicoPage from "./pages/medico/DashboardMedicoPage";
 import PacientesMedicoPage from "./pages/medico/PacientesPage";
 import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
@@ -36,6 +36,7 @@ function App() {
         {/* Rotas públicas*/}
         <Route path="/selecionar-perfil" element={<ProfileSelectionPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Rota de fallback: redireciona para a seleção de perfil se não encontrar a rota */}
         <Route path="*" element={<Navigate to="/selecionar-perfil" />} />

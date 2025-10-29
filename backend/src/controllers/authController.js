@@ -106,7 +106,7 @@ exports.forgotPassword = async (req, res) => {
       [user.id, perfil.toLowerCase(), tokenHash, expiresAt]
     );
 
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const resetUrl = `https://portfolio-rosy-xi-kytnkekhkc.vercel.app/reset-password?token=${resetToken}`;
     const assunto = 'Recuperação de Senha - AgendaMed';
     const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link expira em 1 hora.</p>`;
 
