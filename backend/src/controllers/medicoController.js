@@ -361,11 +361,11 @@ exports.getConsultasByMedicoId = async (req, res) => {
         c.hora,
         c."duracaoMinutos",
         c.status,
-        p.nome AS "nomePaciente", -- CORREÇÃO: Busca p.nome e renomeia
+        p.nome AS "nomePaciente",
         c.observacoes,
-        c.paciente_id AS "pacienteId" -- Retorna também o ID do paciente
+        c.paciente_id AS "pacienteId"
       FROM consulta c
-      JOIN PACIENTE p ON c.paciente_id = p.id -- CORREÇÃO: Adiciona o JOIN
+      JOIN PACIENTE p ON c.paciente_id = p.id 
       ${whereClause}
       ORDER BY ${sortColumn} ${sortOrder}, c.hora ${sortOrder} -- Ordena pela coluna correta (p.nome se for o caso)
       LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length};

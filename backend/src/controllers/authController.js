@@ -54,13 +54,13 @@ exports.login = async (req, res) => {
 
     const userResult = await db.query(`SELECT * FROM ${tabela} WHERE email = $1`, [email]);
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ message: 'Credenciais inválidas.' });
+      return res.status(401).json({ message: 'E-mail e/ou Senha informados são inválidos.' });
     }
 
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(senha, user.senha);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciais inválidas.' });
+      return res.status(401).json({ message: 'E-mail e/ou Senha informados são inválidos.' });
     }
 
     const payload = { id: user.id, nome: user.nome, perfil: perfil.toLowerCase() };
