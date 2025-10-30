@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAllMedicos } from "../../services/adminService"; // Reutilizamos o serviço do admin para buscar a lista de médicos
+import { getAllMedicos } from "../../services/adminService";
 import { createConsulta } from "../../services/consultaService";
 import toast from "react-hot-toast";
 import DatePicker from "../DatePicker";
@@ -38,7 +38,7 @@ export default function SolicitarConsultaForm({ onClose, onSuccess }) {
     try {
       await createConsulta(formData);
       toast.success("Solicitação de consulta enviada com sucesso!");
-      onSuccess(); // Fecha o modal e recarrega a lista
+      onSuccess();
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Não foi possível solicitar a consulta."

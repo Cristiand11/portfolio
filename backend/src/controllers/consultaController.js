@@ -19,6 +19,17 @@ exports.createConsulta = async (req, res) => {
       return res.status(400).json({ message: 'O horário da consulta é obrigatório.' });
     }
 
+    const agora = new Date();
+    const dataConsultaProposta = new Date(`${data}T${hora}`);
+
+    // Compara o timestamp exato
+    if (dataConsultaProposta < agora) {
+      return res.status(400).json({
+        message:
+          'Não é possível criar ou solicitar uma consulta para uma data ou hora que já passou.',
+      });
+    }
+
     let idMedico, idPaciente, statusInicial;
     let medico, paciente;
 
@@ -557,11 +568,19 @@ exports.solicitarRemarcacao = async (req, res) => {
       return res.status(400).json({ message: 'A nova data e hora são obrigatórias.' });
     }
 
+    const agora = new Date();
+    const dataRemarcacaoProposta = new Date(`${novaData}T${novaHora}`);
+
+    if (dataRemarcacaoProposta < agora) {
+      return res.status(400).json({
+        message: 'Não é possível remarcar uma consulta para uma data ou hora que já passou.',
+      });
+    }
+
     const consulta = await Consulta.findById(consultaId);
     if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada.' });
 
     const duracao = consulta.duracaoMinutos;
-    const agora = new Date();
     const dataHoraConsulta = new Date(`${consulta.data}T${consulta.hora}`);
 
     if (agora > dataHoraConsulta) {
