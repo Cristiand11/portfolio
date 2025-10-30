@@ -193,9 +193,6 @@ export default function PacientesPage() {
                   />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                CPF
-              </th>{" "}
               <th className="px-6 py-3 text-left">
                 <button
                   onClick={() => handleSort("email")}
@@ -249,9 +246,6 @@ export default function PacientesPage() {
                   >
                     {paciente.nome}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {paciente.cpf}
-                  </td>{" "}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {paciente.email || "N/A"}
                   </td>
