@@ -129,10 +129,6 @@ export default function MedicosAdminPage() {
       const filterString = buildFilterString(appliedFilters);
       if (filterString) params.filter = filterString;
 
-      // --- ADICIONE ESTE CONSOLE.LOG ---
-      console.log("Filtro enviado para getAllMedicos:", params.filter);
-      // --- FIM CONSOLE.LOG ---
-
       const response = await getAllMedicos(params);
       setMedicos(response.data.contents);
     } catch (err) {

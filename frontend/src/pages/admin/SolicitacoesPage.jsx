@@ -2,16 +2,33 @@ import { useState, useEffect, useCallback } from "react";
 import { getAllMedicos, reverterInativacao } from "../../services/adminService";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/ConfirmModal";
+import { differenceInBusinessDays, addBusinessDays, isAfter } from "date-fns";
 
 // Função para calcular o tempo restante (simplificada)
-const calcularTempoRestante = (dataSolicitacao) => {
-  if (!dataSolicitacao) return "N/A";
-  // Lógica de 5 dias úteis é complexa, aqui uma aproximação de 7 dias corridos
-  const dataFinal = new Date(dataSolicitacao);
-  dataFinal.setDate(dataFinal.getDate() + 7);
-  const diff = dataFinal.getTime() - new Date().getTime();
-  const diasRestantes = Math.ceil(diff / (1000 * 3600 * 24));
-  return diasRestantes > 0 ? `${diasRestantes} dia(s)` : "Expirado";
+const calcularTempoRestante = (dataSolicitacaoISO) => {
+  if (!dataSolicitacaoISO) return { texto: "N/A", expirado: true };
+  try {
+    const dataSolicitacao = new Date(dataSolicitacaoISO);
+    const dataLimite = addBusinessDays(dataSolicitacao, 5);
+    const hoje = new Date();
+
+    if (isAfter(hoje, dataLimite)) {
+      return { texto: "Expirado", expirado: true };
+    } else {
+      const diasRestantes = differenceInBusinessDays(dataLimite, hoje);
+      if (diasRestantes <= 0) {
+        return { texto: "Expira Hoje", expirado: false };
+      } else {
+        const plural = diasRestantes === 1 ? "" : "s";
+        return {
+          texto: `${diasRestantes} dia${plural} útil${plural}`,
+          expirado: false,
+        };
+      }
+    }
+  } catch (e) {
+    return { texto: "Erro Data", expirado: true };
+  }
 };
 
 export default function SolicitacoesPage() {
@@ -25,10 +42,17 @@ export default function SolicitacoesPage() {
   const fetchSolicitacoes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getAllMedicos();
-      // Filtra no frontend para pegar apenas médicos com solicitação pendente
+      const response = await getAllMedicos({
+        size: 500,
+        status: "Aguardando Inativação",
+      });
       const pendentes = response.data.contents.filter(
         (m) => m.inativacaoSolicitadaEm
+      );
+      pendentes.sort(
+        (a, b) =>
+          new Date(a.inativacaoSolicitadaEm) -
+          new Date(b.inativacaoSolicitadaEm)
       );
       setSolicitacoes(pendentes);
     } catch (err) {
@@ -115,40 +139,54 @@ export default function SolicitacoesPage() {
                 </td>
               </tr>
             ) : (
-              solicitacoes.map((medico, index) => (
-                <tr key={medico.id}>
-                  <td
-                    className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ${
-                      index === solicitacoes.length - 1 ? "rounded-bl-lg" : ""
-                    }`}
-                  >
-                    {medico.nome}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {medico.crm}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(medico.inativacaoSolicitadaEm).toLocaleDateString(
-                      "pt-BR"
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {calcularTempoRestante(medico.inativacaoSolicitadaEm)}
-                  </td>
-                  <td
-                    className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      index === solicitacoes.length - 1 ? "rounded-br-lg" : ""
-                    }`}
-                  >
-                    <button
-                      onClick={() => handleReverter(medico)}
-                      className="text-indigo-600 hover:text-indigo-900 text-sm font-semibold"
+              solicitacoes.map((medico, index) => {
+                const { texto: tempoRestanteTexto, expirado } =
+                  calcularTempoRestante(medico.inativacaoSolicitadaEm);
+                return (
+                  <tr key={medico.id}>
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ${
+                        index === solicitacoes.length - 1 ? "rounded-bl-lg" : ""
+                      }`}
                     >
-                      Reverter
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      {medico.nome}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {medico.crm}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(
+                        medico.inativacaoSolicitadaEm
+                      ).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span
+                        className={expirado ? "text-red-600 font-semibold" : ""}
+                      >
+                        {tempoRestanteTexto}
+                      </span>
+                    </td>
+
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        index === solicitacoes.length - 1 ? "rounded-br-lg" : ""
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleReverter(medico)}
+                        disabled={expirado}
+                        className={`text-sm font-semibold ${
+                          expirado
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-indigo-600 hover:text-indigo-900"
+                        }`}
+                      >
+                        Reverter
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
