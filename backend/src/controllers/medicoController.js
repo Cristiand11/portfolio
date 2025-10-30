@@ -6,6 +6,50 @@ const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
 const HorarioTrabalho = require('../models/horarioTrabalhoModel');
 
+// Helper para verificar conflitos de horários no mesmo dia
+const verificaConflitosNoDia = (slotsDoDia) => {
+  if (!slotsDoDia || slotsDoDia.length < 2) {
+    return false;
+  }
+
+  // 1. Converte HH:MM para minutos desde a meia-noite para facilitar a comparação
+  const paraMinutos = (horaStr) => {
+    if (!horaStr || typeof horaStr !== 'string') return null;
+    const [h, m] = horaStr.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  };
+
+  const slotsOrdenados = slotsDoDia
+    .map((slot) => ({
+      inicioMin: paraMinutos(slot.hora_inicio),
+      fimMin: paraMinutos(slot.hora_fim),
+      original: slot,
+    }))
+    .filter(
+      (slot) => slot.inicioMin !== null && slot.fimMin !== null && slot.inicioMin < slot.fimMin
+    )
+    .sort((a, b) => a.inicioMin - b.inicioMin);
+
+  if (slotsOrdenados.length < 2) return false;
+
+  // 2. Verifica sobreposição
+  for (let i = 0; i < slotsOrdenados.length - 1; i++) {
+    const slotAtual = slotsOrdenados[i];
+    const proximoSlot = slotsOrdenados[i + 1];
+
+    // Conflito se o fim do atual for DEPOIS do início do próximo
+    if (slotAtual.fimMin > proximoSlot.inicioMin) {
+      console.log(
+        `Conflito detectado: ${slotAtual.original.hora_inicio}-${slotAtual.original.hora_fim} sobrepõe ${proximoSlot.original.hora_inicio}-${proximoSlot.original.hora_fim}`
+      );
+      return true;
+    }
+  }
+
+  return false;
+};
+
 // Helper para validar o formato do CRM
 function isCrmValido(crm) {
   if (!crm) return false;
@@ -198,14 +242,13 @@ exports.getPacientesAtendidos = async (req, res) => {
   }
 };
 
+// Função para o médico visualizar seus próprios dados
 exports.getMe = async (req, res) => {
   try {
     const medicoId = req.user.id;
 
     const medico = await Medico.findById(medicoId);
     if (!medico) {
-      // Este caso é raro, mas pode acontecer se o médico for deletado
-      // e o token ainda estiver válido
       return res.status(404).json({ message: 'Médico não encontrado.' });
     }
 
@@ -216,6 +259,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
+// Função para o médico visualizar os seus auxiliares
 exports.getMeusAuxiliares = async (req, res) => {
   try {
     const { page, size, filter, sort, order } = req.query;
@@ -243,6 +287,7 @@ exports.getMeusAuxiliares = async (req, res) => {
   }
 };
 
+// Função para o médico definir seus horários
 exports.definirMeusHorarios = async (req, res) => {
   try {
     const idMedicoDoToken = req.user.id;
@@ -252,6 +297,51 @@ exports.definirMeusHorarios = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'O corpo da requisição deve ser um array de horários.' });
+    }
+
+    const horariosPorDia = {};
+    const diasDaSemana = [
+      'Domingo',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado',
+    ];
+
+    const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
+
+    for (const horario of horarios) {
+      if (!horario.hora_inicio || !horario.hora_fim) {
+        return res.status(400).json({
+          message: `Horário inválido detectado para ${diasDaSemana[horario.dia_semana]}. Campos não podem ser vazios.`,
+        });
+      }
+      if (!timeRegex.test(horario.hora_inicio) || !timeRegex.test(horario.hora_fim)) {
+        return res.status(400).json({
+          message: `Formato de hora inválido (${horario.hora_inicio} ou ${horario.hora_fim}). Use HH:MM ou HH:MM:SS.`,
+        });
+      }
+      if (horario.hora_inicio >= horario.hora_fim) {
+        return res.status(400).json({
+          message: `Horário de início (${horario.hora_inicio}) deve ser anterior ao horário de fim (${horario.hora_fim}) para ${diasDaSemana[horario.dia_semana]}.`,
+        });
+      }
+
+      if (!horariosPorDia[horario.dia_semana]) {
+        horariosPorDia[horario.dia_semana] = [];
+      }
+      horariosPorDia[horario.dia_semana].push(horario);
+    }
+
+    // Verifica conflitos para cada dia
+    for (const dia in horariosPorDia) {
+      if (verificaConflitosNoDia(horariosPorDia[dia])) {
+        return res.status(409).json({
+          message: `Conflito de horários detectado para ${diasDaSemana[dia]}. Verifique os intervalos, eles não podem se sobrepor.`,
+        });
+      }
     }
 
     await HorarioTrabalho.definirHorarios(idMedicoDoToken, horarios);
@@ -264,6 +354,7 @@ exports.definirMeusHorarios = async (req, res) => {
   }
 };
 
+// Função para buscar os horários do médico pelo seu ID
 exports.getHorariosByMedicoId = async (req, res) => {
   try {
     const { id: medicoId } = req.params;
@@ -275,6 +366,7 @@ exports.getHorariosByMedicoId = async (req, res) => {
   }
 };
 
+// Função para O médico buscar os seus horários
 exports.getMeusHorarios = async (req, res) => {
   try {
     const idMedicoDoToken = req.user.id;
@@ -288,6 +380,7 @@ exports.getMeusHorarios = async (req, res) => {
   }
 };
 
+// Função para buscar os pacientes do médico pelo seu ID
 exports.getPacientesByMedicoId = async (req, res) => {
   try {
     const { id: medicoId } = req.params;
@@ -315,6 +408,7 @@ exports.getPacientesByMedicoId = async (req, res) => {
   }
 };
 
+// Função para buscar as consultas do médico pelo seu ID
 exports.getConsultasByMedicoId = async (req, res) => {
   try {
     const { id: medicoId } = req.params;
