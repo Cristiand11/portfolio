@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getAllMedicos, reverterInativacao } from "../../services/adminService";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/ConfirmModal";
+import Pagination from "../../components/Pagination";
 import { differenceInBusinessDays, addBusinessDays, isAfter } from "date-fns";
 
 // Função para calcular o tempo restante (simplificada)
@@ -19,11 +20,9 @@ const calcularTempoRestante = (dataSolicitacaoISO) => {
       if (diasRestantes <= 0) {
         return { texto: "Expira Hoje", expirado: false };
       } else {
-        const plural = diasRestantes === 1 ? "" : "s";
-        return {
-          texto: `${diasRestantes} dia${plural} útil${plural}`,
-          expirado: false,
-        };
+        const textoDias =
+          diasRestantes === 1 ? "1 dia útil" : `${diasRestantes} dias úteis`;
+        return { texto: textoDias, expirado: false };
       }
     }
   } catch (e) {
@@ -38,33 +37,41 @@ export default function SolicitacoesPage() {
     isOpen: false,
     onConfirm: () => {},
   });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
 
   const fetchSolicitacoes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getAllMedicos({
-        size: 500,
-        status: "Aguardando Inativação",
-      });
-      const pendentes = response.data.contents.filter(
-        (m) => m.inativacaoSolicitadaEm
-      );
-      pendentes.sort(
-        (a, b) =>
-          new Date(a.inativacaoSolicitadaEm) -
-          new Date(b.inativacaoSolicitadaEm)
-      );
-      setSolicitacoes(pendentes);
+      const params = {
+        page: paginaAtual,
+        size: itensPorPagina,
+        filter: "status eq 'Aguardando Inativação' or status eq 'Inativo'",
+        sort: "inativacaoSolicitadaEm",
+        order: "asc",
+      };
+
+      const response = await getAllMedicos(params);
+
+      setSolicitacoes(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
     } catch (err) {
       toast.error("Não foi possível carregar as solicitações.");
+      setSolicitacoes([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [paginaAtual, itensPorPagina]);
 
   useEffect(() => {
     fetchSolicitacoes();
   }, [fetchSolicitacoes]);
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
+  };
 
   const handleReverter = (medico) => {
     setConfirmModalState({
@@ -96,7 +103,7 @@ export default function SolicitacoesPage() {
         onClose={() => setConfirmModalState({ isOpen: false })}
       />
 
-      <h1 className="text-2xl font-semibold text-gray-800">
+      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
         Solicitações de Inativação
       </h1>
 
@@ -191,6 +198,11 @@ export default function SolicitacoesPage() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

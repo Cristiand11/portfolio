@@ -61,22 +61,18 @@ function isCrmValido(crm) {
 // Função para listar todos os médicos
 exports.getAllMedicos = async (req, res) => {
   try {
-    const { page, size, filter } = req.query;
+    const { page, size, filter, filterOp } = req.query;
     const { perfil } = req.user;
 
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
 
-    let filterString = '';
-    if (filter) {
-      filterString = Array.isArray(filter) ? filter.join(' AND ') : filter;
-    }
-
     const { sort, order } = req.query;
-    const result = await Medico.findPaginated(pageNum, sizeNum, filterString, {
+    const result = await Medico.findPaginated(pageNum, sizeNum, filter, {
       perfil,
       sort,
       order,
+      filterOp,
     });
     res.status(200).json(result);
   } catch (error) {

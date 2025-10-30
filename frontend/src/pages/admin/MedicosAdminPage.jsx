@@ -11,6 +11,7 @@ import EditMedicoForm from "../../components/medico/EditMedicoForm";
 import ActionsDropdown from "../../components/ActionsDropdown";
 import DatePicker from "../../components/DatePicker";
 import ConfirmModal from "../../components/ConfirmModal";
+import Pagination from "../../components/Pagination";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -75,8 +76,8 @@ export default function MedicosAdminPage() {
   const [medicos, setMedicos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState({
-    key: "data",
-    direction: "asc",
+    key: "createdDate",
+    direction: "desc",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editModalState, setEditModalState] = useState({
@@ -89,7 +90,7 @@ export default function MedicosAdminPage() {
     message: "",
     onConfirm: () => {},
   });
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
     nome: "",
     crm: "",
@@ -104,6 +105,9 @@ export default function MedicosAdminPage() {
     createdDate: "",
     status: "",
   });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
 
   const buildFilterString = (applied) => {
     const parts = [];
@@ -121,7 +125,8 @@ export default function MedicosAdminPage() {
     setIsLoading(true);
     try {
       const params = {
-        size: 100,
+        page: paginaAtual,
+        size: itensPorPagina,
         sort: sortConfig.key,
         order: sortConfig.direction,
       };
@@ -130,13 +135,16 @@ export default function MedicosAdminPage() {
       if (filterString) params.filter = filterString;
 
       const response = await getAllMedicos(params);
-      setMedicos(response.data.contents);
+      setMedicos(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
     } catch (err) {
       toast.error("Não foi possível carregar a lista de médicos.");
+      setMedicos([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, [sortConfig, appliedFilters]);
+  }, [sortConfig, appliedFilters, paginaAtual, itensPorPagina]);
 
   useEffect(() => {
     fetchMedicos();
@@ -152,6 +160,9 @@ export default function MedicosAdminPage() {
   };
 
   const handleSuccess = () => {
+    setIsModalOpen(false);
+    setEditModalState({ isOpen: false, medico: null });
+    setPaginaAtual(1);
     fetchMedicos();
   };
 
@@ -165,7 +176,10 @@ export default function MedicosAdminPage() {
     setFilters((prev) => ({ ...prev, createdDate: formattedDate }));
   };
 
-  const handleApplyFilters = () => setAppliedFilters(filters);
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+    setPaginaAtual(1);
+  };
 
   const handleClearFilters = () => {
     setFilters({
@@ -182,6 +196,11 @@ export default function MedicosAdminPage() {
       createdDate: "",
       status: "",
     });
+    setPaginaAtual(1);
+  };
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
   };
 
   const handleOpenEditModal = (medico) => {
@@ -519,6 +538,11 @@ export default function MedicosAdminPage() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

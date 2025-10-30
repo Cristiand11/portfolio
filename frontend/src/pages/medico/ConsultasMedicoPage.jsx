@@ -82,7 +82,7 @@ export default function ConsultasMedicoPage() {
     key: "data",
     direction: "asc",
   });
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
     paciente: "",

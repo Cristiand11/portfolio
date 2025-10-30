@@ -27,10 +27,7 @@ exports.login = async (req, res) => {
         if (medico.status === 'Aguardando Inativação' && medico.inativacaoSolicitadaEm) {
           const diasUteisPassados = getDiasUteis(medico.inativacaoSolicitadaEm);
           if (diasUteisPassados > 5) {
-            await db.query(
-              'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NULL WHERE id = $2',
-              ['Inativo', medico.id]
-            );
+            await db.query('UPDATE medico SET status = $1, WHERE id = $2', ['Inativo', medico.id]);
             return res.status(403).json({ message: 'Acesso bloqueado. Sua conta foi inativada.' });
           }
         }

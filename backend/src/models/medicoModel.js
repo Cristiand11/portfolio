@@ -46,6 +46,7 @@ const operatorMap = {
   gt: '>', // Greater than
   lt: '<', // Less than
   ne: '!=', // Not equal
+  or: '||', // or other
   isnotnull: 'IS NOT NULL', // Not null
 };
 
@@ -65,28 +66,57 @@ Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = 
   const values = [];
 
   if (filterString) {
-    const filters = filterString.split(' AND ');
+    const andFilters = filterString.split(' AND ');
 
-    filters.forEach((filter) => {
-      const match = filter.match(/([\w.]+)\s+(eq|co|isnotnull)\s*'?([^']*)'?/);
-      if (match) {
-        const [, field, operator, value] = match;
-        if (Object.keys(allowedFilterFields).includes(field)) {
-          const sqlField = allowedFilterFields[field];
-          const sqlOperator = operatorMap[operator];
+    andFilters.forEach((filterGroup) => {
+      let orClauses = [];
+      let orValues = [];
+      let parseSuccess = true;
 
-          if (sqlOperator) {
-            if (field === 'createdDate' && operator === 'eq') {
-              whereClauses.push(`DATE(${sqlField}) = $${values.length + 1}`);
-              values.push(value);
-            } else if (operator === 'isnotnull') {
-              whereClauses.push(`${sqlField} ${sqlOperator}`);
+      const orParts = filterGroup.split(' or ');
+
+      orParts.forEach((part) => {
+        const match = part.match(/([\w.]+)\s+(eq|co|isnotnull)\s*'?([^']*)'?/);
+
+        if (match) {
+          const [, field, operator, value] = match;
+
+          if (Object.keys(allowedFilterFields).includes(field)) {
+            const sqlField = allowedFilterFields[field];
+            const sqlOperator = operatorMap[operator];
+
+            if (sqlOperator) {
+              let clause;
+              let val;
+
+              if (field === 'createdDate' && operator === 'eq') {
+                clause = `DATE(${sqlField}) = $${values.length + orValues.length + 1}`;
+                val = value;
+              } else if (operator === 'isnotnull') {
+                clause = `${sqlField} ${sqlOperator}`;
+              } else {
+                clause = `${sqlField} ${sqlOperator} $${values.length + orValues.length + 1}`;
+                val = operator === 'co' ? `%${value}%` : value;
+              }
+
+              orClauses.push(clause);
+              if (operator !== 'isnotnull') {
+                orValues.push(val);
+              }
             } else {
-              whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
-              values.push(operator === 'co' ? `%${value}%` : value);
+              parseSuccess = false;
             }
+          } else {
+            parseSuccess = false;
           }
+        } else {
+          parseSuccess = false;
         }
+      });
+
+      if (parseSuccess && orClauses.length > 0) {
+        whereClauses.push(`(${orClauses.join(' OR ')})`);
+        values.push(...orValues);
       }
     });
   }
