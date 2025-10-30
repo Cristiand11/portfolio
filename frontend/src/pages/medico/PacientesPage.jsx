@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getMeusPacientes } from "../../services/pacienteService";
 import Modal from "../../components/Modal";
 import AddPacienteForm from "../../components/paciente/AddPacienteForm";
+import Pagination from "../../components/Pagination";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -74,30 +75,34 @@ export default function PacientesPage() {
   });
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
-
+  const [itensPorPagina] = useState(10);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   const handleSuccess = () => {
     setRefetchTrigger((prev) => prev + 1);
   };
 
-  useEffect(() => {
-    const fetchPacientes = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const response = await getMeusPacientes(paginaAtual, 10, sortConfig);
-        setPacientes(response.data.contents);
-        setTotalPaginas(response.data.totalPages);
-      } catch (err) {
-        setError("Não foi possível carregar a lista de pacientes.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPacientes = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await getMeusPacientes(
+        paginaAtual,
+        itensPorPagina,
+        sortConfig
+      );
+      setPacientes(response.data.contents);
+      setTotalPaginas(response.data.totalPages);
+    } catch (err) {
+      setError("Não foi possível carregar a lista de pacientes.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [paginaAtual, itensPorPagina, sortConfig, refetchTrigger]);
 
+  useEffect(() => {
     fetchPacientes();
-  }, [paginaAtual, sortConfig, refetchTrigger]);
+  }, [fetchPacientes]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -105,12 +110,18 @@ export default function PacientesPage() {
       direction = "desc";
     } else if (sortConfig.key === key && sortConfig.direction === "desc") {
       setSortConfig({ key: "ultimaConsultaData", direction: "desc" });
+      setPaginaAtual(1);
       return;
     }
     setSortConfig({ key, direction });
+    setPaginaAtual(1);
   };
 
-  if (isLoading) {
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
+  };
+
+  if (isLoading && pacientes.length === 0) {
     return <div>Carregando pacientes...</div>;
   }
 
@@ -216,7 +227,11 @@ export default function PacientesPage() {
           </tbody>
         </table>
       </div>
-      {/* Aqui virá a navegação da paginação */}
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
