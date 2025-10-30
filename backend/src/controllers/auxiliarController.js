@@ -16,6 +16,11 @@ exports.createAuxiliar = async (req, res) => {
       data: novoAuxiliar,
     });
   } catch (error) {
+    if (error.code === '23505' && error.constraint === 'auxiliar_email_key') {
+      return res.status(409).json({
+        message: 'Este e-mail já está em uso por outro auxiliar.',
+      });
+    }
     res.status(500).json({ message: 'Erro ao cadastrar auxiliar', error: error.message });
   }
 };
