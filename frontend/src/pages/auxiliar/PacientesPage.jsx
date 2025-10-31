@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import AddPacienteForm from "../../components/paciente/AddPacienteForm";
 import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -79,6 +80,15 @@ export default function PacientesPage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    if (medicoVinculado?.nome) {
+      setPageTitle(`Pacientes - Dr(a). ${medicoVinculado.nome}`);
+    } else {
+      setPageTitle("Pacientes do Médico");
+    }
+  }, [setPageTitle, medicoVinculado]);
 
   useEffect(() => {
     const fetchMedico = async () => {
@@ -172,11 +182,6 @@ export default function PacientesPage() {
       </Modal>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Pacientes - Dr(a). {medicoVinculado?.nome || "..."}
-          </h1>
-        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           disabled={!medicoVinculado}

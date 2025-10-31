@@ -3,6 +3,7 @@ import { getMeusPacientes } from "../../services/pacienteService";
 import Modal from "../../components/Modal";
 import AddPacienteForm from "../../components/paciente/AddPacienteForm";
 import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -77,6 +78,11 @@ export default function PacientesPage() {
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meus Pacientes");
+  }, [setPageTitle]);
 
   const handleSuccess = () => {
     setRefetchTrigger((prev) => prev + 1);
@@ -142,12 +148,7 @@ export default function PacientesPage() {
         />
       </Modal>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Meus Pacientes
-          </h1>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"

@@ -5,12 +5,18 @@ import { getMeuPerfil, updateMeuPerfil } from "../../services/pacienteService";
 import toast from "react-hot-toast";
 import { InputMask } from "@react-input/mask";
 import DatePicker from "../../components/DatePicker";
+import { useOutletContext } from "react-router-dom";
 
 export default function MeuPerfilPage() {
   const { user } = useAuth();
   const [perfilData, setPerfilData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meu Perfil");
+  }, [setPageTitle]);
 
   useEffect(() => {
     if (user?.id) {
@@ -59,7 +65,6 @@ export default function MeuPerfilPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800">Meu Perfil</h1>
       <p className="mt-1 text-gray-600">Atualize suas informações pessoais.</p>
 
       <form

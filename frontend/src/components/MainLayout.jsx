@@ -5,6 +5,7 @@ import { useState } from "react";
 
 export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pageTitle, setPageTitle] = useState("Dashboard");
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -12,20 +13,16 @@ export default function MainLayout() {
 
   return (
     <div className="relative flex h-screen bg-gray-100">
-      {/* 1. Barra Lateral recebe props para controlar a visibilidade */}
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 2. Cabeçalho recebe a função para o botão */}
-        <Header onMenuButtonClick={toggleMobileMenu} />
+        <Header onMenuButtonClick={toggleMobileMenu} title={pageTitle} />
 
-        {/* 3. Área de Conteúdo Principal */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
-          <Outlet />
+          <Outlet context={{ setPageTitle }} />
         </main>
       </div>
 
-      {/* Fundo escuro que aparece quando o menu está aberto no mobile */}
       {isMobileMenuOpen && (
         <div
           onClick={toggleMobileMenu}

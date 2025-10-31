@@ -15,6 +15,7 @@ import SolicitarConsultaForm from "../../components/paciente/SolicitarConsultaFo
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
 import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -104,6 +105,11 @@ export default function ConsultasPacientePage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Minhas Consultas");
+  }, [setPageTitle]);
 
   const buildFilterString = (applied) => {
     const parts = [];
@@ -345,11 +351,6 @@ export default function ConsultasPacientePage() {
       )}
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Minhas Consultas
-          </h1>
-        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"

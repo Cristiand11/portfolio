@@ -4,6 +4,7 @@ import {
   updateMeusHorarios,
 } from "../../services/horarioService";
 import toast from "react-hot-toast";
+import { useOutletContext } from "react-router-dom";
 
 // Helper para os dias da semana
 const DIAS_SEMANA = [
@@ -21,6 +22,11 @@ export default function HorariosPage() {
     DIAS_SEMANA.map((dia) => ({ ...dia, ativo: false, slots: [] }))
   );
   const [isLoading, setIsLoading] = useState(true);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meus Horários");
+  }, [setPageTitle]);
 
   useEffect(() => {
     async function fetchHorarios() {
@@ -107,9 +113,6 @@ export default function HorariosPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Meus Horários
-          </h1>
           <p className="mt-1 text-gray-600">
             Defina seus dias e horários de atendimento.
           </p>

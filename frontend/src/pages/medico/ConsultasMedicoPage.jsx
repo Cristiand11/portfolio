@@ -16,6 +16,7 @@ import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
 import Pagination from "../../components/Pagination";
 import toast from "react-hot-toast";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -109,6 +110,11 @@ export default function ConsultasMedicoPage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Gerenciar Consultas");
+  }, [setPageTitle]);
 
   const buildFilterString = (applied) => {
     const parts = [];
@@ -427,11 +433,6 @@ export default function ConsultasMedicoPage() {
       />
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Gerenciar Consultas
-          </h1>
-        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setIsAgendamentoModalOpen(true)}

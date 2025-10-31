@@ -3,12 +3,18 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getMeuPerfil, updateMeuPerfil } from "../../services/medicoService";
 import { InputMask } from "@react-input/mask";
 import toast from "react-hot-toast";
+import { useOutletContext } from "react-router-dom";
 
 export default function MeuPerfilPage() {
   const { user } = useAuth(); // Pega o usuário logado do contexto
   const [perfilData, setPerfilData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meu Perfil");
+  }, [setPageTitle]);
 
   // Busca os dados do perfil quando o componente é montado
   useEffect(() => {
@@ -58,7 +64,6 @@ export default function MeuPerfilPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800">Meu Perfil</h1>
       <p className="mt-1 text-gray-600">
         Atualize suas informações pessoais e profissionais.
       </p>

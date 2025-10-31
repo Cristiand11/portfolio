@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import ConfirmModal from "../../components/ConfirmModal";
 import Pagination from "../../components/Pagination";
 import { differenceInBusinessDays, addBusinessDays, isAfter } from "date-fns";
+import { useOutletContext } from "react-router-dom";
 
 // Função para calcular o tempo restante (simplificada)
 const calcularTempoRestante = (dataSolicitacaoISO) => {
@@ -40,6 +41,11 @@ export default function SolicitacoesPage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Solicitações de Inativação");
+  }, [setPageTitle]);
 
   const fetchSolicitacoes = useCallback(async () => {
     setIsLoading(true);
@@ -102,10 +108,6 @@ export default function SolicitacoesPage() {
         onConfirm={confirmModalState.onConfirm}
         onClose={() => setConfirmModalState({ isOpen: false })}
       />
-
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Solicitações de Inativação
-      </h1>
 
       <div className="mt-6 overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">

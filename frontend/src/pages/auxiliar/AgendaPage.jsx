@@ -21,6 +21,7 @@ import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import DetalhesConsulta from "../../components/consulta/DetalhesConsulta";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useOutletContext } from "react-router-dom";
 import toast from "react-hot-toast";
 import { format, parseISO } from "date-fns";
 
@@ -109,6 +110,15 @@ export default function AgendaPage() {
   });
   const { width } = useWindowSize();
   const isMobile = width < 768;
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    if (medicoVinculado?.nome) {
+      setPageTitle(`Agenda - Dr(a). ${medicoVinculado.nome}`);
+    } else {
+      setPageTitle("Agenda do Médico");
+    }
+  }, [setPageTitle, medicoVinculado]);
 
   const fetchAgendaData = useCallback(async () => {
     setIsLoading(true);
@@ -518,9 +528,6 @@ export default function AgendaPage() {
         </Modal>
       )}
 
-      <h1 className="text-2xl font-semibold text-gray-800">
-        Agenda - Dr(a). {medicoVinculado?.nome}
-      </h1>
       <AgendaLegenda />
       <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
         <FullCalendar {...calendarOptions} />

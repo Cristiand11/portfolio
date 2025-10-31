@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import AddAuxiliarForm from "../../components/auxiliar/AddAuxiliarForm";
 import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -86,6 +87,11 @@ export default function AuxiliaresPage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meus Auxiliares");
+  }, [setPageTitle]);
 
   const fetchAuxiliares = useCallback(async () => {
     setIsLoading(true);
@@ -230,11 +236,6 @@ export default function AuxiliaresPage() {
       </Modal>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Meus Auxiliares
-          </h1>
-        </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsModalOpen(true)}
