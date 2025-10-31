@@ -6,6 +6,7 @@ import {
 } from "../../services/auxiliarService";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
+import ConfirmModal from "../../components/ConfirmModal";
 import AddAuxiliarForm from "../../components/auxiliar/AddAuxiliarForm";
 import Pagination from "../../components/Pagination";
 import { useOutletContext } from "react-router-dom";
@@ -83,6 +84,9 @@ export default function AuxiliaresPage() {
     isOpen: false,
     auxiliarId: null,
   });
+  const [confirmBulkDeleteState, setConfirmBulkDeleteState] = useState({
+    isOpen: false,
+  });
   const [selectedIds, setSelectedIds] = useState([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(0);
@@ -142,20 +146,21 @@ export default function AuxiliaresPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja excluir ${selectedIds.length} auxiliares?`
-      )
-    ) {
-      try {
-        await deleteVariosAuxiliares(selectedIds);
-        toast.success("Auxiliares excluídos com sucesso!");
-        setSelectedIds([]);
-        handleSuccess();
-      } catch (err) {
-        toast.error("Não foi possível excluir os auxiliares.");
-      }
-    }
+    setConfirmBulkDeleteState({
+      isOpen: true,
+      onConfirm: async () => {
+        try {
+          await deleteVariosAuxiliares(selectedIds);
+          toast.success("Auxiliares excluídos com sucesso!");
+          setSelectedIds([]);
+          handleSuccess();
+        } catch (err) {
+          toast.error("Não foi possível excluir os auxiliares.");
+        } finally {
+          setConfirmBulkDeleteState({ isOpen: false });
+        }
+      },
+    });
   };
 
   const handleSort = (key) => {
@@ -204,36 +209,24 @@ export default function AuxiliaresPage() {
           onSuccess={handleSuccess}
         />
       </Modal>
-      <Modal
+
+      <ConfirmModal
         isOpen={confirmDeleteState.isOpen}
         onClose={() =>
           setConfirmDeleteState({ isOpen: false, auxiliarId: null })
         }
         title="Confirmar Exclusão"
-      >
-        <div>
-          <p className="text-gray-600">
-            Tem certeza de que deseja excluir este auxiliar? Esta ação não
-            poderá ser desfeita.
-          </p>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
-            <button
-              onClick={() =>
-                setConfirmDeleteState({ isOpen: false, auxiliarId: null })
-              }
-              className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={executeDelete}
-              className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700"
-            >
-              Confirmar Exclusão
-            </button>
-          </div>
-        </div>
-      </Modal>
+        message="Tem certeza de que deseja excluir este auxiliar? Esta ação não poderá ser desfeita."
+        onConfirm={executeDelete}
+      />
+
+      <ConfirmModal
+        isOpen={confirmBulkDeleteState.isOpen}
+        onClose={() => setConfirmBulkDeleteState({ isOpen: false })}
+        title={`Confirmar Exclusão em Massa`}
+        message={`Tem certeza de que deseja excluir ${selectedIds.length} auxiliares selecionados? Esta ação não poderá ser desfeita.`}
+        onConfirm={confirmBulkDeleteState.onConfirm}
+      />
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
