@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast, ToastBar } from "react-hot-toast";
 
 import LoginPage from "./pages/LoginPage";
 import ProfileSelectionPage from "./pages/ProfileSelectionPage";
@@ -31,7 +31,40 @@ function App() {
         toastOptions={{
           duration: 5000, // Duração de 5 segundos
         }}
-      />
+      >
+        {(t) => (
+          <ToastBar toast={t}>
+            {({ icon, message }) => (
+              <>
+                {icon}
+                {message}
+                {t.type !== "loading" && (
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+                    aria-label="Fechar"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
       <Routes>
         {/* Rotas públicas*/}
         <Route path="/selecionar-perfil" element={<ProfileSelectionPage />} />
