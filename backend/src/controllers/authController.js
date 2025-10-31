@@ -116,6 +116,9 @@ exports.forgotPassword = async (req, res) => {
 
     await enviarEmail({ para: user.email, assunto, mensagemHtml });
 
+    console.log('BREVO_EMAIL:', process.env.BREVO_EMAIL);
+    console.log('BREVO_SMTP_KEY existe?', !!process.env.BREVO_SMTP_KEY);
+
     res.status(200).json({
       message:
         'Se um usuário com este e-mail existir, um link de redefinição de senha será enviado.',
