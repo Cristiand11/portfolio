@@ -22,6 +22,7 @@ import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import DashboardAuxiliarPage from "./pages/auxiliar/DashboardAuxiliarPage";
 import AgendaAuxiliarPage from "./pages/auxiliar/AgendaPage";
 import PacientesAuxiliarPage from "./pages/auxiliar/PacientesPage";
+import MeuPerfilAuxiliarPage from "./pages/auxiliar/MeuPerfilPage";
 
 function App() {
   return (
@@ -116,6 +117,10 @@ function App() {
           <Route
             path="/auxiliar/pacientes"
             element={<PacientesAuxiliarPage />}
+          />
+          <Route
+            path="/auxiliar/meu-perfil"
+            element={<MeuPerfilAuxiliarPage />}
           />
         </Route>
       </Routes>

@@ -40,3 +40,17 @@ export const getMeuMedicoVinculado = async () => {
     throw error.response?.data || new Error("Erro ao buscar dados do médico.");
   }
 };
+
+/**
+ * Busca pelos dados do próprio auxiliar
+ */
+export const getMeuPerfil = () => {
+  return api.get("/auxiliares/me");
+};
+
+/**
+ * Atualiza os dados do perfil do auxiliar logado.
+ */
+export const updateAuxiliar = (idAuxiliar, auxiliarData) => {
+  return api.put(`/auxiliares/${idAuxiliar}`, auxiliarData);
+};

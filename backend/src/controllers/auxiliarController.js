@@ -47,23 +47,76 @@ exports.getAllAuxiliares = async (req, res) => {
 
 exports.updateAuxiliar = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id: auxiliarId } = req.params;
+    const { id: idUsuarioLogado, perfil } = req.user;
 
-    const auxiliarAtualizado = await Auxiliar.update(id, req.body);
+    if (perfil !== 'auxiliar' || auxiliarId !== idUsuarioLogado) {
+      return res
+        .status(403)
+        .json({ message: 'Você não tem permissão para atualizar este perfil.' });
+    }
 
-    if (!auxiliarAtualizado) {
+    const { nome, email, telefone, dataNascimento, senha } = req.body;
+
+    const fieldsToUpdate = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (nome) {
+      fieldsToUpdate.push(`nome = $${paramIndex++}`);
+      values.push(nome);
+    }
+    if (email) {
+      fieldsToUpdate.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (telefone !== undefined) {
+      fieldsToUpdate.push(`telefone = $${paramIndex++}`);
+      values.push(telefone);
+    }
+    if (dataNascimento !== undefined) {
+      fieldsToUpdate.push(`"dataNascimento" = $${paramIndex++}`);
+      values.push(dataNascimento);
+    }
+
+    if (senha && senha.length > 0) {
+      const salt = await bcrypt.genSalt(10);
+      const senhaHash = await bcrypt.hash(senha, salt);
+      fieldsToUpdate.push(`senha = $${paramIndex++}`);
+      values.push(senhaHash);
+    }
+
+    fieldsToUpdate.push(`"lastModifiedDate" = NOW()`);
+
+    if (fieldsToUpdate.length <= 1) {
+      return res
+        .status(400)
+        .json({ message: 'Nenhum dado válido para atualização foi fornecido.' });
+    }
+
+    values.push(auxiliarId);
+    const whereCondition = `WHERE id = $${paramIndex}`;
+
+    const query = `
+      UPDATE AUXILIAR
+      SET ${fieldsToUpdate.join(', ')}
+      ${whereCondition}
+      RETURNING id, nome, email, telefone, "dataNascimento", "createdDate", "lastModifiedDate"
+    `;
+
+    const { rows } = await db.query(query, values);
+
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'Auxiliar não encontrado.' });
     }
 
-    res.status(200).json({
-      message: 'Dados do auxiliar atualizados com sucesso!',
-      data: auxiliarAtualizado,
-    });
+    res.status(200).json({ message: 'Perfil atualizado com sucesso!', data: rows[0] });
   } catch (error) {
-    res.status(500).json({
-      message: 'Erro ao atualizar dados do auxiliar',
-      error: error.message,
-    });
+    if (error.code === '23505' && error.constraint === 'auxiliar_email_key') {
+      return res.status(409).json({ message: 'Este e-mail já está em uso por outro usuário.' });
+    }
+    console.error('Erro ao atualizar auxiliar:', error);
+    res.status(500).json({ message: 'Erro ao atualizar dados do auxiliar', error: error.message });
   }
 };
 
