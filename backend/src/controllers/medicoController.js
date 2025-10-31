@@ -214,12 +214,11 @@ exports.reverterInativacao = async (req, res) => {
   }
 };
 
-// Função para o médico visualizar os pacientes que ele já atendeu
 exports.getPacientesAtendidos = async (req, res) => {
   try {
     const idMedicoDoToken = req.user.id;
+    const { page, size, sort, order, filter } = req.query;
 
-    const { page, size, sort, order } = req.query;
     const pageNum = parseInt(page || '1', 10);
     const sizeNum = parseInt(size || '10', 10);
 
@@ -228,13 +227,16 @@ exports.getPacientesAtendidos = async (req, res) => {
       pageNum,
       sizeNum,
       sort,
-      order
+      order,
+      filter
     );
+
     res.status(200).json(pacientesPaginados);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: 'Erro ao buscar histórico de pacientes.', error: error.message });
+    res.status(500).json({
+      message: 'Erro ao buscar histórico de pacientes.',
+      error: error.message,
+    });
   }
 };
 

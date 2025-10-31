@@ -4,6 +4,7 @@ import Modal from "../../components/Modal";
 import AddPacienteForm from "../../components/paciente/AddPacienteForm";
 import Pagination from "../../components/Pagination";
 import { useOutletContext } from "react-router-dom";
+import { InputMask } from "@react-input/mask";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -79,6 +80,17 @@ export default function PacientesPage() {
   const [itensPorPagina] = useState(10);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const { setPageTitle } = useOutletContext();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+  });
 
   useEffect(() => {
     setPageTitle("Meus Pacientes");
@@ -86,17 +98,36 @@ export default function PacientesPage() {
 
   const handleSuccess = () => {
     setRefetchTrigger((prev) => prev + 1);
+    setIsModalOpen(false);
+  };
+
+  const buildFilterString = (applied) => {
+    const parts = [];
+    if (applied.nome) parts.push(`nome co '${applied.nome}'`);
+    if (applied.email) parts.push(`email co '${applied.email}'`);
+    if (applied.telefone)
+      parts.push(`telefone co '${applied.telefone.replace(/\D/g, "")}'`);
+    return parts.length ? parts.join(" AND ") : undefined;
   };
 
   const fetchPacientes = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await getMeusPacientes(
-        paginaAtual,
-        itensPorPagina,
-        sortConfig
-      );
+      const params = {
+        page: paginaAtual,
+        size: itensPorPagina,
+        sort: sortConfig.key,
+        order: sortConfig.direction,
+      };
+
+      const filterString = buildFilterString(appliedFilters);
+      if (filterString) {
+        params.filter = filterString;
+      }
+
+      const response = await getMeusPacientes(params);
+
       setPacientes(response.data.contents);
       setTotalPaginas(response.data.totalPages);
     } catch (err) {
@@ -104,7 +135,7 @@ export default function PacientesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [paginaAtual, itensPorPagina, sortConfig, refetchTrigger]);
+  }, [paginaAtual, itensPorPagina, sortConfig, refetchTrigger, appliedFilters]);
 
   useEffect(() => {
     fetchPacientes();
@@ -125,6 +156,22 @@ export default function PacientesPage() {
 
   const handlePageChange = (novaPagina) => {
     setPaginaAtual(novaPagina);
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+    setPaginaAtual(1);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ nome: "", email: "", telefone: "" });
+    setAppliedFilters({ nome: "", email: "", telefone: "" });
+    setPaginaAtual(1);
   };
 
   if (isLoading && pacientes.length === 0) {
@@ -155,6 +202,107 @@ export default function PacientesPage() {
         >
           Adicionar Paciente
         </button>
+      </div>
+
+      <div className="bg-white shadow-md rounded-lg mb-6">
+        <div
+          className="p-4 flex justify-between items-center cursor-pointer"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+        >
+          <h2 className="font-semibold text-gray-700">Filtros</h2>
+          <svg
+            className={`h-6 w-6 transform transition-transform ${
+              isFilterOpen ? "rotate-180" : ""
+            }`}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+
+        {isFilterOpen && (
+          <div className="p-4 border-t space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {" "}
+              {/* 3 Colunas */}
+              <div>
+                <label
+                  htmlFor="nome"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Nome
+                </label>
+                <input
+                  type="text"
+                  name="nome"
+                  id="nome"
+                  value={filters.nome}
+                  onChange={handleFilterChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  placeholder="Buscar por nome..."
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <input
+                  type="text"
+                  name="email"
+                  id="email"
+                  value={filters.email}
+                  onChange={handleFilterChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  placeholder="Buscar por email..."
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="telefone"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Telefone
+                </label>
+                <InputMask
+                  mask="(__) _____-____"
+                  replacement={{ _: /\d/ }}
+                  id="telefone"
+                  name="telefone"
+                  value={filters.telefone}
+                  onChange={handleFilterChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <button
+                onClick={handleClearFilters}
+                className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700"
+              >
+                Filtrar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabela de Pacientes */}
