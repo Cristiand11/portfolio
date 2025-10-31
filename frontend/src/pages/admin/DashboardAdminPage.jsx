@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { getDashboardStats } from "../../services/adminService";
 import toast from "react-hot-toast";
+import { useOutletContext } from "react-router-dom";
 
 export default function DashboardAdminPage() {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meu Dashboard");
+  }, [setPageTitle]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -26,9 +32,6 @@ export default function DashboardAdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Meu Dashboard
-      </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card de Médicos Ativos */}
         <div className="bg-white p-6 rounded-lg shadow-md">

@@ -25,7 +25,6 @@ Medico.create = async (medicoData) => {
   return rows[0];
 };
 
-// Função para buscar médicos
 // Mapeia o nome do filtro da URL para o nome da coluna no banco
 const allowedFilterFields = {
   id: 'id',
@@ -40,12 +39,27 @@ const allowedFilterFields = {
   inativacaoSolicitadaEm: '"inativacaoSolicitadaEm"',
 };
 
+// Mapeia os campos permitidos para filtrar
+const pacienteFilterFields = {
+  nome: 'p.nome',
+  email: 'p.email',
+  telefone: 'p.telefone',
+};
+
+// Mapeia os campos permitidos para ordenar dos pacientes
+const pacienteSortColumns = {
+  nome: 'p.nome',
+  email: 'p.email',
+  ultimaConsultaData: 'MAX(c.data)',
+};
+
 const operatorMap = {
   eq: '=', // Equals
   co: 'ILIKE', // Contains (case-insensitive)
   gt: '>', // Greater than
   lt: '<', // Less than
   ne: '!=', // Not equal
+  or: '||', // or other
   isnotnull: 'IS NOT NULL', // Not null
 };
 
@@ -59,31 +73,64 @@ const colunasOrdenaveis = {
   createdDate: '"createdDate"',
 };
 
+// Função para buscar médicos
 Medico.findPaginated = async (page = 1, size = 10, filterString = '', options = {}) => {
   const offset = (page - 1) * size;
   let whereClauses = [];
   const values = [];
 
   if (filterString) {
-    const filters = filterString.split(' AND ');
+    const andFilters = filterString.split(' AND ');
 
-    filters.forEach((filter) => {
-      const match = filter.match(/([\w.]+)\s+(eq|co|isnotnull)\s*'?([^']*)'?/);
-      if (match) {
-        const [, field, operator, value] = match;
-        if (Object.keys(allowedFilterFields).includes(field)) {
-          const sqlField = allowedFilterFields[field];
-          const sqlOperator = operatorMap[operator];
+    andFilters.forEach((filterGroup) => {
+      let orClauses = [];
+      let orValues = [];
+      let parseSuccess = true;
 
-          if (sqlOperator) {
-            if (operator === 'isnotnull') {
-              whereClauses.push(`${sqlField} ${sqlOperator}`);
+      const orParts = filterGroup.split(' or ');
+
+      orParts.forEach((part) => {
+        const match = part.match(/([\w.]+)\s+(eq|co|isnotnull)\s*'?([^']*)'?/);
+
+        if (match) {
+          const [, field, operator, value] = match;
+
+          if (Object.keys(allowedFilterFields).includes(field)) {
+            const sqlField = allowedFilterFields[field];
+            const sqlOperator = operatorMap[operator];
+
+            if (sqlOperator) {
+              let clause;
+              let val;
+
+              if (field === 'createdDate' && operator === 'eq') {
+                clause = `DATE(${sqlField}) = $${values.length + orValues.length + 1}`;
+                val = value;
+              } else if (operator === 'isnotnull') {
+                clause = `${sqlField} ${sqlOperator}`;
+              } else {
+                clause = `${sqlField} ${sqlOperator} $${values.length + orValues.length + 1}`;
+                val = operator === 'co' ? `%${value}%` : value;
+              }
+
+              orClauses.push(clause);
+              if (operator !== 'isnotnull') {
+                orValues.push(val);
+              }
             } else {
-              whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
-              values.push(operator === 'co' ? `%${value}%` : value);
+              parseSuccess = false;
             }
+          } else {
+            parseSuccess = false;
           }
+        } else {
+          parseSuccess = false;
         }
+      });
+
+      if (parseSuccess && orClauses.length > 0) {
+        whereClauses.push(`(${orClauses.join(' OR ')})`);
+        values.push(...orValues);
       }
     });
   }
@@ -242,17 +289,67 @@ Medico.findById = async (id) => {
 };
 
 // Função para um médico visualizar os pacientes que ele já atendeu
-Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, order) => {
+Medico.findPacientesAtendidos = async (
+  idMedico,
+  page = 1,
+  size = 10,
+  sort,
+  order,
+  filterString = ''
+) => {
   const offset = (page - 1) * size;
 
+  let whereClauses = ['mp.medico_id = $1']; // Filtro base
+  const values = [idMedico]; // Valor base
+
+  if (filterString) {
+    const filters = filterString.split(' AND ');
+    filters.forEach((filter) => {
+      const match = filter.match(/([\w.]+)\s+(eq|co|isnotnull)\s*["']?([^"']*)["']?/);
+      if (match) {
+        const [, field, operator, value] = match;
+
+        // Verifica se o campo é permitido (nome, email, telefone)
+        if (Object.keys(pacienteFilterFields).includes(field)) {
+          const sqlField = pacienteFilterFields[field]; // ex: p.nome
+          const sqlOperator = operatorMap[operator]; // ex: ILIKE
+
+          if (sqlOperator) {
+            whereClauses.push(`${sqlField} ${sqlOperator} $${values.length + 1}`);
+            let finalValue = value;
+
+            // Se for 'co' (contains/ILIKE), adiciona os curingas
+            if (operator === 'co') {
+              // Se for telefone, limpa a máscara (assumindo que o banco guarda só números)
+              if (field === 'telefone') {
+                finalValue = value.replace(/\D/g, '');
+                // Se o banco também tiver máscara, comente a linha acima
+              }
+              finalValue = `%${finalValue}%`;
+            }
+            values.push(finalValue);
+          }
+        }
+      }
+    });
+    console.log('>>> Where clauses construídas:', whereClauses);
+    console.log('>>> Values para query:', values);
+  }
+  const whereClause = `WHERE ${whereClauses.join(' AND ')}`;
+
   // A query de contagem agora olha para a tabela de vínculo
-  const countQuery = `SELECT COUNT(*) FROM MEDICO_PACIENTE WHERE medico_id = $1`;
-  const countResult = await db.query(countQuery, [idMedico]);
+  const countQuery = `
+    SELECT COUNT(DISTINCT p.id) 
+    FROM paciente p
+    JOIN MEDICO_PACIENTE mp ON p.id = mp.paciente_id
+    ${whereClause}
+  `;
+  const countResult = await db.query(countQuery, values);
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
   const sortKey = sort || 'nome';
   const orderDirection = (order || 'asc').toUpperCase();
-  const orderByClause = colunasOrdenaveis[sortKey] || 'p.nome';
+  const orderByClause = pacienteSortColumns[sortKey] || 'p.nome';
 
   // A query principal agora usa a tabela de vínculo como base e um LEFT JOIN
   const dataQuery = `
@@ -262,12 +359,12 @@ Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, orde
         FROM paciente p
         JOIN MEDICO_PACIENTE mp ON p.id = mp.paciente_id
         LEFT JOIN consulta c ON p.id = c.paciente_id AND c.medico_id = mp.medico_id
-        WHERE mp.medico_id = $1
+        ${whereClause}
         GROUP BY p.id
         ORDER BY ${orderByClause} ${orderDirection}
-        LIMIT $2 OFFSET $3
+        LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
-  const { rows } = await db.query(dataQuery, [idMedico, size, offset]);
+  const { rows } = await db.query(dataQuery, [...values, size, offset]);
 
   const formattedRows = rows.map((row) => {
     if (row.ultimaConsultaData) {
@@ -277,12 +374,7 @@ Medico.findPacientesAtendidos = async (idMedico, page = 1, size = 10, sort, orde
   });
 
   const totalPages = Math.ceil(totalElements / size);
-
-  return {
-    totalPages,
-    totalElements,
-    contents: formattedRows,
-  };
+  return { totalPages, totalElements, contents: formattedRows };
 };
 
 // Função para criar um vínculo entre médico e paciente

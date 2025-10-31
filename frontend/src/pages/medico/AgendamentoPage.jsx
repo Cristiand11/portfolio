@@ -19,6 +19,7 @@ import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import DetalhesConsulta from "../../components/consulta/DetalhesConsulta";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import toast from "react-hot-toast";
+import { useOutletContext } from "react-router-dom";
 
 const getEventStyleAndTitle = (consulta) => {
   const baseTitle = consulta.nomePaciente;
@@ -103,6 +104,11 @@ export default function AgendamentoPage() {
   });
   const { width } = useWindowSize();
   const isMobile = width < 768;
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Minha Agenda");
+  }, [setPageTitle]);
 
   const fetchAgendaData = useCallback(async () => {
     setIsLoading(true);
@@ -160,7 +166,6 @@ export default function AgendamentoPage() {
       }));
       setBusinessHours(horariosFormatados);
     } catch (error) {
-      console.error("Erro ao carregar dados da agenda:", error);
       toast.error("Não foi possível carregar os dados da agenda.");
     } finally {
       setIsLoading(false);
@@ -574,7 +579,6 @@ export default function AgendamentoPage() {
         </Modal>
       )}
 
-      <h1 className="text-2xl font-semibold text-gray-800">Minha Agenda</h1>
       <AgendaLegenda />
       <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
         <FullCalendar {...calendarOptions} />

@@ -23,8 +23,8 @@ export default function AddAuxiliarForm({ onClose, onSuccess }) {
     try {
       await createAuxiliar(formData);
       toast.success("Auxiliar cadastrado com sucesso!");
-      onSuccess(); // Recarrega a lista na página principal
-      onClose(); // Fecha o modal
+      onSuccess();
+      onClose();
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Não foi possível cadastrar o auxiliar.";

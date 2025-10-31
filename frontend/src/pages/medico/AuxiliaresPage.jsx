@@ -6,7 +6,10 @@ import {
 } from "../../services/auxiliarService";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
+import ConfirmModal from "../../components/ConfirmModal";
 import AddAuxiliarForm from "../../components/auxiliar/AddAuxiliarForm";
+import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -81,31 +84,50 @@ export default function AuxiliaresPage() {
     isOpen: false,
     auxiliarId: null,
   });
+  const [confirmBulkDeleteState, setConfirmBulkDeleteState] = useState({
+    isOpen: false,
+  });
   const [selectedIds, setSelectedIds] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
 
   useEffect(() => {
-    const fetchAuxiliares = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const params = {
-          sort: sortConfig.key,
-          order: sortConfig.direction,
-        };
-        const response = await getMeusAuxiliares(params);
-        setAuxiliares(response.data.contents);
-      } catch (err) {
-        console.error("Erro ao buscar auxiliares:", err);
-        setError("Não foi possível carregar a lista de auxiliares.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    setPageTitle("Meus Auxiliares");
+  }, [setPageTitle]);
 
+  const fetchAuxiliares = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const params = {
+        page: paginaAtual,
+        size: itensPorPagina,
+        sort: sortConfig.key,
+        order: sortConfig.direction,
+      };
+      const response = await getMeusAuxiliares(params);
+
+      setAuxiliares(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
+      setSelectedIds([]);
+    } catch (err) {
+      setError("Não foi possível carregar a lista de auxiliares.");
+      setAuxiliares([]);
+      setTotalPaginas(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refetchTrigger, sortConfig, paginaAtual, itensPorPagina]);
+
+  useEffect(() => {
     fetchAuxiliares();
-  }, [refetchTrigger, sortConfig]);
+  }, [fetchAuxiliares]);
 
   const handleSuccess = () => {
+    setIsModalOpen(false);
+    setPaginaAtual(1);
     setRefetchTrigger((prev) => prev + 1);
   };
 
@@ -124,20 +146,21 @@ export default function AuxiliaresPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (
-      window.confirm(
-        `Tem certeza de que deseja excluir ${selectedIds.length} auxiliares?`
-      )
-    ) {
-      try {
-        await deleteVariosAuxiliares(selectedIds);
-        toast.success("Auxiliares excluídos com sucesso!");
-        setSelectedIds([]);
-        handleSuccess();
-      } catch (err) {
-        toast.error("Não foi possível excluir os auxiliares.");
-      }
-    }
+    setConfirmBulkDeleteState({
+      isOpen: true,
+      onConfirm: async () => {
+        try {
+          await deleteVariosAuxiliares(selectedIds);
+          toast.success("Auxiliares excluídos com sucesso!");
+          setSelectedIds([]);
+          handleSuccess();
+        } catch (err) {
+          toast.error("Não foi possível excluir os auxiliares.");
+        } finally {
+          setConfirmBulkDeleteState({ isOpen: false });
+        }
+      },
+    });
   };
 
   const handleSort = (key) => {
@@ -146,9 +169,15 @@ export default function AuxiliaresPage() {
       direction = "desc";
     } else if (sortConfig.key === key && sortConfig.direction === "desc") {
       setSortConfig({ key: "nome", direction: "asc" });
+      setPaginaAtual(1);
       return;
     }
     setSortConfig({ key, direction });
+    setPaginaAtual(1);
+  };
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
   };
 
   const handleDeleteClick = (auxiliarId) => {
@@ -163,7 +192,6 @@ export default function AuxiliaresPage() {
       setRefetchTrigger((prev) => prev + 1);
     } catch (err) {
       toast.error("Não foi possível excluir o auxiliar.");
-      console.error("Erro ao excluir auxiliar:", err);
     } finally {
       setConfirmDeleteState({ isOpen: false, auxiliarId: null });
     }
@@ -181,43 +209,26 @@ export default function AuxiliaresPage() {
           onSuccess={handleSuccess}
         />
       </Modal>
-      <Modal
+
+      <ConfirmModal
         isOpen={confirmDeleteState.isOpen}
         onClose={() =>
           setConfirmDeleteState({ isOpen: false, auxiliarId: null })
         }
         title="Confirmar Exclusão"
-      >
-        <div>
-          <p className="text-gray-600">
-            Tem certeza de que deseja excluir este auxiliar? Esta ação não
-            poderá ser desfeita.
-          </p>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
-            <button
-              onClick={() =>
-                setConfirmDeleteState({ isOpen: false, auxiliarId: null })
-              }
-              className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={executeDelete}
-              className="bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700"
-            >
-              Confirmar Exclusão
-            </button>
-          </div>
-        </div>
-      </Modal>
+        message="Tem certeza de que deseja excluir este auxiliar? Esta ação não poderá ser desfeita."
+        onConfirm={executeDelete}
+      />
+
+      <ConfirmModal
+        isOpen={confirmBulkDeleteState.isOpen}
+        onClose={() => setConfirmBulkDeleteState({ isOpen: false })}
+        title={`Confirmar Exclusão em Massa`}
+        message={`Tem certeza de que deseja excluir ${selectedIds.length} auxiliares selecionados? Esta ação não poderá ser desfeita.`}
+        onConfirm={confirmBulkDeleteState.onConfirm}
+      />
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Meus Auxiliares
-          </h1>
-        </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsModalOpen(true)}
@@ -236,7 +247,7 @@ export default function AuxiliaresPage() {
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-        {isLoading ? (
+        {isLoading && auxiliares.length === 0 ? (
           <p className="p-10 text-center text-gray-500">Carregando...</p>
         ) : error ? (
           <p className="p-10 text-center text-red-600">{error}</p>
@@ -290,13 +301,7 @@ export default function AuxiliaresPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {isLoading ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-10">
-                    Carregando...
-                  </td>
-                </tr>
-              ) : auxiliares.length > 0 ? (
+              {auxiliares.length > 0 ? (
                 auxiliares.map((aux) => (
                   <tr key={aux.id}>
                     <td className="p-4 py-4 w-16 text-center">
@@ -350,6 +355,11 @@ export default function AuxiliaresPage() {
           </table>
         )}
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

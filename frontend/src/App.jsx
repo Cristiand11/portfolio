@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast, ToastBar } from "react-hot-toast";
 
 import LoginPage from "./pages/LoginPage";
 import ProfileSelectionPage from "./pages/ProfileSelectionPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
-
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardMedicoPage from "./pages/medico/DashboardMedicoPage";
 import PacientesMedicoPage from "./pages/medico/PacientesPage";
 import AuxiliaresPage from "./pages/medico/AuxiliaresPage";
@@ -22,6 +22,7 @@ import SolicitacoesPage from "./pages/admin/SolicitacoesPage";
 import DashboardAuxiliarPage from "./pages/auxiliar/DashboardAuxiliarPage";
 import AgendaAuxiliarPage from "./pages/auxiliar/AgendaPage";
 import PacientesAuxiliarPage from "./pages/auxiliar/PacientesPage";
+import MeuPerfilAuxiliarPage from "./pages/auxiliar/MeuPerfilPage";
 
 function App() {
   return (
@@ -31,11 +32,45 @@ function App() {
         toastOptions={{
           duration: 5000, // Duração de 5 segundos
         }}
-      />
+      >
+        {(t) => (
+          <ToastBar toast={t}>
+            {({ icon, message }) => (
+              <>
+                {icon}
+                {message}
+                {t.type !== "loading" && (
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+                    aria-label="Fechar"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
       <Routes>
         {/* Rotas públicas*/}
         <Route path="/selecionar-perfil" element={<ProfileSelectionPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Rota de fallback: redireciona para a seleção de perfil se não encontrar a rota */}
         <Route path="*" element={<Navigate to="/selecionar-perfil" />} />
@@ -82,6 +117,10 @@ function App() {
           <Route
             path="/auxiliar/pacientes"
             element={<PacientesAuxiliarPage />}
+          />
+          <Route
+            path="/auxiliar/meu-perfil"
+            element={<MeuPerfilAuxiliarPage />}
           />
         </Route>
       </Routes>

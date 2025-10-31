@@ -3,6 +3,7 @@ import { getMinhasConsultas } from "../../services/consultaService";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
+import { useOutletContext } from "react-router-dom";
 import DetalhesConsultaPaciente from "../../components/paciente/DetalhesConsultaPaciente";
 
 export default function DashboardPacientePage() {
@@ -15,6 +16,11 @@ export default function DashboardPacientePage() {
     isOpen: false,
     consulta: null,
   });
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meu Dashboard");
+  }, [setPageTitle]);
 
   const fetchConsultas = useCallback(async () => {
     setIsLoading(true);
@@ -41,7 +47,6 @@ export default function DashboardPacientePage() {
     } catch (err) {
       setError("Não foi possível carregar as suas consultas.");
       toast.error("Não foi possível carregar as suas consultas.");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +119,6 @@ export default function DashboardPacientePage() {
         />
       </Modal>
 
-      <h1 className="text-2xl font-semibold text-gray-800">Meu Dashboard</h1>
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card de Próximas Consultas */}
         <div className="bg-white p-6 rounded-lg shadow-md">

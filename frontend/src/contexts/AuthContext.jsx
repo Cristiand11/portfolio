@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
         const decodedUser = jwtDecode(token);
         setUser(decodedUser);
       } catch (error) {
-        console.error("Token inválido ou expirado:", error);
         localStorage.removeItem("authToken");
         setToken(null);
         setUser(null);
@@ -61,7 +60,6 @@ export const AuthProvider = ({ children }) => {
         navigate("/");
       }
     } catch (error) {
-      console.error("Falha no login", error);
       throw error;
     }
   };

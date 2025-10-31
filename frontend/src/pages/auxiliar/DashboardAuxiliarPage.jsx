@@ -3,6 +3,7 @@ import { getMeuMedicoVinculado } from "../../services/auxiliarService";
 import { getMinhasConsultas } from "../../services/consultaService";
 import toast from "react-hot-toast";
 import { format, parseISO, isFuture, startOfDay, endOfDay } from "date-fns";
+import { useOutletContext } from "react-router-dom";
 
 export default function DashboardAuxiliarPage() {
   const [medicoVinculado, setMedicoVinculado] = useState(null);
@@ -11,6 +12,15 @@ export default function DashboardAuxiliarPage() {
   const [consultasRestantes, setConsultasRestantes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    if (medicoVinculado?.nome) {
+      setPageTitle(`Dashboard - Dr(a). ${medicoVinculado.nome}`);
+    } else {
+      setPageTitle("Dashboard do Médico");
+    }
+  }, [setPageTitle, medicoVinculado]);
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
@@ -62,7 +72,6 @@ export default function DashboardAuxiliarPage() {
       setProximaConsulta(proxima);
       setConsultasRestantes(restantes);
     } catch (err) {
-      console.error("Erro ao carregar dashboard do auxiliar:", err);
       setError("Não foi possível carregar os dados do dashboard.");
       toast.error(
         err.message || "Não foi possível carregar os dados do dashboard."
@@ -86,10 +95,6 @@ export default function DashboardAuxiliarPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Dashboard - Dr(a). {medicoVinculado?.nome || "Médico"}
-      </h1>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Card Consultas Restantes */}
         <div className="bg-white p-6 rounded-lg shadow-md">

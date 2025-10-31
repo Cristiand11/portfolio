@@ -2,16 +2,33 @@ import { useState, useEffect, useCallback } from "react";
 import { getAllMedicos, reverterInativacao } from "../../services/adminService";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/ConfirmModal";
+import Pagination from "../../components/Pagination";
+import { differenceInBusinessDays, addBusinessDays, isAfter } from "date-fns";
+import { useOutletContext } from "react-router-dom";
 
 // Função para calcular o tempo restante (simplificada)
-const calcularTempoRestante = (dataSolicitacao) => {
-  if (!dataSolicitacao) return "N/A";
-  // Lógica de 5 dias úteis é complexa, aqui uma aproximação de 7 dias corridos
-  const dataFinal = new Date(dataSolicitacao);
-  dataFinal.setDate(dataFinal.getDate() + 7);
-  const diff = dataFinal.getTime() - new Date().getTime();
-  const diasRestantes = Math.ceil(diff / (1000 * 3600 * 24));
-  return diasRestantes > 0 ? `${diasRestantes} dia(s)` : "Expirado";
+const calcularTempoRestante = (dataSolicitacaoISO) => {
+  if (!dataSolicitacaoISO) return { texto: "N/A", expirado: true };
+  try {
+    const dataSolicitacao = new Date(dataSolicitacaoISO);
+    const dataLimite = addBusinessDays(dataSolicitacao, 5);
+    const hoje = new Date();
+
+    if (isAfter(hoje, dataLimite)) {
+      return { texto: "Expirado", expirado: true };
+    } else {
+      const diasRestantes = differenceInBusinessDays(dataLimite, hoje);
+      if (diasRestantes <= 0) {
+        return { texto: "Expira Hoje", expirado: false };
+      } else {
+        const textoDias =
+          diasRestantes === 1 ? "1 dia útil" : `${diasRestantes} dias úteis`;
+        return { texto: textoDias, expirado: false };
+      }
+    }
+  } catch (e) {
+    return { texto: "Erro Data", expirado: true };
+  }
 };
 
 export default function SolicitacoesPage() {
@@ -21,26 +38,46 @@ export default function SolicitacoesPage() {
     isOpen: false,
     onConfirm: () => {},
   });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Solicitações de Inativação");
+  }, [setPageTitle]);
 
   const fetchSolicitacoes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getAllMedicos();
-      // Filtra no frontend para pegar apenas médicos com solicitação pendente
-      const pendentes = response.data.contents.filter(
-        (m) => m.inativacaoSolicitadaEm
-      );
-      setSolicitacoes(pendentes);
+      const params = {
+        page: paginaAtual,
+        size: itensPorPagina,
+        filter: "status eq 'Aguardando Inativação' or status eq 'Inativo'",
+        sort: "inativacaoSolicitadaEm",
+        order: "asc",
+      };
+
+      const response = await getAllMedicos(params);
+
+      setSolicitacoes(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
     } catch (err) {
       toast.error("Não foi possível carregar as solicitações.");
+      setSolicitacoes([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [paginaAtual, itensPorPagina]);
 
   useEffect(() => {
     fetchSolicitacoes();
   }, [fetchSolicitacoes]);
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
+  };
 
   const handleReverter = (medico) => {
     setConfirmModalState({
@@ -71,10 +108,6 @@ export default function SolicitacoesPage() {
         onConfirm={confirmModalState.onConfirm}
         onClose={() => setConfirmModalState({ isOpen: false })}
       />
-
-      <h1 className="text-2xl font-semibold text-gray-800">
-        Solicitações de Inativação
-      </h1>
 
       <div className="mt-6 overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
@@ -115,44 +148,63 @@ export default function SolicitacoesPage() {
                 </td>
               </tr>
             ) : (
-              solicitacoes.map((medico, index) => (
-                <tr key={medico.id}>
-                  <td
-                    className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ${
-                      index === solicitacoes.length - 1 ? "rounded-bl-lg" : ""
-                    }`}
-                  >
-                    {medico.nome}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {medico.crm}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(medico.inativacaoSolicitadaEm).toLocaleDateString(
-                      "pt-BR"
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {calcularTempoRestante(medico.inativacaoSolicitadaEm)}
-                  </td>
-                  <td
-                    className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      index === solicitacoes.length - 1 ? "rounded-br-lg" : ""
-                    }`}
-                  >
-                    <button
-                      onClick={() => handleReverter(medico)}
-                      className="text-indigo-600 hover:text-indigo-900 text-sm font-semibold"
+              solicitacoes.map((medico, index) => {
+                const { texto: tempoRestanteTexto, expirado } =
+                  calcularTempoRestante(medico.inativacaoSolicitadaEm);
+                return (
+                  <tr key={medico.id}>
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ${
+                        index === solicitacoes.length - 1 ? "rounded-bl-lg" : ""
+                      }`}
                     >
-                      Reverter
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      {medico.nome}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {medico.crm}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(
+                        medico.inativacaoSolicitadaEm
+                      ).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span
+                        className={expirado ? "text-red-600 font-semibold" : ""}
+                      >
+                        {tempoRestanteTexto}
+                      </span>
+                    </td>
+
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        index === solicitacoes.length - 1 ? "rounded-br-lg" : ""
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleReverter(medico)}
+                        disabled={expirado}
+                        className={`text-sm font-semibold ${
+                          expirado
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-indigo-600 hover:text-indigo-900"
+                        }`}
+                      >
+                        Reverter
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

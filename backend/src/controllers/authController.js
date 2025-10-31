@@ -7,11 +7,12 @@ const { enviarEmail } = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// --- FUNÇÃO PARA REALIZAR O LOGIN ---
 exports.login = async (req, res) => {
   try {
     const { email, senha, perfil } = req.body;
     if (!email || !senha || !perfil) {
-      return res.status(400).json({ message: 'Email, senha e perfil são obrigatórios.' });
+      return res.status(400).json({ message: 'Preencha todos os campos para continuar.' });
     }
 
     if (perfil.toLowerCase() === 'medico') {
@@ -20,21 +21,14 @@ exports.login = async (req, res) => {
         const medico = medicoResult.rows[0];
 
         if (medico.status === 'Inativo') {
-          return res
-            .status(403)
-            .json({ message: 'Acesso bloqueado. Esta conta de médico está inativa.' });
+          return res.status(403).json({ message: 'Acesso bloqueado. Sua conta foi inativada.' });
         }
 
         if (medico.status === 'Aguardando Inativação' && medico.inativacaoSolicitadaEm) {
           const diasUteisPassados = getDiasUteis(medico.inativacaoSolicitadaEm);
           if (diasUteisPassados > 5) {
-            await db.query(
-              'UPDATE medico SET status = $1, "inativacaoSolicitadaEm" = NULL WHERE id = $2',
-              ['Inativo', medico.id]
-            );
-            return res
-              .status(403)
-              .json({ message: 'Acesso bloqueado. Sua conta foi inativada permanentemente.' });
+            await db.query('UPDATE medico SET status = $1, WHERE id = $2', ['Inativo', medico.id]);
+            return res.status(403).json({ message: 'Acesso bloqueado. Sua conta foi inativada.' });
           }
         }
       }
@@ -49,18 +43,24 @@ exports.login = async (req, res) => {
 
     const tabela = tabelas[perfil.toLowerCase()];
     if (!tabela) {
-      return res.status(400).json({ message: 'Perfil inválido.' });
+      return res.status(400).json({
+        message: 'O tipo de perfil informado não é reconhecido. Verifique e tente novamente.',
+      });
     }
 
     const userResult = await db.query(`SELECT * FROM ${tabela} WHERE email = $1`, [email]);
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ message: 'E-mail e/ou Senha informados são inválidos.' });
+      return res.status(401).json({
+        message: 'E-mail ou senha incorretos. Verifique suas informações e tente novamente.',
+      });
     }
 
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(senha, user.senha);
     if (!isMatch) {
-      return res.status(401).json({ message: 'E-mail e/ou Senha informados são inválidos.' });
+      return res.status(401).json({
+        message: 'E-mail ou senha incorretos. Verifique suas informações e tente novamente.',
+      });
     }
 
     const payload = { id: user.id, nome: user.nome, perfil: perfil.toLowerCase() };
@@ -68,7 +68,10 @@ exports.login = async (req, res) => {
 
     res.json({ message: 'Login bem-sucedido!', token });
   } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor', error: error.message });
+    res.status(500).json({
+      message: 'Ocorreu um problema inesperado. Tente novamente em alguns instantes.',
+      error: error.message,
+    });
   }
 };
 
@@ -106,7 +109,8 @@ exports.forgotPassword = async (req, res) => {
       [user.id, perfil.toLowerCase(), tokenHash, expiresAt]
     );
 
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendBaseUrl}/reset-password?token=${resetToken}`;
     const assunto = 'Recuperação de Senha - AgendaMed';
     const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link expira em 1 hora.</p>`;
 

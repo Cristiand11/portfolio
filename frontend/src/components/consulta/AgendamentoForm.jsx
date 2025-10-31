@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { getMeusPacientes } from "../../services/pacienteService";
+import {
+  getMeusPacientes,
+  getPacientesByMedicoId,
+} from "../../services/pacienteService";
 import { createConsulta } from "../../services/consultaService";
-import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
-export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
+export default function AgendamentoForm({
+  initialData,
+  onClose,
+  onSuccess,
+  medicoId,
+}) {
   const [pacientes, setPacientes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,17 +27,32 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
 
   useEffect(() => {
     async function fetchPacientes() {
+      setIsLoading(true);
       try {
-        const response = await getMeusPacientes();
+        let response;
+        if (medicoId) {
+          response = await getPacientesByMedicoId(medicoId, 0, 1000, {
+            key: "nome",
+            direction: "asc",
+          });
+        } else {
+          response = await getMeusPacientes({
+            size: 1000,
+            sort: "nome",
+            order: "asc",
+          });
+        }
         setPacientes(response?.data?.contents || []);
       } catch (err) {
-        console.error("Erro ao buscar pacientes:", err);
         toast.error("Não foi possível carregar a lista de pacientes.");
+        setPacientes([]);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchPacientes();
-  }, []);
+  }, [medicoId]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -133,9 +155,12 @@ export default function AgendamentoForm({ initialData, onClose, onSuccess }) {
           value={formData.idPaciente}
           onChange={handleChange}
           required
+          disabled={isLoading}
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         >
-          <option value="">Selecione um paciente:</option>
+          <option value="">
+            {isLoading ? "Carregando..." : "Selecione um paciente:"}
+          </option>
           {pacientes.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nome}

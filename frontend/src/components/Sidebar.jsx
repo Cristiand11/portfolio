@@ -58,43 +58,52 @@ export default function Sidebar({ isMobileMenuOpen }) {
   return (
     // ALTERADO: Usando a tag <aside> para semântica e aplicando as classes dinâmicas
     <aside className={sidebarClasses}>
-      <h2 className="text-2xl font-bold mb-6 text-center">AgendaMed</h2>
-      <nav>
-        <ul>
-          {links.map((link, index) => {
-            if (link.type === "divider") {
-              if (link.isSpacer)
+      <div>
+        <h2 className="text-2xl font-bold mb-6 text-center">AgendaMed</h2>
+        <nav>
+          <ul>
+            {links.map((link, index) => {
+              if (link.type === "divider") {
+                if (link.isSpacer)
+                  return (
+                    <li
+                      key={index}
+                      className="flex-grow pt-4 border-t border-gray-700"
+                    />
+                  );
                 return (
                   <li
                     key={index}
-                    className="flex-grow pt-4 border-t border-gray-700"
-                  />
+                    className="px-2 pt-4 pb-2 text-xs font-bold uppercase text-gray-400"
+                  >
+                    {link.label}
+                  </li>
                 );
+              }
               return (
-                <li
-                  key={index}
-                  className="px-2 pt-4 pb-2 text-xs font-bold uppercase text-gray-400"
-                >
-                  {link.label}
+                <li key={index} className={`mb-1 ${link.indent ? "pl-4" : ""}`}>
+                  <NavLink
+                    to={link.to}
+                    style={({ isActive }) =>
+                      isActive ? activeLinkStyle : undefined
+                    }
+                    className="block p-2 rounded hover:bg-gray-700 transition-colors"
+                  >
+                    {link.label}
+                  </NavLink>
                 </li>
               );
-            }
-            return (
-              <li key={index} className={`mb-1 ${link.indent ? "pl-4" : ""}`}>
-                <NavLink
-                  to={link.to}
-                  style={({ isActive }) =>
-                    isActive ? activeLinkStyle : undefined
-                  }
-                  className="block p-2 rounded hover:bg-gray-700 transition-colors"
-                >
-                  {link.label}
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+            })}
+          </ul>
+        </nav>
+      </div>
+      <div className="mt-auto pt-4 border-t border-gray-700">
+        <p className="text-xs text-gray-400 text-center">
+          © {new Date().getFullYear()} AgendaMed
+          <br />
+          Todos os direitos reservados
+        </p>
+      </div>
     </aside>
   );
 }

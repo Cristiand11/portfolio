@@ -175,7 +175,11 @@ Consulta.deleteByIds = async (ids) => {
 
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
-  const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
+  const busyStatus = [
+    'Confirmada',
+    'Aguardando Confirmação do Médico',
+    'Aguardando Confirmação do Paciente',
+  ];
   let query = `
         SELECT COUNT(*) FROM consulta 
         WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
@@ -209,8 +213,11 @@ Consulta.checkPatientConflict = async (
   duracao,
   excludeConsultaId = null
 ) => {
-  // Definimos os status que são considerados "horário ocupado"
-  const busyStatus = ['Agendada', 'Confirmada', 'Concluída'];
+  const busyStatus = [
+    'Confirmada',
+    'Aguardando Confirmação do Médico',
+    'Aguardando Confirmação do Paciente',
+  ];
 
   let query = `
         SELECT COUNT(*) FROM consulta 

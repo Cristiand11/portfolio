@@ -4,6 +4,8 @@ import { getPacientesByMedicoId } from "../../services/pacienteService";
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import AddPacienteForm from "../../components/paciente/AddPacienteForm";
+import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -75,8 +77,19 @@ export default function PacientesPage() {
     direction: "asc",
   });
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
 
-  // 1. Busca o médico vinculado primeiro
+  useEffect(() => {
+    if (medicoVinculado?.nome) {
+      setPageTitle(`Pacientes - Dr(a). ${medicoVinculado.nome}`);
+    } else {
+      setPageTitle("Pacientes do Médico");
+    }
+  }, [setPageTitle, medicoVinculado]);
+
   useEffect(() => {
     const fetchMedico = async () => {
       setIsLoading(true);
@@ -88,7 +101,6 @@ export default function PacientesPage() {
         }
         setMedicoVinculado(medicoRes.data);
       } catch (err) {
-        console.error("Erro ao buscar médico vinculado:", err);
         setError("Não foi possível identificar o médico vinculado.");
         setIsLoading(false);
         toast.error("Não foi possível identificar o médico vinculado.");
@@ -100,39 +112,38 @@ export default function PacientesPage() {
   const fetchPacientes = useCallback(async () => {
     if (!medicoVinculado?.id) return;
 
-    if (!isLoading) setIsLoading(true);
+    setIsLoading(true);
     setError("");
 
     try {
-      const params = {
-        page: 0,
-        size: 100,
-        sort: sortConfig.key,
-        order: sortConfig.direction,
-      };
+      const paginaParaApi = paginaAtual > 0 ? paginaAtual - 1 : 0;
       const response = await getPacientesByMedicoId(
         medicoVinculado.id,
-        params.page,
-        params.size,
+        paginaParaApi,
+        itensPorPagina,
         sortConfig
       );
       setPacientes(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
     } catch (err) {
-      console.error("Erro ao buscar pacientes do médico:", err);
       setError("Não foi possível carregar a lista de pacientes.");
       toast.error("Não foi possível carregar a lista de pacientes.");
       setPacientes([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, [medicoVinculado, sortConfig]);
+  }, [medicoVinculado, sortConfig, paginaAtual, itensPorPagina]);
 
   useEffect(() => {
-    fetchPacientes();
-  }, [fetchPacientes, refetchTrigger]);
+    if (medicoVinculado?.id) {
+      fetchPacientes();
+    }
+  }, [fetchPacientes, refetchTrigger, medicoVinculado]);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
+    setPaginaAtual(1);
     setRefetchTrigger((prev) => prev + 1);
   };
 
@@ -142,9 +153,17 @@ export default function PacientesPage() {
       direction = "desc";
     }
     setSortConfig({ key, direction });
+    setPaginaAtual(1);
   };
 
-  if (error && !pacientes.length) {
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
+  };
+
+  if (isLoading && !medicoVinculado) {
+    return <div className="text-center p-10">Carregando...</div>;
+  }
+  if (error && !pacientes.length && !isLoading) {
     return <div className="text-center p-10 text-red-600">{error}</div>;
   }
 
@@ -155,7 +174,6 @@ export default function PacientesPage() {
         onClose={() => setIsModalOpen(false)}
         title="Cadastrar Novo Paciente"
       >
-        {/* Passa o medicoId para o formulário saber a quem vincular */}
         <AddPacienteForm
           medicoId={medicoVinculado?.id}
           onClose={() => setIsModalOpen(false)}
@@ -164,11 +182,6 @@ export default function PacientesPage() {
       </Modal>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Pacientes - Dr(a). {medicoVinculado?.nome || "..."}
-          </h1>
-        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           disabled={!medicoVinculado}
@@ -195,9 +208,6 @@ export default function PacientesPage() {
                   />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                CPF
-              </th>{" "}
               <th className="px-6 py-3 text-left">
                 <button
                   onClick={() => handleSort("email")}
@@ -216,20 +226,12 @@ export default function PacientesPage() {
               </th>
             </tr>
           </thead>
+
           <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading && !pacientes.length ? (
+            {isLoading ? (
               <tr>
                 <td colSpan="4" className="text-center py-10 rounded-b-lg">
                   Carregando pacientes...
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td
-                  colSpan="4"
-                  className="text-center py-10 text-red-600 rounded-b-lg"
-                >
-                  {error}
                 </td>
               </tr>
             ) : pacientes.length === 0 ? (
@@ -252,9 +254,6 @@ export default function PacientesPage() {
                     {paciente.nome}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {paciente.cpf}
-                  </td>{" "}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {paciente.email || "N/A"}
                   </td>
                   <td
@@ -264,14 +263,17 @@ export default function PacientesPage() {
                   >
                     {paciente.telefone || "N/A"}
                   </td>
-                  {/* Removido Última Consulta e Ações */}
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
-      {/* TODO: Adicionar Paginação */}
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

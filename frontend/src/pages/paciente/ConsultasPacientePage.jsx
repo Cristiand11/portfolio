@@ -14,6 +14,8 @@ import Modal from "../../components/Modal";
 import SolicitarConsultaForm from "../../components/paciente/SolicitarConsultaForm";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
+import Pagination from "../../components/Pagination";
+import { useOutletContext } from "react-router-dom";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -79,7 +81,7 @@ export default function ConsultasPacientePage() {
   });
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
     medico: "",
@@ -100,6 +102,14 @@ export default function ConsultasPacientePage() {
     message: "",
     onConfirm: () => {},
   });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Minhas Consultas");
+  }, [setPageTitle]);
 
   const buildFilterString = (applied) => {
     const parts = [];
@@ -113,7 +123,8 @@ export default function ConsultasPacientePage() {
     setIsLoading(true);
     try {
       const params = {
-        size: 100,
+        page: paginaAtual,
+        size: itensPorPagina,
         sort: sortConfig.key,
         order: sortConfig.direction,
       };
@@ -123,13 +134,15 @@ export default function ConsultasPacientePage() {
 
       const response = await getMinhasConsultas(params);
       setConsultas(response.data.contents);
+      setTotalPaginas(response.data.totalPages || 0);
     } catch (err) {
       setError("Não foi possível carregar as suas consultas.");
-      console.error(err);
+      setConsultas([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, [sortConfig, appliedFilters]);
+  }, [sortConfig, appliedFilters, paginaAtual, itensPorPagina]);
 
   useEffect(() => {
     fetchConsultas();
@@ -153,6 +166,7 @@ export default function ConsultasPacientePage() {
       return;
     }
     setSortConfig({ key, direction: newDirection });
+    setPaginaAtual(1);
   };
 
   const handleFilterChange = (e) => {
@@ -167,11 +181,17 @@ export default function ConsultasPacientePage() {
 
   const handleApplyFilters = () => {
     setAppliedFilters(filters);
+    setPaginaAtual(1);
   };
 
   const handleClearFilters = () => {
     setFilters({ status: "", medico: "", data: "" });
     setAppliedFilters({ status: "", medico: "", data: "" });
+    setPaginaAtual(1);
+  };
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
   };
 
   // --- Funções de Ação ---
@@ -292,7 +312,8 @@ export default function ConsultasPacientePage() {
     return actions;
   };
 
-  if (isLoading) return <div>A carregar as suas consultas...</div>;
+  if (isLoading && consultas.length === 0)
+    return <div>A carregar as suas consultas...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
   return (
@@ -330,11 +351,6 @@ export default function ConsultasPacientePage() {
       )}
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Minhas Consultas
-          </h1>
-        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 w-full sm:w-auto"
@@ -498,12 +514,18 @@ export default function ConsultasPacientePage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {consultas.length === 0 ? (
+            {isLoading && consultas.length === 0 ? (
               <tr>
                 <td
                   colSpan="5"
                   className="text-center py-10 rounded-b-lg text-gray-500"
                 >
+                  Carregando...
+                </td>
+              </tr>
+            ) : consultas.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center py-10 text-gray-500">
                   Nenhuma consulta encontrada.
                 </td>
               </tr>
@@ -543,6 +565,11 @@ export default function ConsultasPacientePage() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

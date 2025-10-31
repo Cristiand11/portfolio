@@ -1,6 +1,6 @@
 import { useAuth } from "../contexts/AuthContext";
 
-export default function Header({ onMenuButtonClick }) {
+export default function Header({ onMenuButtonClick, title }) {
   const { logout, user } = useAuth();
 
   return (
@@ -25,7 +25,7 @@ export default function Header({ onMenuButtonClick }) {
             />
           </svg>
         </button>
-        <h1 className="text-xl font-semibold text-gray-700">Dashboard</h1>
+        <h1 className="text-xl font-semibold text-gray-700">{title}</h1>
       </div>
       <div>
         <span className="mr-4">{user?.nome || "Usuário"}</span>

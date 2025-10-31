@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import { getMinhasConsultas } from "../../services/consultaService";
+import { useOutletContext } from "react-router-dom";
 
 export default function DashboardMedicoPage() {
   const [consultasHoje, setConsultasHoje] = useState([]);
   const [proximaConsulta, setProximaConsulta] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    setPageTitle("Meu Dashboard");
+  }, [setPageTitle]);
 
   useEffect(() => {
     const fetchConsultas = async () => {
@@ -32,7 +38,6 @@ export default function DashboardMedicoPage() {
         });
         setProximaConsulta(proxima);
       } catch (err) {
-        console.error("Erro ao buscar consultas:", err);
         setError("Não foi possível carregar os dados da agenda.");
       } finally {
         setIsLoading(false);
@@ -40,7 +45,7 @@ export default function DashboardMedicoPage() {
     };
 
     fetchConsultas();
-  }, []); // O array vazio [] faz com que o useEffect rode apenas uma vez, quando o componente monta
+  }, []);
 
   if (isLoading) {
     return <div className="text-center p-10">Carregando agenda...</div>;
@@ -52,9 +57,6 @@ export default function DashboardMedicoPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Meu Dashboard
-      </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-600">

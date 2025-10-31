@@ -21,6 +21,7 @@ import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import DetalhesConsulta from "../../components/consulta/DetalhesConsulta";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useOutletContext } from "react-router-dom";
 import toast from "react-hot-toast";
 import { format, parseISO } from "date-fns";
 
@@ -109,6 +110,15 @@ export default function AgendaPage() {
   });
   const { width } = useWindowSize();
   const isMobile = width < 768;
+  const { setPageTitle } = useOutletContext();
+
+  useEffect(() => {
+    if (medicoVinculado?.nome) {
+      setPageTitle(`Agenda - Dr(a). ${medicoVinculado.nome}`);
+    } else {
+      setPageTitle("Agenda do Médico");
+    }
+  }, [setPageTitle, medicoVinculado]);
 
   const fetchAgendaData = useCallback(async () => {
     setIsLoading(true);
@@ -116,8 +126,10 @@ export default function AgendaPage() {
     try {
       // 1. Buscar o médico vinculado
       const medicoRes = await getMeuMedicoVinculado();
-      setMedicoVinculado(medicoRes.data);
-      const medicoId = medicoRes.data?.id;
+      const medicoData = medicoRes.data;
+      setMedicoVinculado(medicoData);
+
+      const medicoId = medicoData?.id;
 
       if (!medicoId) {
         throw new Error("Médico vinculado não encontrado.");
@@ -142,7 +154,7 @@ export default function AgendaPage() {
       };
 
       const [consultasRes, horariosRes] = await Promise.all([
-        getConsultasByMedicoId(paramsConsultas),
+        getConsultasByMedicoId(medicoId, paramsConsultas),
         getHorariosByMedicoId(medicoId),
       ]);
 
@@ -176,7 +188,6 @@ export default function AgendaPage() {
       }));
       setBusinessHours(horariosFormatados);
     } catch (err) {
-      console.error("Erro ao carregar dados da agenda:", err);
       setError("Não foi possível carregar os dados da agenda.");
       toast.error(
         err.message || "Não foi possível carregar os dados da agenda."
@@ -517,9 +528,6 @@ export default function AgendaPage() {
         </Modal>
       )}
 
-      <h1 className="text-2xl font-semibold text-gray-800">
-        Agenda - Dr(a). {medicoVinculado?.nome}
-      </h1>
       <AgendaLegenda />
       <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
         <FullCalendar {...calendarOptions} />
