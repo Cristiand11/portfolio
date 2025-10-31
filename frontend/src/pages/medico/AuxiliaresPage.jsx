@@ -7,6 +7,7 @@ import {
 import toast from "react-hot-toast";
 import Modal from "../../components/Modal";
 import AddAuxiliarForm from "../../components/auxiliar/AddAuxiliarForm";
+import Pagination from "../../components/Pagination";
 
 const SortIcon = ({ direction }) => {
   if (!direction) {
@@ -82,29 +83,41 @@ export default function AuxiliaresPage() {
     auxiliarId: null,
   });
   const [selectedIds, setSelectedIds] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
+
+  const fetchAuxiliares = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const params = {
+        page: paginaAtual,
+        size: itensPorPagina,
+        sort: sortConfig.key,
+        order: sortConfig.direction,
+      };
+      const response = await getMeusAuxiliares(params);
+
+      setAuxiliares(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
+      setSelectedIds([]);
+    } catch (err) {
+      setError("Não foi possível carregar a lista de auxiliares.");
+      setAuxiliares([]);
+      setTotalPaginas(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refetchTrigger, sortConfig, paginaAtual, itensPorPagina]);
 
   useEffect(() => {
-    const fetchAuxiliares = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const params = {
-          sort: sortConfig.key,
-          order: sortConfig.direction,
-        };
-        const response = await getMeusAuxiliares(params);
-        setAuxiliares(response.data.contents);
-      } catch (err) {
-        setError("Não foi possível carregar a lista de auxiliares.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchAuxiliares();
-  }, [refetchTrigger, sortConfig]);
+  }, [fetchAuxiliares]);
 
   const handleSuccess = () => {
+    setIsModalOpen(false);
+    setPaginaAtual(1);
     setRefetchTrigger((prev) => prev + 1);
   };
 
@@ -145,9 +158,15 @@ export default function AuxiliaresPage() {
       direction = "desc";
     } else if (sortConfig.key === key && sortConfig.direction === "desc") {
       setSortConfig({ key: "nome", direction: "asc" });
+      setPaginaAtual(1);
       return;
     }
     setSortConfig({ key, direction });
+    setPaginaAtual(1);
+  };
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
   };
 
   const handleDeleteClick = (auxiliarId) => {
@@ -234,7 +253,7 @@ export default function AuxiliaresPage() {
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-        {isLoading ? (
+        {isLoading && auxiliares.length === 0 ? (
           <p className="p-10 text-center text-gray-500">Carregando...</p>
         ) : error ? (
           <p className="p-10 text-center text-red-600">{error}</p>
@@ -288,13 +307,7 @@ export default function AuxiliaresPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {isLoading ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-10">
-                    Carregando...
-                  </td>
-                </tr>
-              ) : auxiliares.length > 0 ? (
+              {auxiliares.length > 0 ? (
                 auxiliares.map((aux) => (
                   <tr key={aux.id}>
                     <td className="p-4 py-4 w-16 text-center">
@@ -348,6 +361,11 @@ export default function AuxiliaresPage() {
           </table>
         )}
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

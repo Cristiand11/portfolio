@@ -14,6 +14,7 @@ import Modal from "../../components/Modal";
 import AgendamentoForm from "../../components/consulta/AgendamentoForm";
 import RemarcacaoForm from "../../components/consulta/RemarcacaoForm";
 import ConfirmModal from "../../components/ConfirmModal";
+import Pagination from "../../components/Pagination";
 import toast from "react-hot-toast";
 
 const SortIcon = ({ direction }) => {
@@ -105,6 +106,9 @@ export default function ConsultasMedicoPage() {
     message: "",
     onConfirm: () => {},
   });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [itensPorPagina] = useState(10);
 
   const buildFilterString = (applied) => {
     const parts = [];
@@ -118,7 +122,8 @@ export default function ConsultasMedicoPage() {
     setIsLoading(true);
     try {
       const params = {
-        size: 100,
+        page: paginaAtual,
+        size: itensPorPagina,
         sort: sortConfig.key,
         order: sortConfig.direction,
       };
@@ -127,13 +132,18 @@ export default function ConsultasMedicoPage() {
       if (filterString) params.filter = filterString;
 
       const response = await getMinhasConsultas(params);
-      setConsultas(response.data.contents);
+
+      setConsultas(response.data.contents || []);
+      setTotalPaginas(response.data.totalPages || 0);
+      setSelectedIds([]);
     } catch (err) {
       toast.error("Não foi possível carregar as consultas.");
+      setConsultas([]);
+      setTotalPaginas(0);
     } finally {
       setIsLoading(false);
     }
-  }, [sortConfig, appliedFilters]);
+  }, [sortConfig, appliedFilters, paginaAtual, itensPorPagina]);
 
   useEffect(() => {
     fetchConsultas();
@@ -146,6 +156,7 @@ export default function ConsultasMedicoPage() {
       }
       return { key, direction: "asc" };
     });
+    setPaginaAtual(1);
   };
 
   const handleSelectOne = (id) => {
@@ -196,11 +207,17 @@ export default function ConsultasMedicoPage() {
 
   const handleApplyFilters = () => {
     setAppliedFilters(filters);
+    setPaginaAtual(1);
   };
 
   const handleClearFilters = () => {
     setFilters({ status: "", paciente: "", data: "" });
     setAppliedFilters({ status: "", paciente: "", data: "" });
+    setPaginaAtual(1);
+  };
+
+  const handlePageChange = (novaPagina) => {
+    setPaginaAtual(novaPagina);
   };
 
   const handleConfirm = async (id) => {
@@ -595,21 +612,15 @@ export default function ConsultasMedicoPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading ? (
+            {isLoading && consultas.length === 0 ? (
               <tr>
-                <td
-                  colSpan="5"
-                  className="text-center py-10 text-gray-500 rounded-tl-lg"
-                >
+                <td colSpan="6" className="text-center py-10 ...">
                   Carregando...
                 </td>
               </tr>
             ) : consultas.length === 0 ? (
               <tr>
-                <td
-                  colSpan="5"
-                  className="text-center py-10 text-gray-500 rounded-tl-lg"
-                >
+                <td colSpan="6" className="text-center py-10 ...">
                   Nenhuma consulta encontrada.
                 </td>
               </tr>
@@ -674,6 +685,11 @@ export default function ConsultasMedicoPage() {
           </tbody>
         </table>
       </div>
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
