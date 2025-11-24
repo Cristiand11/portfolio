@@ -1,54 +1,11 @@
 const db = require('../config/database');
 const { parseFilter } = require('../utils/queryUtils');
 const { getDiasUteis } = require('../utils/dateUtils');
+const { verificaConflitosNoDia } = require('../utils/agendaHelper');
 
 const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
 const HorarioTrabalho = require('../models/horarioTrabalhoModel');
-
-// Helper para verificar conflitos de horários no mesmo dia
-const verificaConflitosNoDia = (slotsDoDia) => {
-  if (!slotsDoDia || slotsDoDia.length < 2) {
-    return false;
-  }
-
-  // 1. Converte HH:MM para minutos desde a meia-noite para facilitar a comparação
-  const paraMinutos = (horaStr) => {
-    if (!horaStr || typeof horaStr !== 'string') return null;
-    const [h, m] = horaStr.split(':').map(Number);
-    if (isNaN(h) || isNaN(m)) return null;
-    return h * 60 + m;
-  };
-
-  const slotsOrdenados = slotsDoDia
-    .map((slot) => ({
-      inicioMin: paraMinutos(slot.hora_inicio),
-      fimMin: paraMinutos(slot.hora_fim),
-      original: slot,
-    }))
-    .filter(
-      (slot) => slot.inicioMin !== null && slot.fimMin !== null && slot.inicioMin < slot.fimMin
-    )
-    .sort((a, b) => a.inicioMin - b.inicioMin);
-
-  if (slotsOrdenados.length < 2) return false;
-
-  // 2. Verifica sobreposição
-  for (let i = 0; i < slotsOrdenados.length - 1; i++) {
-    const slotAtual = slotsOrdenados[i];
-    const proximoSlot = slotsOrdenados[i + 1];
-
-    // Conflito se o fim do atual for DEPOIS do início do próximo
-    if (slotAtual.fimMin > proximoSlot.inicioMin) {
-      console.log(
-        `Conflito detectado: ${slotAtual.original.hora_inicio}-${slotAtual.original.hora_fim} sobrepõe ${proximoSlot.original.hora_inicio}-${proximoSlot.original.hora_fim}`
-      );
-      return true;
-    }
-  }
-
-  return false;
-};
 
 // Helper para validar o formato do CRM
 function isCrmValido(crm) {

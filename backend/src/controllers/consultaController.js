@@ -245,53 +245,6 @@ exports.updateConsulta = async (req, res) => {
   }
 };
 
-/* 
-Removida por solicitação da professora
-// Função para excluir uma consulta
-exports.deleteConsulta = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletada = await Consulta.delete(id);
-    if (deletada === 0) {
-      return res.status(404).json({ message: 'Consulta não encontrada' });
-    }
-    res.status(200).json({ message: 'Consulta removida com sucesso!' });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover consulta', error: error.message });
-  }
-};
-
-Removida por solicitação da professora
-// Função para excluir várias consultas
-exports.deleteVariasConsultas = async (req, res) => {
-  try {
-    const { ids } = req.body;
-    const { id: idUsuarioLogado, perfil } = req.user;
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ message: 'Uma lista de IDs de consultas é necessária.' });
-    }
-
-    const { rows: consultas } = await db.query(
-      'SELECT medico_id FROM consulta WHERE id = ANY($1::uuid[])',
-      [ids]
-    );
-    for (const c of consultas) {
-      if (c.medico_id !== idUsuarioLogado) {
-        return res
-          .status(403)
-          .json({ message: 'Acesso negado. Você só pode excluir suas próprias consultas.' });
-      }
-    }
-
-    await Consulta.deleteByIds(ids);
-    res.status(200).json({ message: `${ids.length} consultas foram excluídas com sucesso.` });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover consultas.', error: error.message });
-  }
-};
-*/
-
 // Função para cancelar uma consulta
 exports.cancelarConsulta = async (req, res) => {
   try {
