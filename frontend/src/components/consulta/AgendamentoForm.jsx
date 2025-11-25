@@ -83,6 +83,7 @@ export default function AgendamentoForm({
       await createConsulta(formData);
       toast.success("Consulta proposta com sucesso!");
       onSuccess();
+      onClose();
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Não foi possível agendar a consulta."

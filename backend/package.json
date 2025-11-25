@@ -10,7 +10,8 @@
     "dev": "nodemon index.js",
     "lint": "eslint .",
     "prepare": "husky",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -46,6 +47,7 @@
     "globals": "^16.4.0",
     "husky": "^9.1.7",
     "jest": "^30.0.5",
+    "jest-mock-express": "^0.1.1",
     "lint-staged": "^16.1.6",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",

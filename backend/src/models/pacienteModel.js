@@ -97,6 +97,9 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
   const totalElements = parseInt(countResult.rows[0].count, 10);
 
   let paramIndex = values.length + 1;
+  const limitParam = `$${paramIndex++}`;
+  const offsetParam = `$${paramIndex++}`;
+
   const finalQueryValues = [...values, size, offset];
 
   const dataQuery = `
@@ -106,14 +109,10 @@ Paciente.findPaginated = async (page = 1, size = 10, filterString = '') => {
         FROM paciente 
         ${whereClause} 
         ORDER BY nome ASC 
-        LIMIT $1 OFFSET $2
+        LIMIT ${limitParam} OFFSET ${offsetParam}
     `;
 
-  const dataQueryFinal = dataQuery
-    .replace('$1', `$${paramIndex++}`)
-    .replace('$2', `$${paramIndex++}`);
-
-  const { rows } = await db.query(dataQueryFinal, finalQueryValues);
+  const { rows } = await db.query(dataQuery, finalQueryValues);
 
   const formattedRows = rows.map((row) => ({
     ...row,

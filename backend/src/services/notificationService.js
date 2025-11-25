@@ -5,8 +5,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_EMAIL, // pode manter seu Gmail aqui
-    pass: process.env.BREVO_SMTP_KEY, // ⚠️ troque para a SMTP key nova
+    user: process.env.BREVO_EMAIL,
+    pass: process.env.BREVO_SMTP_KEY,
   },
 });
 

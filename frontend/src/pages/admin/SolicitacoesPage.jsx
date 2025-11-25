@@ -3,33 +3,8 @@ import { getAllMedicos, reverterInativacao } from "../../services/adminService";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/ConfirmModal";
 import Pagination from "../../components/Pagination";
-import { differenceInBusinessDays, addBusinessDays, isAfter } from "date-fns";
 import { useOutletContext } from "react-router-dom";
-
-// Função para calcular o tempo restante (simplificada)
-const calcularTempoRestante = (dataSolicitacaoISO) => {
-  if (!dataSolicitacaoISO) return { texto: "N/A", expirado: true };
-  try {
-    const dataSolicitacao = new Date(dataSolicitacaoISO);
-    const dataLimite = addBusinessDays(dataSolicitacao, 5);
-    const hoje = new Date();
-
-    if (isAfter(hoje, dataLimite)) {
-      return { texto: "Expirado", expirado: true };
-    } else {
-      const diasRestantes = differenceInBusinessDays(dataLimite, hoje);
-      if (diasRestantes <= 0) {
-        return { texto: "Expira Hoje", expirado: false };
-      } else {
-        const textoDias =
-          diasRestantes === 1 ? "1 dia útil" : `${diasRestantes} dias úteis`;
-        return { texto: textoDias, expirado: false };
-      }
-    }
-  } catch (e) {
-    return { texto: "Erro Data", expirado: true };
-  }
-};
+import { calcularTempoRestante } from "../../utils/dateUtils";
 
 export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState([]);
