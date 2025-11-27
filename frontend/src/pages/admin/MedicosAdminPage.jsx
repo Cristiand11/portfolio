@@ -143,7 +143,7 @@ export default function MedicosAdminPage() {
       const response = await getAllMedicos(params);
       setMedicos(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível carregar a lista de médicos.");
       setMedicos([]);
       setTotalPaginas(0);

@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const decodedUser = jwtDecode(token);
         setUser(decodedUser);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("authToken");
         setToken(null);
         setUser(null);
@@ -38,29 +38,25 @@ export const AuthProvider = ({ children }) => {
     if (!selectedProfile) {
       throw new Error("Nenhum perfil selecionado.");
     }
-    try {
-      const data = await loginService(email, senha, perfil);
 
-      const decodedToken = jwtDecode(data.token);
-      const userProfile = decodedToken.perfil;
+    const data = await loginService(email, senha, perfil);
 
-      localStorage.setItem("authToken", data.token);
-      setToken(data.token);
+    const decodedToken = jwtDecode(data.token);
+    const userProfile = decodedToken.perfil;
 
-      if (userProfile === "medico") {
-        navigate("/medico/dashboard");
-      } else if (userProfile === "paciente") {
-        navigate("/paciente/dashboard");
-      } else if (userProfile === "auxiliar") {
-        navigate("/auxiliar/dashboard");
-      } else if (userProfile === "administrador") {
-        navigate("/admin/dashboard");
-      } else {
-        // Fallback, caso algo dê errado
-        navigate("/");
-      }
-    } catch (error) {
-      throw error;
+    localStorage.setItem("authToken", data.token);
+    setToken(data.token);
+
+    if (userProfile === "medico") {
+      navigate("/medico/dashboard");
+    } else if (userProfile === "paciente") {
+      navigate("/paciente/dashboard");
+    } else if (userProfile === "auxiliar") {
+      navigate("/auxiliar/dashboard");
+    } else if (userProfile === "administrador") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/");
     }
   };
 
@@ -81,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook customizado para facilitar o uso do contexto
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   return useContext(AuthContext);
 };

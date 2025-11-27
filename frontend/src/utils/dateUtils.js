@@ -27,7 +27,7 @@ export const calcularTempoRestante = (dataSolicitacaoISO) => {
         };
       }
     }
-  } catch (e) {
+  } catch {
     return { texto: "Erro Data", expirado: true };
   }
 };

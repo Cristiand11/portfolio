@@ -1,13 +1,11 @@
 import {
   confirmarConsulta,
-  cancelarConsultaAdmin,
   concluirConsulta,
 } from "../../services/consultaService";
 import toast from "react-hot-toast";
 
 export default function DetalhesConsulta({
   consulta,
-  onClose,
   onSuccess,
   onRemarcar,
   onCancelar,

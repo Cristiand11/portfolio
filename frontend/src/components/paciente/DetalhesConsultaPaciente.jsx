@@ -8,7 +8,6 @@ import {
 
 export default function DetalhesConsultaPaciente({
   consulta,
-  onClose,
   onSuccess,
   onRemarcar,
 }) {
