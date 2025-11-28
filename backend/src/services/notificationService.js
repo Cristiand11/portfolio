@@ -11,17 +11,13 @@ const transporter = nodemailer.createTransport({
 });
 
 async function enviarEmail({ para, assunto, mensagemHtml }) {
-  try {
-    const info = await transporter.sendMail({
-      from: `"AgendaMed" <cristiandomingues.15@gmail.com>`,
-      to: para,
-      subject: assunto,
-      html: mensagemHtml,
-    });
-    return info;
-  } catch (error) {
-    throw error;
-  }
+  const info = await transporter.sendMail({
+    from: `"AgendaMed" <cristiandomingues.15@gmail.com>`,
+    to: para,
+    subject: assunto,
+    html: mensagemHtml,
+  });
+  return info;
 }
 
 module.exports = { enviarEmail };

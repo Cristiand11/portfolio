@@ -15,7 +15,7 @@ module.exports = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded; // Adiciona o usuário à requisição se o token for válido
     next();
-  } catch (error) {
+  } catch {
     // Se o token for inválido, podemos optar por prosseguir sem usuário
     // ou retornar um erro. Vamos prosseguir para não bloquear o auto-cadastro.
     return next();

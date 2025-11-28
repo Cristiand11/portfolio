@@ -6,8 +6,6 @@ const Consulta = require('../models/consultaModel');
 const Medico = require('../models/medicoModel');
 const Auxiliar = require('../models/auxiliarModel');
 const Paciente = require('../models/pacienteModel');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 
 // Função para criar uma consulta
 exports.createConsulta = async (req, res) => {

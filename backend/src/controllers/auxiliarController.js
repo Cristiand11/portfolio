@@ -1,5 +1,6 @@
 const Auxiliar = require('../models/auxiliarModel');
 const db = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 exports.createAuxiliar = async (req, res) => {
   try {

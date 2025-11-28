@@ -61,7 +61,7 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options 
   if (filterString) {
     const filters = filterString.split(' AND ');
     filters.forEach((filter) => {
-      const match = filter.match(/([\w\.]+)\s+(eq|co)\s+'([^']*)'/);
+      const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
       if (match) {
         const [, field, operator, value] = match;
         if (Object.keys(allowedFilterFields).includes(field)) {
@@ -84,10 +84,10 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options 
   const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
   const baseQuery = `
-    FROM consulta c 
-    LEFT JOIN paciente p ON c.paciente_id = p.id
-    LEFT JOIN medico m ON c.medico_id = m.id
-  `;
+      FROM consulta c 
+      LEFT JOIN paciente p ON c.paciente_id = p.id
+      LEFT JOIN medico m ON c.medico_id = m.id
+    `;
 
   const countQuery = `SELECT COUNT(c.id) ${baseQuery} ${whereClause}`;
   const countResult = await db.query(countQuery, values);
@@ -96,11 +96,11 @@ Consulta.findPaginated = async (page = 1, size = 10, filterString = '', options 
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
   const dataQuery = `
-    SELECT c.*, p.nome as "nomePaciente", m.nome as "nomeMedico"
-    ${baseQuery} 
-    ${whereClause} 
-    ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
-    LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      SELECT c.*, p.nome as "nomePaciente", m.nome as "nomeMedico"
+      ${baseQuery} 
+      ${whereClause} 
+      ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
 
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
@@ -157,22 +157,6 @@ Consulta.update = async (id, consultaData) => {
   return rows[0];
 };
 
-/*
-Removida por solicitação da professora
-// --- DELETE ---
-Consulta.delete = async (id) => {
-  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = $1', [id]);
-  return rowCount;
-};
-
-Removida por solicitação da professora
-// Deleta múltiplas consultas com base em um array de IDs
-Consulta.deleteByIds = async (ids) => {
-  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = ANY($1::uuid[])', [ids]);
-  return rowCount;
-};
-*/
-
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) => {
   const busyStatus = [
@@ -181,19 +165,19 @@ Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId
     'Aguardando Confirmação do Paciente',
   ];
   let query = `
-        SELECT COUNT(*) FROM consulta 
-        WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
-        AND (
-            -- A nova consulta começa durante uma existente
-            ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
-            OR 
-            -- A nova consulta termina durante uma existente
-            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-            OR
-            -- A nova consulta "envelopa" uma existente
-            ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-        )
-    `;
+          SELECT COUNT(*) FROM consulta 
+          WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+          AND (
+              -- A nova consulta começa durante uma existente
+              ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+              OR 
+              -- A nova consulta termina durante uma existente
+              (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+              OR
+              -- A nova consulta "envelopa" uma existente
+              ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+          )
+      `;
   const values = [idMedico, data, busyStatus, hora, duracao];
 
   if (excludeConsultaId) {
@@ -220,19 +204,19 @@ Consulta.checkPatientConflict = async (
   ];
 
   let query = `
-        SELECT COUNT(*) FROM consulta 
-        WHERE paciente_id = $1 AND data = $2 AND status = ANY($3::varchar[])
-        AND (
-            -- A nova consulta começa durante uma existente
-            ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
-            OR 
-            -- A nova consulta termina durante uma existente
-            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-            OR
-            -- A nova consulta "envelopa" uma existente
-            ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-        )
-    `;
+          SELECT COUNT(*) FROM consulta 
+          WHERE paciente_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+          AND (
+              -- A nova consulta começa durante uma existente
+              ($4::time >= hora AND $4::time < (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+              OR 
+              -- A nova consulta termina durante uma existente
+              (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') > hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') <= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+              OR
+              -- A nova consulta "envelopa" uma existente
+              ($4::time <= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') >= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+          )
+      `;
   const values = [idPaciente, data, busyStatus, hora, duracao];
 
   // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
@@ -290,13 +274,13 @@ Consulta.marcarComoConcluida = async (id) => {
 Consulta.confirmar = async (id, novaData, novaHora) => {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            data = $1,
-            hora = $2,
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $3 RETURNING *`,
+              status = 'Confirmada',
+              data = $1,
+              hora = $2,
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $3 RETURNING *`,
     [novaData, novaHora, id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -309,11 +293,11 @@ Consulta.confirmar = async (id, novaData, novaHora) => {
 Consulta.reprovar = async (id) => {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $1 RETURNING *`,
+              status = 'Confirmada',
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $1 RETURNING *`,
     [id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -326,11 +310,11 @@ Consulta.reprovar = async (id) => {
 Consulta.solicitarRemarcacao = async (id, novaData, novaHora, novoStatus) => {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = $1, 
-            "dataRemarcacaoSugerida" = $2, 
-            "horaRemarcacaoSugerida" = $3, 
-            "lastModifiedDate" = NOW() 
-         WHERE id = $4 RETURNING *`,
+              status = $1, 
+              "dataRemarcacaoSugerida" = $2, 
+              "horaRemarcacaoSugerida" = $3, 
+              "lastModifiedDate" = NOW() 
+          WHERE id = $4 RETURNING *`,
     [novoStatus, novaData, novaHora, id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -353,13 +337,13 @@ Consulta.updateStatus = async (id, novoStatus) => {
 Consulta.aceitarRemarcacao = async (id, novaData, novaHora) => {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            data = $1,
-            hora = $2,
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $3 RETURNING *`,
+              status = 'Confirmada',
+              data = $1,
+              hora = $2,
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $3 RETURNING *`,
     [novaData, novaHora, id]
   );
   return formatarConsulta(rows[0]);
@@ -369,11 +353,11 @@ Consulta.aceitarRemarcacao = async (id, novaData, novaHora) => {
 Consulta.rejeitarRemarcacao = async (id) => {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $1 RETURNING *`,
+              status = 'Confirmada',
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $1 RETURNING *`,
     [id]
   );
   return formatarConsulta(rows[0]);

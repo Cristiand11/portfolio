@@ -39,7 +39,7 @@ const verificaConflitosNoDia = (slotsDoDia) => {
     //     Prox  11:00 (660) -> ...
     //     720 > 660 -> CONFLITO
     if (slotAtual.fimMin > proximoSlot.inicioMin) {
-      return true; 
+      return true;
     }
   }
 
