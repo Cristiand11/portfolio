@@ -49,7 +49,7 @@ export default function LoginPage() {
       );
       setIsForgotPassword(false);
       setResetEmail("");
-    } catch (err) {
+    } catch {
       toast.success(
         "Se o e-mail estiver cadastrado, um link de recuperação foi enviado."
       );

@@ -7,7 +7,6 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { getMeuMedicoVinculado } from "../../services/auxiliarService";
 import {
   getConsultasByMedicoId,
-  createConsulta,
   updateConsulta,
   cancelarConsultaAdmin,
   aceitarRemarcacao,
