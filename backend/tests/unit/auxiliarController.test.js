@@ -45,9 +45,11 @@ describe('AuxiliarController Unit Tests', () => {
 
       await auxiliarController.createAuxiliar(req, res);
 
-      expect(Auxiliar.create).toHaveBeenCalledWith(expect.objectContaining({
-        idMedico: 'medico-id-123'
-      }));
+      expect(Auxiliar.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          idMedico: 'medico-id-123',
+        })
+      );
       expect(res.status).toHaveBeenCalledWith(201);
     });
 
@@ -60,9 +62,11 @@ describe('AuxiliarController Unit Tests', () => {
       await auxiliarController.createAuxiliar(req, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringMatching(/e-mail já está em uso/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringMatching(/e-mail já está em uso/),
+        })
+      );
     });
 
     it('deve retornar 500 em caso de erro genérico', async () => {
@@ -105,7 +109,7 @@ describe('AuxiliarController Unit Tests', () => {
     it('deve retornar 400 se não houver campos para atualizar', async () => {
       req.params = { id: 'meu-id' };
       req.user = { id: 'meu-id', perfil: 'auxiliar' };
-      req.body = {}; 
+      req.body = {};
 
       await auxiliarController.updateAuxiliar(req, res);
 
@@ -161,7 +165,7 @@ describe('AuxiliarController Unit Tests', () => {
     it('deve deletar com sucesso se for médico dono (200)', async () => {
       req.params = { id: 'aux-id' };
       req.user = { id: 'medico-id-1', perfil: 'medico' };
-      
+
       Auxiliar.findById.mockResolvedValue({ id: 'aux-id', idMedico: 'medico-id-1' });
 
       await auxiliarController.deleteAuxiliar(req, res);
@@ -173,7 +177,7 @@ describe('AuxiliarController Unit Tests', () => {
     it('deve negar exclusão se médico não for dono (403)', async () => {
       req.params = { id: 'aux-id' };
       req.user = { id: 'medico-invasor', perfil: 'medico' };
-      
+
       Auxiliar.findById.mockResolvedValue({ id: 'aux-id', idMedico: 'medico-dono' });
 
       await auxiliarController.deleteAuxiliar(req, res);
@@ -203,8 +207,8 @@ describe('AuxiliarController Unit Tests', () => {
       req.body = { ids: ['1', '2'] };
       req.user = { id: 'medico-1', perfil: 'medico' };
 
-      db.query.mockResolvedValue({ 
-        rows: [{ idMedico: 'medico-1' }, { idMedico: 'medico-1' }] 
+      db.query.mockResolvedValue({
+        rows: [{ idMedico: 'medico-1' }, { idMedico: 'medico-1' }],
       });
 
       Auxiliar.deleteByIds.mockResolvedValue(2);
@@ -219,8 +223,8 @@ describe('AuxiliarController Unit Tests', () => {
       req.body = { ids: ['1', '2'] };
       req.user = { id: 'medico-1', perfil: 'medico' };
 
-      db.query.mockResolvedValue({ 
-        rows: [{ idMedico: 'medico-1' }, { idMedico: 'medico-OUTRO' }] 
+      db.query.mockResolvedValue({
+        rows: [{ idMedico: 'medico-1' }, { idMedico: 'medico-OUTRO' }],
       });
 
       await auxiliarController.deleteVariosAuxiliares(req, res);
@@ -275,7 +279,7 @@ describe('AuxiliarController Unit Tests', () => {
   describe('getMeuMedicoVinculado', () => {
     it('deve retornar dados do médico vinculado (200)', async () => {
       req.user = { id: 'aux-1' };
-      
+
       db.query.mockResolvedValueOnce({ rows: [{ idMedico: 'med-1' }] });
       db.query.mockResolvedValueOnce({ rows: [{ nome: 'Dr. House', crm: '123' }] });
 
@@ -290,7 +294,7 @@ describe('AuxiliarController Unit Tests', () => {
       db.query.mockResolvedValueOnce({ rows: [{ idMedico: null }] });
 
       await auxiliarController.getMeuMedicoVinculado(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(404);
     });
 

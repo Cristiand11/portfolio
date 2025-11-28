@@ -11,8 +11,8 @@ jest.mock('../../src/utils/dateUtils');
 describe('AuxiliarModel Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    formatarData.mockImplementation(d => 'Formatted Date');
-    formatarApenasData.mockImplementation(d => 'Formatted Only Date');
+    formatarData.mockImplementation((d) => 'Formatted Date');
+    formatarApenasData.mockImplementation((d) => 'Formatted Only Date');
   });
 
   // ---------------------------------------------------------
@@ -22,9 +22,9 @@ describe('AuxiliarModel Unit Tests', () => {
     it('deve criar auxiliar formatando datas', async () => {
       const dados = { nome: 'Aux', senha: '123' };
       bcrypt.hash.mockResolvedValue('hash');
-      
-      db.query.mockResolvedValue({ 
-        rows: [{ ...dados, senha: 'hash', dataNascimento: new Date(), createdDate: new Date() }] 
+
+      db.query.mockResolvedValue({
+        rows: [{ ...dados, senha: 'hash', dataNascimento: new Date(), createdDate: new Date() }],
       });
 
       const result = await Auxiliar.create(dados);
@@ -45,7 +45,7 @@ describe('AuxiliarModel Unit Tests', () => {
 
       // Filtro específico deste model
       const filter = "idMedico eq '123'";
-      
+
       await Auxiliar.findPaginated(1, 10, filter);
 
       expect(db.query).toHaveBeenCalledWith(
@@ -55,16 +55,16 @@ describe('AuxiliarModel Unit Tests', () => {
     });
 
     it('deve ordenar corretamente (feature especifica do auxiliarModel)', async () => {
-        db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
-        db.query.mockResolvedValueOnce({ rows: [] });
-  
-        await Auxiliar.findPaginated(1, 10, '', { sort: 'email', order: 'DESC' });
-  
-        // Verifica se a query contém ORDER BY email DESC
-        const callArgs = db.query.mock.calls[1]; // Segunda chamada (SELECT dados)
-        const sql = callArgs[0];
-        
-        expect(sql).toContain('ORDER BY email DESC');
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      await Auxiliar.findPaginated(1, 10, '', { sort: 'email', order: 'DESC' });
+
+      // Verifica se a query contém ORDER BY email DESC
+      const callArgs = db.query.mock.calls[1]; // Segunda chamada (SELECT dados)
+      const sql = callArgs[0];
+
+      expect(sql).toContain('ORDER BY email DESC');
     });
   });
 

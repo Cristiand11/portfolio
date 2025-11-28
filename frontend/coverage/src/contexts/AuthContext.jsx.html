@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.41% </span>
+                <span class="strong">86.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>41/48</span>
+                <span class='fraction'>40/46</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.41% </span>
+                <span class="strong">86.95% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>41/48</span>
+                <span class='fraction'>40/46</span>
             </div>
         
             
@@ -145,20 +145,15 @@
 <a name='L80'></a><a href='#L80'>80</a>
 <a name='L81'></a><a href='#L81'>81</a>
 <a name='L82'></a><a href='#L82'>82</a>
-<a name='L83'></a><a href='#L83'>83</a>
-<a name='L84'></a><a href='#L84'>84</a>
-<a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L83'></a><a href='#L83'>83</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">19x</span>
@@ -190,7 +185,7 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -207,10 +202,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -234,9 +225,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -257,7 +247,7 @@ export const AuthProvider = ({ children }) =&gt; {
       try {
         const decodedUser = jwtDecode(token);
         setUser(decodedUser);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("authToken");
         setToken(null);
         setUser(null);
@@ -277,29 +267,25 @@ export const AuthProvider = ({ children }) =&gt; {
     if (!selectedProfile) {
       throw new Error("Nenhum perfil selecionado.");
     }
-    try {
-      const data = await loginService(email, senha, perfil);
 &nbsp;
-      const decodedToken = jwtDecode(data.token);
-      const userProfile = decodedToken.perfil;
+    const data = await loginService(email, senha, perfil);
 &nbsp;
-      localStorage.setItem("authToken", data.token);
-      setToken(data.token);
+    const decodedToken = jwtDecode(data.token);
+    const userProfile = decodedToken.perfil;
 &nbsp;
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (userProfile === "medico") {
-<span class="cstat-no" title="statement not covered" >        navigate("/medico/dashboard");</span>
-      } else if (userProfile === "paciente") {
-        navigate("/paciente/dashboard");
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="else path not taken" >E</span>} else if (userProfile === "auxiliar") {</span>
-<span class="cstat-no" title="statement not covered" >        navigate("/auxiliar/dashboard");</span>
-<span class="cstat-no" title="statement not covered" >      } else if (userProfile === "administrador") {</span>
-<span class="cstat-no" title="statement not covered" >        navigate("/admin/dashboard");</span>
-      } else {
-        // Fallback, caso algo dê errado
-<span class="cstat-no" title="statement not covered" >        navigate("/");</span>
-      }
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+    localStorage.setItem("authToken", data.token);
+    setToken(data.token);
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (userProfile === "medico") {
+<span class="cstat-no" title="statement not covered" >      navigate("/medico/dashboard");</span>
+    } else if (userProfile === "paciente") {
+      navigate("/paciente/dashboard");
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="else path not taken" >E</span>} else if (userProfile === "auxiliar") {</span>
+<span class="cstat-no" title="statement not covered" >      navigate("/auxiliar/dashboard");</span>
+<span class="cstat-no" title="statement not covered" >    } else if (userProfile === "administrador") {</span>
+<span class="cstat-no" title="statement not covered" >      navigate("/admin/dashboard");</span>
+    } else {
+<span class="cstat-no" title="statement not covered" >      navigate("/");</span>
     }
   };
 &nbsp;
@@ -320,18 +306,17 @@ export const AuthProvider = ({ children }) =&gt; {
   );
 };
 &nbsp;
-// Hook customizado para facilitar o uso do contexto
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () =&gt; {
   return useContext(AuthContext);
-};
-&nbsp;</pre></td></tr></table></pre>
+};</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-27T23:16:11.830Z
+                at 2025-11-28T01:08:26.424Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

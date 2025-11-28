@@ -10,7 +10,7 @@ jest.mock('jsonwebtoken');
 // Mocks manuais
 const mockRequest = () => ({
   header: jest.fn(),
-  user: undefined
+  user: undefined,
 });
 
 const mockResponse = () => {
@@ -69,7 +69,7 @@ describe('CheckAuthMiddleware Unit Tests', () => {
 
   it('deve capturar erro de token inválido e prosseguir sem usuário (fail soft)', () => {
     req.header.mockReturnValue('Bearer token-invalido');
-    
+
     // Simula erro (expirado ou adulterado)
     jwt.verify.mockImplementation(() => {
       throw new Error('Token expired');

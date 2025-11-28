@@ -39,64 +39,70 @@ describe('AuthController Unit Tests', () => {
   describe('login', () => {
     it('deve logar com sucesso e retornar token (200)', async () => {
       req.body = { email: 'test@test.com', senha: '123', perfil: 'paciente' };
-      
+
       // Mock User Database
-      db.query.mockResolvedValue({ 
-        rows: [{ id: 1, nome: 'User', senha: 'hashed_password' }] 
+      db.query.mockResolvedValue({
+        rows: [{ id: 1, nome: 'User', senha: 'hashed_password' }],
       });
-      
+
       // Mock Password Check
       bcrypt.compare.mockResolvedValue(true);
-      
+
       // Mock Token Generation
       jwt.sign.mockReturnValue('token_jwt_valido');
 
       await authController.login(req, res);
 
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        token: 'token_jwt_valido'
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          token: 'token_jwt_valido',
+        })
+      );
     });
 
     it('deve retornar 401 se senha estiver incorreta', async () => {
       req.body = { email: 'test@test.com', senha: 'errada', perfil: 'paciente' };
-      
-      db.query.mockResolvedValue({ 
-        rows: [{ id: 1, senha: 'hashed_password' }] 
+
+      db.query.mockResolvedValue({
+        rows: [{ id: 1, senha: 'hashed_password' }],
       });
-      
+
       bcrypt.compare.mockResolvedValue(false); // Senha não bate
 
       await authController.login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringMatching(/incorretos/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringMatching(/incorretos/),
+        })
+      );
     });
 
     it('deve bloquear médico Inativo (403)', async () => {
       req.body = { email: 'med@test.com', senha: '123', perfil: 'medico' };
 
       // Mock Médico Inativo
-      db.query.mockResolvedValue({ 
-        rows: [{ id: 1, status: 'Inativo' }] 
+      db.query.mockResolvedValue({
+        rows: [{ id: 1, status: 'Inativo' }],
       });
 
       await authController.login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringMatching(/conta foi inativada/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringMatching(/conta foi inativada/),
+        })
+      );
     });
 
     it('deve inativar médico automaticamente após 5 dias úteis (403)', async () => {
       req.body = { email: 'med@test.com', senha: '123', perfil: 'medico' };
 
       // Mock Médico Aguardando Inativação
-      db.query.mockResolvedValueOnce({ 
-        rows: [{ id: 1, status: 'Aguardando Inativação', inativacaoSolicitadaEm: '2023-01-01' }] 
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'Aguardando Inativação', inativacaoSolicitadaEm: '2023-01-01' }],
       });
 
       // Mock Dias Úteis > 5
@@ -111,30 +117,40 @@ describe('AuthController Unit Tests', () => {
       );
       expect(res.status).toHaveBeenCalledWith(403);
     });
-    
+
     it('deve permitir médico Aguardando Inativação se <= 5 dias úteis', async () => {
-        req.body = { email: 'med@test.com', senha: '123', perfil: 'medico' };
+      req.body = { email: 'med@test.com', senha: '123', perfil: 'medico' };
 
-        // Mock 1: Verifica status especial (retorna médico)
-        db.query.mockResolvedValueOnce({ 
-          rows: [{ id: 1, status: 'Aguardando Inativação', inativacaoSolicitadaEm: '2023-01-01', senha: 'hash' }] 
-        });
+      // Mock 1: Verifica status especial (retorna médico)
+      db.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            status: 'Aguardando Inativação',
+            inativacaoSolicitadaEm: '2023-01-01',
+            senha: 'hash',
+          },
+        ],
+      });
 
-        // Mock 2: Busca usuário para login (retorna mesmo médico)
-        db.query.mockResolvedValueOnce({ 
-            rows: [{ id: 1, senha: 'hash', nome: 'Dr' }] 
-        });
+      // Mock 2: Busca usuário para login (retorna mesmo médico)
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, senha: 'hash', nome: 'Dr' }],
+      });
 
-        dateUtils.getDiasUteis.mockReturnValue(3); // Dentro do prazo
-        bcrypt.compare.mockResolvedValue(true);
-        jwt.sign.mockReturnValue('token');
-  
-        await authController.login(req, res);
-  
-        // NÃO deve chamar update de inativação
-        expect(db.query).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE'), expect.any(Array));
-        // Deve logar
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'token' }));
+      dateUtils.getDiasUteis.mockReturnValue(3); // Dentro do prazo
+      bcrypt.compare.mockResolvedValue(true);
+      jwt.sign.mockReturnValue('token');
+
+      await authController.login(req, res);
+
+      // NÃO deve chamar update de inativação
+      expect(db.query).not.toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE'),
+        expect.any(Array)
+      );
+      // Deve logar
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'token' }));
     });
   });
 
@@ -147,9 +163,9 @@ describe('AuthController Unit Tests', () => {
 
       // Mock User Exists
       db.query.mockResolvedValueOnce({ rows: [{ id: 1, email: 'user@test.com' }] });
-      
+
       // Mock Insert Token
-      db.query.mockResolvedValueOnce({}); 
+      db.query.mockResolvedValueOnce({});
 
       await authController.forgotPassword(req, res);
 
@@ -163,7 +179,7 @@ describe('AuthController Unit Tests', () => {
 
     it('deve retornar 200 mesmo se usuário não existir (Segurança)', async () => {
       req.body = { email: 'fake@test.com', perfil: 'paciente' };
-      
+
       // Mock User Not Found
       db.query.mockResolvedValue({ rows: [] });
 
@@ -182,8 +198,8 @@ describe('AuthController Unit Tests', () => {
       req.body = { token: 'valid-token', novaSenha: 'new-pass' };
 
       // Mock Find Token
-      db.query.mockResolvedValueOnce({ 
-        rows: [{ id: 99, user_id: 1, perfil: 'paciente' }] 
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 99, user_id: 1, perfil: 'paciente' }],
       });
 
       // Mock Update Password
@@ -194,14 +210,14 @@ describe('AuthController Unit Tests', () => {
 
       // --- CORREÇÃO AQUI ---
       // Precisamos mockar o genSalt para retornar uma string, senão o 'salt' fica undefined
-      bcrypt.genSalt.mockResolvedValue('salt_teste'); 
+      bcrypt.genSalt.mockResolvedValue('salt_teste');
       bcrypt.hash.mockResolvedValue('new_hash');
 
       await authController.resetPassword(req, res);
 
       // Agora o segundo argumento será 'salt_teste', que é uma String, e o teste passará
       expect(bcrypt.hash).toHaveBeenCalledWith('new-pass', 'salt_teste');
-      
+
       expect(db.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE PACIENTE SET senha'),
         expect.any(Array)

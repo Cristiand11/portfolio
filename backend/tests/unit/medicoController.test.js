@@ -94,7 +94,7 @@ describe('MedicoController Unit Tests', () => {
     it('deve atualizar médico com sucesso (200)', async () => {
       req.params = { id: '1' };
       req.body = { nome: 'Novo Nome', crm: '12345/SC' };
-      
+
       Medico.update.mockResolvedValue({ id: '1', nome: 'Novo Nome' });
 
       await medicoController.updateMedico(req, res);
@@ -112,22 +112,22 @@ describe('MedicoController Unit Tests', () => {
     it('deve retornar 404 se médico não for encontrado', async () => {
       req.params = { id: '99' };
       req.body = { crm: '12345/SC' };
-      
+
       Medico.update.mockResolvedValue(null);
-      
+
       await medicoController.updateMedico(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(404);
     });
 
     it('deve retornar 500 em erro', async () => {
       req.params = { id: '1' };
       req.body = { crm: '12345/SC' };
-      
+
       Medico.update.mockRejectedValue(new Error('Erro'));
-      
+
       await medicoController.updateMedico(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
@@ -229,9 +229,9 @@ describe('MedicoController Unit Tests', () => {
     });
 
     it('deve retornar 500 em erro', async () => {
-        db.query.mockRejectedValue(new Error('Erro'));
-        await medicoController.reverterInativacao(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      db.query.mockRejectedValue(new Error('Erro'));
+      await medicoController.reverterInativacao(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -240,15 +240,15 @@ describe('MedicoController Unit Tests', () => {
   // ---------------------------------------------------------
   describe('getPacientesAtendidos', () => {
     it('deve retornar lista de pacientes (200)', async () => {
-        Medico.findPacientesAtendidos.mockResolvedValue({ contents: [] });
-        await medicoController.getPacientesAtendidos(req, res);
-        expect(res.status).toHaveBeenCalledWith(200);
+      Medico.findPacientesAtendidos.mockResolvedValue({ contents: [] });
+      await medicoController.getPacientesAtendidos(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('deve retornar 500 em caso de erro', async () => {
-        Medico.findPacientesAtendidos.mockRejectedValue(new Error('Erro'));
-        await medicoController.getPacientesAtendidos(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      Medico.findPacientesAtendidos.mockRejectedValue(new Error('Erro'));
+      await medicoController.getPacientesAtendidos(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -257,21 +257,21 @@ describe('MedicoController Unit Tests', () => {
   // ---------------------------------------------------------
   describe('getMe', () => {
     it('deve retornar dados do médico logado (200)', async () => {
-        Medico.findById.mockResolvedValue({ id: '1', nome: 'Dr' });
-        await medicoController.getMe(req, res);
-        expect(res.status).toHaveBeenCalledWith(200);
+      Medico.findById.mockResolvedValue({ id: '1', nome: 'Dr' });
+      await medicoController.getMe(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('deve retornar 404 se médico não encontrado', async () => {
-        Medico.findById.mockResolvedValue(null);
-        await medicoController.getMe(req, res);
-        expect(res.status).toHaveBeenCalledWith(404);
+      Medico.findById.mockResolvedValue(null);
+      await medicoController.getMe(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
     });
 
     it('deve retornar 500 em caso de erro', async () => {
-        Medico.findById.mockRejectedValue(new Error('Erro'));
-        await medicoController.getMe(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      Medico.findById.mockRejectedValue(new Error('Erro'));
+      await medicoController.getMe(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -280,21 +280,21 @@ describe('MedicoController Unit Tests', () => {
   // ---------------------------------------------------------
   describe('definirMeusHorarios', () => {
     it('deve retornar 400 se body não for array', async () => {
-        req.body = {}; // Objeto, não array
-        await medicoController.definirMeusHorarios(req, res);
-        expect(res.status).toHaveBeenCalledWith(400);
+      req.body = {}; // Objeto, não array
+      await medicoController.definirMeusHorarios(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it('deve retornar 400 se campos obrigatórios faltarem', async () => {
-        req.body = [{ dia_semana: 1, hora_inicio: '08:00' }]; // Falta hora_fim
-        await medicoController.definirMeusHorarios(req, res);
-        expect(res.status).toHaveBeenCalledWith(400);
+      req.body = [{ dia_semana: 1, hora_inicio: '08:00' }]; // Falta hora_fim
+      await medicoController.definirMeusHorarios(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it('deve retornar 400 se formato de hora inválido', async () => {
-        req.body = [{ dia_semana: 1, hora_inicio: '8h', hora_fim: '12:00' }];
-        await medicoController.definirMeusHorarios(req, res);
-        expect(res.status).toHaveBeenCalledWith(400);
+      req.body = [{ dia_semana: 1, hora_inicio: '8h', hora_fim: '12:00' }];
+      await medicoController.definirMeusHorarios(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it('deve retornar 400 se hora_inicio >= hora_fim', async () => {
@@ -311,18 +311,18 @@ describe('MedicoController Unit Tests', () => {
     });
 
     it('deve salvar horários com sucesso (200)', async () => {
-        req.body = [{ dia_semana: 1, hora_inicio: '08:00', hora_fim: '12:00' }];
-        agendaHelper.verificaConflitosNoDia.mockReturnValue(false);
-        await medicoController.definirMeusHorarios(req, res);
-        expect(HorarioTrabalho.definirHorarios).toHaveBeenCalled();
-        expect(res.status).toHaveBeenCalledWith(200);
+      req.body = [{ dia_semana: 1, hora_inicio: '08:00', hora_fim: '12:00' }];
+      agendaHelper.verificaConflitosNoDia.mockReturnValue(false);
+      await medicoController.definirMeusHorarios(req, res);
+      expect(HorarioTrabalho.definirHorarios).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('deve retornar 500 em erro', async () => {
-        req.body = []; // Válido (array vazio limpa horários)
-        HorarioTrabalho.definirHorarios.mockRejectedValue(new Error('Erro'));
-        await medicoController.definirMeusHorarios(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      req.body = []; // Válido (array vazio limpa horários)
+      HorarioTrabalho.definirHorarios.mockRejectedValue(new Error('Erro'));
+      await medicoController.definirMeusHorarios(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -331,29 +331,29 @@ describe('MedicoController Unit Tests', () => {
   // ---------------------------------------------------------
   describe('getHorarios', () => {
     it('getHorariosByMedicoId: deve retornar sucesso (200)', async () => {
-        req.params = { id: '1' };
-        HorarioTrabalho.findByMedicoId.mockResolvedValue([]);
-        await medicoController.getHorariosByMedicoId(req, res);
-        expect(res.status).toHaveBeenCalledWith(200);
+      req.params = { id: '1' };
+      HorarioTrabalho.findByMedicoId.mockResolvedValue([]);
+      await medicoController.getHorariosByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('getHorariosByMedicoId: deve retornar 500 em erro', async () => {
-        HorarioTrabalho.findByMedicoId.mockRejectedValue(new Error('Erro'));
-        await medicoController.getHorariosByMedicoId(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      HorarioTrabalho.findByMedicoId.mockRejectedValue(new Error('Erro'));
+      await medicoController.getHorariosByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
 
     it('getMeusHorarios: deve retornar sucesso (200)', async () => {
-        HorarioTrabalho.findByMedicoId.mockResolvedValue([]);
-        await medicoController.getMeusHorarios(req, res);
-        expect(HorarioTrabalho.findByMedicoId).toHaveBeenCalledWith('medico-123');
-        expect(res.status).toHaveBeenCalledWith(200);
+      HorarioTrabalho.findByMedicoId.mockResolvedValue([]);
+      await medicoController.getMeusHorarios(req, res);
+      expect(HorarioTrabalho.findByMedicoId).toHaveBeenCalledWith('medico-123');
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it('getMeusHorarios: deve retornar 500 em erro', async () => {
-        HorarioTrabalho.findByMedicoId.mockRejectedValue(new Error('Erro'));
-        await medicoController.getMeusHorarios(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      HorarioTrabalho.findByMedicoId.mockRejectedValue(new Error('Erro'));
+      await medicoController.getMeusHorarios(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -361,25 +361,25 @@ describe('MedicoController Unit Tests', () => {
   // Get Pacientes By Medico Id (Admin/Outros)
   // ---------------------------------------------------------
   describe('getPacientesByMedicoId', () => {
-      it('deve retornar 400 se ID não for fornecido (embora rota exija)', async () => {
-          req.params = {}; // Sem ID
-          await medicoController.getPacientesByMedicoId(req, res);
-          expect(res.status).toHaveBeenCalledWith(400);
-      });
+    it('deve retornar 400 se ID não for fornecido (embora rota exija)', async () => {
+      req.params = {}; // Sem ID
+      await medicoController.getPacientesByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
 
-      it('deve retornar lista paginada (200)', async () => {
-          req.params = { id: '1' };
-          Medico.findPacientesAtendidos.mockResolvedValue({});
-          await medicoController.getPacientesByMedicoId(req, res);
-          expect(res.status).toHaveBeenCalledWith(200);
-      });
+    it('deve retornar lista paginada (200)', async () => {
+      req.params = { id: '1' };
+      Medico.findPacientesAtendidos.mockResolvedValue({});
+      await medicoController.getPacientesByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
 
-      it('deve retornar 500 em erro', async () => {
-          req.params = { id: '1' };
-          Medico.findPacientesAtendidos.mockRejectedValue(new Error('Erro'));
-          await medicoController.getPacientesByMedicoId(req, res);
-          expect(res.status).toHaveBeenCalledWith(500);
-      });
+    it('deve retornar 500 em erro', async () => {
+      req.params = { id: '1' };
+      Medico.findPacientesAtendidos.mockRejectedValue(new Error('Erro'));
+      await medicoController.getPacientesByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+    });
   });
 
   // ---------------------------------------------------------
@@ -396,21 +396,23 @@ describe('MedicoController Unit Tests', () => {
     });
 
     it('deve retornar 400 se filtro for inválido', async () => {
-        req.params = { id: 'med-1' };
-        req.query.filter = 'invalido';
-        queryUtils.parseFilter.mockImplementation(() => { throw new Error('Filtro ruim'); });
-        
-        await medicoController.getConsultasByMedicoId(req, res);
-        expect(res.status).toHaveBeenCalledWith(400);
+      req.params = { id: 'med-1' };
+      req.query.filter = 'invalido';
+      queryUtils.parseFilter.mockImplementation(() => {
+        throw new Error('Filtro ruim');
+      });
+
+      await medicoController.getConsultasByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it('deve retornar 500 em erro de banco', async () => {
-        req.params = { id: 'med-1' };
-        queryUtils.parseFilter.mockReturnValue({ clause: '', params: [] });
-        db.query.mockRejectedValue(new Error('Erro DB'));
-        
-        await medicoController.getConsultasByMedicoId(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      req.params = { id: 'med-1' };
+      queryUtils.parseFilter.mockReturnValue({ clause: '', params: [] });
+      db.query.mockRejectedValue(new Error('Erro DB'));
+
+      await medicoController.getConsultasByMedicoId(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -423,16 +425,17 @@ describe('MedicoController Unit Tests', () => {
       Auxiliar.findPaginated.mockResolvedValue({});
       await medicoController.getMeusAuxiliares(req, res);
       expect(Auxiliar.findPaginated).toHaveBeenCalledWith(
-        expect.any(Number), expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
         expect.stringContaining("idMedico eq 'medico-auth-1'"),
         expect.any(Object)
       );
     });
 
     it('deve retornar 500 em erro', async () => {
-        Auxiliar.findPaginated.mockRejectedValue(new Error('Erro'));
-        await medicoController.getMeusAuxiliares(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
+      Auxiliar.findPaginated.mockRejectedValue(new Error('Erro'));
+      await medicoController.getMeusAuxiliares(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 });

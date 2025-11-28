@@ -28,7 +28,7 @@ describe('HorarioTrabalhoModel Unit Tests', () => {
       const idMedico = 1;
       const horarios = [
         { dia_semana: 1, hora_inicio: '08:00', hora_fim: '12:00' },
-        { dia_semana: 2, hora_inicio: '14:00', hora_fim: '18:00' }
+        { dia_semana: 2, hora_inicio: '14:00', hora_fim: '18:00' },
       ];
 
       await HorarioTrabalho.definirHorarios(idMedico, horarios);
@@ -45,11 +45,11 @@ describe('HorarioTrabalhoModel Unit Tests', () => {
 
       // 3. Verificação dos INSERTS (deve ter sido chamado para cada item do array)
       // Verificamos se a string de INSERT foi chamada
-      const insertCalls = mockClient.query.mock.calls.filter(call => 
+      const insertCalls = mockClient.query.mock.calls.filter((call) =>
         call[0].includes('INSERT INTO HORARIO_TRABALHO')
       );
       expect(insertCalls).toHaveLength(2); // 2 horários = 2 inserts
-      
+
       // Valida os parametros do primeiro insert
       expect(insertCalls[0][1]).toEqual([idMedico, 1, '08:00', '12:00']);
 
@@ -73,8 +73,9 @@ describe('HorarioTrabalhoModel Unit Tests', () => {
       });
 
       // Espera que a função lance o erro para cima
-      await expect(HorarioTrabalho.definirHorarios(idMedico, horarios))
-        .rejects.toThrow('Erro de Banco de Dados');
+      await expect(HorarioTrabalho.definirHorarios(idMedico, horarios)).rejects.toThrow(
+        'Erro de Banco de Dados'
+      );
 
       // Verificações de falha
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
@@ -90,17 +91,12 @@ describe('HorarioTrabalhoModel Unit Tests', () => {
   describe('findByMedicoId', () => {
     it('deve buscar horários ordenados corretamente', async () => {
       // Mock do db.query direto (não usa o client aqui, usa o pool direto)
-      const mockHorarios = [
-        { dia_semana: 1, hora_inicio: '08:00', hora_fim: '12:00' }
-      ];
+      const mockHorarios = [{ dia_semana: 1, hora_inicio: '08:00', hora_fim: '12:00' }];
       db.query.mockResolvedValue({ rows: mockHorarios });
 
       const resultado = await HorarioTrabalho.findByMedicoId(123);
 
-      expect(db.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT dia_semana'),
-        [123]
-      );
+      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT dia_semana'), [123]);
       expect(db.query).toHaveBeenCalledWith(
         expect.stringContaining('ORDER BY dia_semana, hora_inicio ASC'),
         expect.any(Array)

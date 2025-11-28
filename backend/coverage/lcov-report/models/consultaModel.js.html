@@ -429,23 +429,7 @@
 <a name='L364'></a><a href='#L364'>364</a>
 <a name='L365'></a><a href='#L365'>365</a>
 <a name='L366'></a><a href='#L366'>366</a>
-<a name='L367'></a><a href='#L367'>367</a>
-<a name='L368'></a><a href='#L368'>368</a>
-<a name='L369'></a><a href='#L369'>369</a>
-<a name='L370'></a><a href='#L370'>370</a>
-<a name='L371'></a><a href='#L371'>371</a>
-<a name='L372'></a><a href='#L372'>372</a>
-<a name='L373'></a><a href='#L373'>373</a>
-<a name='L374'></a><a href='#L374'>374</a>
-<a name='L375'></a><a href='#L375'>375</a>
-<a name='L376'></a><a href='#L376'>376</a>
-<a name='L377'></a><a href='#L377'>377</a>
-<a name='L378'></a><a href='#L378'>378</a>
-<a name='L379'></a><a href='#L379'>379</a>
-<a name='L380'></a><a href='#L380'>380</a>
-<a name='L381'></a><a href='#L381'>381</a>
-<a name='L382'></a><a href='#L382'>382</a>
-<a name='L383'></a><a href='#L383'>383</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<a name='L367'></a><a href='#L367'>367</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
@@ -602,22 +586,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -890,7 +858,7 @@ Consulta.findPaginated = async (page = <span class="branch-0 cbranch-no" title="
   if (filterString) {
     const filters = filterString.split(' AND ');
     filters.forEach((filter) =&gt; {
-      const match = filter.match(/([\w\.]+)\s+(eq|co)\s+'([^']*)'/);
+      const match = filter.match(/([\w.]+)\s+(eq|co)\s+'([^']*)'/);
       <span class="missing-if-branch" title="else path not taken" >E</span>if (match) {
         const [, field, operator, value] = match;
         <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.keys(allowedFilterFields).includes(field)) {
@@ -913,10 +881,10 @@ Consulta.findPaginated = async (page = <span class="branch-0 cbranch-no" title="
   const orderDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 &nbsp;
   const baseQuery = `
-    FROM consulta c 
-    LEFT JOIN paciente p ON c.paciente_id = p.id
-    LEFT JOIN medico m ON c.medico_id = m.id
-  `;
+      FROM consulta c 
+      LEFT JOIN paciente p ON c.paciente_id = p.id
+      LEFT JOIN medico m ON c.medico_id = m.id
+    `;
 &nbsp;
   const countQuery = `SELECT COUNT(c.id) ${baseQuery} ${whereClause}`;
   const countResult = await db.query(countQuery, values);
@@ -925,11 +893,11 @@ Consulta.findPaginated = async (page = <span class="branch-0 cbranch-no" title="
   let paramIndex = values.length + 1;
   const queryValues = [...values, size, offset];
   const dataQuery = `
-    SELECT c.*, p.nome as "nomePaciente", m.nome as "nomeMedico"
-    ${baseQuery} 
-    ${whereClause} 
-    ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
-    LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+      SELECT c.*, p.nome as "nomePaciente", m.nome as "nomeMedico"
+      ${baseQuery} 
+      ${whereClause} 
+      ORDER BY ${orderByClause} ${orderDirection}, c.hora ASC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
 &nbsp;
   const { rows } = await db.query(dataQuery, queryValues);
   const totalPages = Math.ceil(totalElements / size);
@@ -986,22 +954,6 @@ Consulta.update = async (id, consultaData) =&gt; {
   return rows[0];
 };
 &nbsp;
-/*
-Removida por solicitação da professora
-// --- DELETE ---
-Consulta.delete = async (id) =&gt; {
-  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = $1', [id]);
-  return rowCount;
-};
-&nbsp;
-Removida por solicitação da professora
-// Deleta múltiplas consultas com base em um array de IDs
-Consulta.deleteByIds = async (ids) =&gt; {
-  const { rowCount } = await db.query('DELETE FROM consulta WHERE id = ANY($1::uuid[])', [ids]);
-  return rowCount;
-};
-*/
-&nbsp;
 // --- FUNÇÃO DE VALIDAÇÃO DE CONFLITO PARA O MÉDICO ---
 Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId = null) =&gt; {
   const busyStatus = [
@@ -1010,19 +962,19 @@ Consulta.checkConflict = async (idMedico, data, hora, duracao, excludeConsultaId
     'Aguardando Confirmação do Paciente',
   ];
   let query = `
-        SELECT COUNT(*) FROM consulta 
-        WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
-        AND (
-            -- A nova consulta começa durante uma existente
-            ($4::time &gt;= hora AND $4::time &lt; (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
-            OR 
-            -- A nova consulta termina durante uma existente
-            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt; hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &lt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-            OR
-            -- A nova consulta "envelopa" uma existente
-            ($4::time &lt;= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-        )
-    `;
+          SELECT COUNT(*) FROM consulta 
+          WHERE medico_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+          AND (
+              -- A nova consulta começa durante uma existente
+              ($4::time &gt;= hora AND $4::time &lt; (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+              OR 
+              -- A nova consulta termina durante uma existente
+              (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt; hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &lt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+              OR
+              -- A nova consulta "envelopa" uma existente
+              ($4::time &lt;= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+          )
+      `;
   const values = [idMedico, data, busyStatus, hora, duracao];
 &nbsp;
   if (excludeConsultaId) {
@@ -1049,19 +1001,19 @@ Consulta.checkPatientConflict = async (
   ];
 &nbsp;
   let query = `
-        SELECT COUNT(*) FROM consulta 
-        WHERE paciente_id = $1 AND data = $2 AND status = ANY($3::varchar[])
-        AND (
-            -- A nova consulta começa durante uma existente
-            ($4::time &gt;= hora AND $4::time &lt; (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
-            OR 
-            -- A nova consulta termina durante uma existente
-            (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt; hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &lt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-            OR
-            -- A nova consulta "envelopa" uma existente
-            ($4::time &lt;= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
-        )
-    `;
+          SELECT COUNT(*) FROM consulta 
+          WHERE paciente_id = $1 AND data = $2 AND status = ANY($3::varchar[])
+          AND (
+              -- A nova consulta começa durante uma existente
+              ($4::time &gt;= hora AND $4::time &lt; (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute')) 
+              OR 
+              -- A nova consulta termina durante uma existente
+              (($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt; hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &lt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+              OR
+              -- A nova consulta "envelopa" uma existente
+              ($4::time &lt;= hora AND ($4::time + ($5::integer + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute') &gt;= (hora + ("duracaoMinutos" + ${MINUTOS_ENTRE_CONSULTAS}) * INTERVAL '1 minute'))
+          )
+      `;
   const values = [idPaciente, data, busyStatus, hora, duracao];
 &nbsp;
   // Se estivermos atualizando, precisamos excluir a própria consulta da verificação
@@ -1119,13 +1071,13 @@ Consulta.marcarComoConcluida = async (id) =&gt; {
 Consulta.confirmar = async (id, novaData, novaHora) =&gt; {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            data = $1,
-            hora = $2,
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $3 RETURNING *`,
+              status = 'Confirmada',
+              data = $1,
+              hora = $2,
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $3 RETURNING *`,
     [novaData, novaHora, id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -1138,11 +1090,11 @@ Consulta.confirmar = async (id, novaData, novaHora) =&gt; {
 Consulta.reprovar = async (id) =&gt; {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $1 RETURNING *`,
+              status = 'Confirmada',
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $1 RETURNING *`,
     [id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -1155,11 +1107,11 @@ Consulta.reprovar = async (id) =&gt; {
 Consulta.solicitarRemarcacao = async (id, novaData, novaHora, novoStatus) =&gt; {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = $1, 
-            "dataRemarcacaoSugerida" = $2, 
-            "horaRemarcacaoSugerida" = $3, 
-            "lastModifiedDate" = NOW() 
-         WHERE id = $4 RETURNING *`,
+              status = $1, 
+              "dataRemarcacaoSugerida" = $2, 
+              "horaRemarcacaoSugerida" = $3, 
+              "lastModifiedDate" = NOW() 
+          WHERE id = $4 RETURNING *`,
     [novoStatus, novaData, novaHora, id]
   );
   rows[0].data = formatarApenasData(rows[0].data);
@@ -1182,13 +1134,13 @@ Consulta.updateStatus = async (id, novoStatus) =&gt; {
 Consulta.aceitarRemarcacao = async (id, novaData, novaHora) =&gt; {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            data = $1,
-            hora = $2,
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $3 RETURNING *`,
+              status = 'Confirmada',
+              data = $1,
+              hora = $2,
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $3 RETURNING *`,
     [novaData, novaHora, id]
   );
   return formatarConsulta(rows[0]);
@@ -1198,11 +1150,11 @@ Consulta.aceitarRemarcacao = async (id, novaData, novaHora) =&gt; {
 Consulta.rejeitarRemarcacao = async (id) =&gt; {
   const { rows } = await db.query(
     `UPDATE consulta SET 
-            status = 'Confirmada',
-            "dataRemarcacaoSugerida" = NULL,
-            "horaRemarcacaoSugerida" = NULL,
-            "lastModifiedDate" = NOW()
-         WHERE id = $1 RETURNING *`,
+              status = 'Confirmada',
+              "dataRemarcacaoSugerida" = NULL,
+              "horaRemarcacaoSugerida" = NULL,
+              "lastModifiedDate" = NOW()
+          WHERE id = $1 RETURNING *`,
     [id]
   );
   return formatarConsulta(rows[0]);
@@ -1216,7 +1168,7 @@ module.exports = Consulta;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-27T23:14:08.384Z
+                at 2025-11-28T00:45:34.780Z
             </div>
         <script src="../prettify.js"></script>
         <script>
