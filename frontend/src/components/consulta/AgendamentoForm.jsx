@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   getMeusPacientes,
   getPacientesByMedicoId,
 } from "../../services/pacienteService";
 import { createConsulta } from "../../services/consultaService";
-import "react-calendar/dist/Calendar.css";
-import { format } from "date-fns";
 import toast from "react-hot-toast";
 
 export default function AgendamentoForm({
@@ -22,8 +20,6 @@ export default function AgendamentoForm({
     hora: initialData?.hora || "",
     observacoes: "",
   });
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const calendarRef = useRef(null);
 
   useEffect(() => {
     async function fetchPacientes() {
@@ -43,7 +39,7 @@ export default function AgendamentoForm({
           });
         }
         setPacientes(response?.data?.contents || []);
-      } catch (err) {
+      } catch {
         toast.error("Não foi possível carregar a lista de pacientes.");
         setPacientes([]);
       } finally {
@@ -54,25 +50,9 @@ export default function AgendamentoForm({
     fetchPacientes();
   }, [medicoId]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
-        setIsCalendarOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (date) => {
-    const formattedDate = format(date, "yyyy-MM-dd");
-    setFormData((prev) => ({ ...prev, data: formattedDate }));
-    setIsCalendarOpen(false);
   };
 
   const handleSubmit = async (e) => {

@@ -5,9 +5,7 @@ import {
   getMinhasConsultas,
   confirmarConsulta,
   cancelarConsultaAdmin,
-  concluirConsulta,
-  aceitarRemarcacao,
-  rejeitarRemarcacao,
+  concluirConsulta
 } from "../../services/consultaService";
 import ActionsDropdown from "../../components/ActionsDropdown";
 import Modal from "../../components/Modal";
@@ -142,7 +140,7 @@ export default function ConsultasMedicoPage() {
       setConsultas(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
       setSelectedIds([]);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível carregar as consultas.");
       setConsultas([]);
       setTotalPaginas(0);
@@ -178,28 +176,6 @@ export default function ConsultasMedicoPage() {
       setSelectedIds([]);
     }
   };
-
-  /*
-  Removida por solicitação da professora
-  const handleBulkDelete = () => {
-    setConfirmModalState({
-      isOpen: true,
-      title: `Excluir ${selectedIds.length} Consultas`,
-      message: `Tem certeza de que deseja excluir permanentemente as ${selectedIds.length} consultas selecionadas?`,
-      onConfirm: async () => {
-        try {
-          await deleteVariasConsultas(selectedIds);
-          toast.success("Consultas excluídas com sucesso!");
-          setSelectedIds([]);
-          fetchConsultas();
-        } catch (err) {
-          toast.error("Não foi possível excluir as consultas.");
-        }
-        setConfirmModalState({ isOpen: false });
-      },
-    });
-  };
-  */
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -278,59 +254,6 @@ export default function ConsultasMedicoPage() {
 
   const handleIniciarRemarcacao = (consulta) => {
     setRemarcacaoModalState({ isOpen: true, consulta: consulta });
-  };
-
-  const handleAceitarRemarcacao = async (id) => {
-    const consultaParaRemarcar = consultas.find((c) => c.id === id);
-    if (!consultaParaRemarcar) return;
-
-    const dataAntiga = new Date(consultaParaRemarcar.data).toLocaleDateString(
-      "pt-BR",
-      { timeZone: "UTC" }
-    );
-    const dataNova = new Date(
-      consultaParaRemarcar.dataRemarcacaoSugerida
-    ).toLocaleDateString("pt-BR", { timeZone: "UTC" });
-
-    setConfirmModalState({
-      isOpen: true,
-      title: "Confirmar Remarcação",
-      message: `Aceitar a proposta de remarcação do paciente ${consultaParaRemarcar.nomePaciente}? De: ${dataAntiga} às ${consultaParaRemarcar.hora}. Para: ${dataNova} às ${consultaParaRemarcar.horaRemarcacaoSugerida}.`,
-      onConfirm: async () => {
-        try {
-          await aceitarRemarcacao(id);
-          toast.success("Remarcação aceita com sucesso!");
-          fetchConsultas();
-        } catch (err) {
-          toast.error(
-            err.response?.data?.message || "Erro ao aceitar remarcação."
-          );
-        }
-        setConfirmModalState({ isOpen: false });
-      },
-    });
-  };
-
-  const handleRejeitarRemarcacao = (id) => {
-    setConfirmModalState({
-      isOpen: true,
-      title: "Confirmar Rejeição",
-      message:
-        "Tem certeza de que deseja rejeitar esta proposta de remarcação? A consulta voltará ao seu horário original.",
-      onConfirm: async () => {
-        try {
-          await rejeitarRemarcacao(id);
-          toast.success("Remarcação rejeitada com sucesso!");
-          fetchConsultas();
-        } catch (err) {
-          toast.error(
-            err.response?.data?.message || "Erro ao rejeitar remarcação."
-          );
-        }
-        // Fecha o modal após a ação ser concluída
-        setConfirmModalState({ isOpen: false });
-      },
-    });
   };
 
   const handleCloseModal = () => {

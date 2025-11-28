@@ -135,7 +135,7 @@ export default function ConsultasPacientePage() {
       const response = await getMinhasConsultas(params);
       setConsultas(response.data.contents);
       setTotalPaginas(response.data.totalPages || 0);
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar as suas consultas.");
       setConsultas([]);
       setTotalPaginas(0);

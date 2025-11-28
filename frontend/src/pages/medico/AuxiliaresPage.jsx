@@ -112,7 +112,7 @@ export default function AuxiliaresPage() {
       setAuxiliares(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
       setSelectedIds([]);
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar a lista de auxiliares.");
       setAuxiliares([]);
       setTotalPaginas(0);
@@ -154,7 +154,7 @@ export default function AuxiliaresPage() {
           toast.success("Auxiliares excluídos com sucesso!");
           setSelectedIds([]);
           handleSuccess();
-        } catch (err) {
+        } catch {
           toast.error("Não foi possível excluir os auxiliares.");
         } finally {
           setConfirmBulkDeleteState({ isOpen: false });
@@ -190,7 +190,7 @@ export default function AuxiliaresPage() {
       await deleteAuxiliar(auxiliarId);
       toast.success("Auxiliar excluído com sucesso!");
       setRefetchTrigger((prev) => prev + 1);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível excluir o auxiliar.");
     } finally {
       setConfirmDeleteState({ isOpen: false, auxiliarId: null });

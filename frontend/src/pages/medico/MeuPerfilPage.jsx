@@ -24,7 +24,7 @@ export default function MeuPerfilPage() {
         .then((response) => {
           setPerfilData(response.data);
         })
-        .catch((err) => {
+        .catch(() => {
           setError("Não foi possível carregar os dados do perfil.");
         })
         .finally(() => {

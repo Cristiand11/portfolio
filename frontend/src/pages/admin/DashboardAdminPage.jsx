@@ -17,7 +17,7 @@ export default function DashboardAdminPage() {
       try {
         const response = await getDashboardStats();
         setStats(response.data);
-      } catch (err) {
+      } catch {
         toast.error("Não foi possível carregar as estatísticas.");
       } finally {
         setIsLoading(false);

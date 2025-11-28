@@ -130,7 +130,7 @@ export default function PacientesPage() {
 
       setPacientes(response.data.contents);
       setTotalPaginas(response.data.totalPages);
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar a lista de pacientes.");
     } finally {
       setIsLoading(false);

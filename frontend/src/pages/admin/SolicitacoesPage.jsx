@@ -37,7 +37,7 @@ export default function SolicitacoesPage() {
 
       setSolicitacoes(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível carregar as solicitações.");
       setSolicitacoes([]);
       setTotalPaginas(0);

@@ -44,7 +44,7 @@ export default function DashboardPacientePage() {
         );
 
       setProximasConsultas(consultasFuturas);
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar as suas consultas.");
       toast.error("Não foi possível carregar as suas consultas.");
     } finally {

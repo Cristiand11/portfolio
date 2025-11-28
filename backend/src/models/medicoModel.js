@@ -332,8 +332,6 @@ Medico.findPacientesAtendidos = async (
         }
       }
     });
-    console.log('>>> Where clauses construídas:', whereClauses);
-    console.log('>>> Values para query:', values);
   }
   const whereClause = `WHERE ${whereClauses.join(' AND ')}`;
 

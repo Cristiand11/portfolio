@@ -37,7 +37,7 @@ export default function DashboardMedicoPage() {
           return dataConsulta > agora;
         });
         setProximaConsulta(proxima);
-      } catch (err) {
+      } catch {
         setError("Não foi possível carregar os dados da agenda.");
       } finally {
         setIsLoading(false);

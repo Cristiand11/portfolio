@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getMeuMedicoVinculado } from "../../services/auxiliarService";
 import { getMinhasConsultas } from "../../services/consultaService";
 import toast from "react-hot-toast";
-import { format, parseISO, isFuture, startOfDay, endOfDay } from "date-fns";
+import { format, parseISO, isFuture } from "date-fns";
 import { useOutletContext } from "react-router-dom";
 
 export default function DashboardAuxiliarPage() {
@@ -54,7 +54,6 @@ export default function DashboardAuxiliarPage() {
       setConsultasHoje(consultasDoDia);
 
       // 3. Calcular próximas consultas e restantes
-      const agora = new Date();
       let proxima = null;
       let restantes = 0;
 

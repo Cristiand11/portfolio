@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { requestPasswordReset } from "../services/authService";
 import toast from "react-hot-toast";
@@ -49,7 +49,7 @@ export default function LoginPage() {
       );
       setIsForgotPassword(false);
       setResetEmail("");
-    } catch (err) {
+    } catch {
       toast.success(
         "Se o e-mail estiver cadastrado, um link de recuperação foi enviado."
       );
@@ -65,7 +65,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-        {/* Botão Trocar Perfil */}
         {!isForgotPassword && (
           <button
             type="button"
@@ -80,11 +79,8 @@ export default function LoginPage() {
           {isForgotPassword ? "Recuperar Senha" : "Acessar AgendaMed"}
         </h1>
 
-        {/* Renderização Condicional: Formulário de Login OU Esqueci a Senha */}
         {!isForgotPassword ? (
-          // --- FORMULÁRIO DE LOGIN ---
           <form onSubmit={handleLogin} className="mt-4 space-y-4">
-            {/* Campo de E-mail */}
             <div>
               <label
                 htmlFor="email"
@@ -102,7 +98,6 @@ export default function LoginPage() {
                 placeholder="seuemail@exemplo.com"
               />
             </div>
-            {/* --- CAMPO DE SENHA --- */}
             <div>
               <label
                 htmlFor="senha"
@@ -132,13 +127,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* NOVO: Link "Esqueci a senha?" */}
             <div className="text-right">
               <button
                 type="button"
                 onClick={() => {
                   setIsForgotPassword(true);
-                  setError(""); // Limpa erros ao mudar de formulário
+                  setError("");
                 }}
                 className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
               >
@@ -146,7 +140,6 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* --- BOTÃO DE SUBMIT --- */}
             <button
               type="submit"
               disabled={isLoading}
@@ -156,12 +149,10 @@ export default function LoginPage() {
             </button>
           </form>
         ) : (
-          // --- FORMULÁRIO ESQUECI A SENHA ---
           <form onSubmit={handleForgotPassword} className="mt-4 space-y-4">
             <p className="text-sm text-gray-600 text-center">
               Digite seu e-mail para receber o link de recuperação de senha.
             </p>
-            {/* Campo de E-mail para Recuperação */}
             <div>
               <label
                 htmlFor="resetEmail"
@@ -180,7 +171,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Botão de Submit Recuperação */}
             <button
               type="submit"
               disabled={isLoading}
@@ -189,13 +179,12 @@ export default function LoginPage() {
               {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
             </button>
 
-            {/* NOVO: Link "Voltar para o login" */}
             <div className="text-center">
               <button
                 type="button"
                 onClick={() => {
                   setIsForgotPassword(false);
-                  setError(""); // Limpa erros ao mudar de formulário
+                  setError("");
                 }}
                 className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
               >

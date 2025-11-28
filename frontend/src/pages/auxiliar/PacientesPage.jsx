@@ -100,7 +100,7 @@ export default function PacientesPage() {
           throw new Error("Médico vinculado não identificado.");
         }
         setMedicoVinculado(medicoRes.data);
-      } catch (err) {
+      } catch {
         setError("Não foi possível identificar o médico vinculado.");
         setIsLoading(false);
         toast.error("Não foi possível identificar o médico vinculado.");
@@ -125,7 +125,7 @@ export default function PacientesPage() {
       );
       setPacientes(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar a lista de pacientes.");
       toast.error("Não foi possível carregar a lista de pacientes.");
       setPacientes([]);
