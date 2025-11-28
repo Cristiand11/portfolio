@@ -142,7 +142,7 @@ export default function ConsultasMedicoPage() {
       setConsultas(response.data.contents || []);
       setTotalPaginas(response.data.totalPages || 0);
       setSelectedIds([]);
-    } catch (err) {
+    } catch {
       toast.error("Não foi possível carregar as consultas.");
       setConsultas([]);
       setTotalPaginas(0);

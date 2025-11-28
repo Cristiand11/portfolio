@@ -50,7 +50,7 @@ export default function HorariosPage() {
           };
         });
         setHorarios(newState);
-      } catch (err) {
+      } catch {
         toast.error("Não foi possível carregar os horários.");
       } finally {
         setIsLoading(false);
