@@ -10,8 +10,8 @@ jest.mock('../../src/utils/dateUtils');
 describe('PacienteModel Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    formatarApenasData.mockImplementation(d => '2000-01-01');
-    formatarData.mockImplementation(d => '2025-01-01');
+    formatarApenasData.mockImplementation((d) => '2000-01-01');
+    formatarData.mockImplementation((d) => '2025-01-01');
   });
 
   // ---------------------------------------------------------
@@ -21,9 +21,9 @@ describe('PacienteModel Unit Tests', () => {
     it('deve criar paciente e formatar datas de retorno', async () => {
       const dados = { nome: 'Pac', senha: '123' };
       bcrypt.hash.mockResolvedValue('hash');
-      
-      db.query.mockResolvedValue({ 
-        rows: [{ ...dados, senha: 'hash', dataNascimento: new Date(), createdDate: new Date() }] 
+
+      db.query.mockResolvedValue({
+        rows: [{ ...dados, senha: 'hash', dataNascimento: new Date(), createdDate: new Date() }],
       });
 
       const result = await Paciente.create(dados);
@@ -43,7 +43,7 @@ describe('PacienteModel Unit Tests', () => {
 
       // No controller/model, cepCodigo é mapeado para "cepCodigo" (com aspas)
       const filter = "cepCodigo eq '89200'";
-      
+
       await Paciente.findPaginated(1, 10, filter);
 
       expect(db.query).toHaveBeenCalledWith(
@@ -51,18 +51,18 @@ describe('PacienteModel Unit Tests', () => {
         expect.arrayContaining(['89200'])
       );
     });
-    
-    it('deve aplicar replace correto nos parâmetros de paginação', async () => {
-       db.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });
-       db.query.mockResolvedValueOnce({ rows: [] });
 
-       const filter = "nome eq 'Teste'";
-       await Paciente.findPaginated(1, 10, filter);
-       
-       const queryExecutada = db.query.mock.calls[1][0];
-       
-       expect(queryExecutada).not.toContain('LIMIT $1'); 
-       expect(queryExecutada).toContain('LIMIT $2');
+    it('deve aplicar replace correto nos parâmetros de paginação', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const filter = "nome eq 'Teste'";
+      await Paciente.findPaginated(1, 10, filter);
+
+      const queryExecutada = db.query.mock.calls[1][0];
+
+      expect(queryExecutada).not.toContain('LIMIT $1');
+      expect(queryExecutada).toContain('LIMIT $2');
     });
   });
 
@@ -83,14 +83,14 @@ describe('PacienteModel Unit Tests', () => {
     });
 
     it('deve retornar próprio objeto se não houver campos para update', async () => {
-        // Mock do findById pois ele será chamado
-        db.query.mockResolvedValue({ rows: [{ id: 1, nome: 'Antigo' }] });
-        
-        const result = await Paciente.update(1, {}); // Objeto vazio
+      // Mock do findById pois ele será chamado
+      db.query.mockResolvedValue({ rows: [{ id: 1, nome: 'Antigo' }] });
 
-        // Deve chamar findById (SELECT) e não UPDATE
-        expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'), expect.any(Array));
-        expect(result.nome).toBe('Antigo');
+      const result = await Paciente.update(1, {}); // Objeto vazio
+
+      // Deve chamar findById (SELECT) e não UPDATE
+      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'), expect.any(Array));
+      expect(result.nome).toBe('Antigo');
     });
   });
 
@@ -98,14 +98,14 @@ describe('PacienteModel Unit Tests', () => {
   // Find Medicos Consultados
   // ---------------------------------------------------------
   describe('findMedicosConsultados', () => {
-      it('deve executar query com DISTINCT e JOIN', async () => {
-          db.query.mockResolvedValue({ rows: [] });
-          
-          await Paciente.findMedicosConsultados(1);
+    it('deve executar query com DISTINCT e JOIN', async () => {
+      db.query.mockResolvedValue({ rows: [] });
 
-          const sql = db.query.mock.calls[0][0];
-          expect(sql).toContain('DISTINCT m.id');
-          expect(sql).toContain('JOIN consulta c');
-      });
+      await Paciente.findMedicosConsultados(1);
+
+      const sql = db.query.mock.calls[0][0];
+      expect(sql).toContain('DISTINCT m.id');
+      expect(sql).toContain('JOIN consulta c');
+    });
   });
 });

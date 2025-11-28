@@ -1,11 +1,10 @@
 const { parseFilter } = require('../../src/utils/queryUtils');
 
 describe('QueryUtils Unit Tests', () => {
-  
   // ---------------------------------------------------------
   // CAMINHOS FELIZES (Sucesso)
   // ---------------------------------------------------------
-  
+
   it('deve fazer o parse de um filtro de igualdade simples (eq)', () => {
     const input = "status eq 'Confirmada'";
     const resultado = parseFilter(input);
@@ -26,9 +25,9 @@ describe('QueryUtils Unit Tests', () => {
   it('deve processar array de múltiplos filtros e incrementar índices', () => {
     const input = [
       "status eq 'Ativo'",
-      "medicoId eq '123'" // Teste de mapeamento camelCase -> snake_case
+      "medicoId eq '123'", // Teste de mapeamento camelCase -> snake_case
     ];
-    
+
     // Começando do índice 5 para testar o offset
     const resultado = parseFilter(input, 5);
 
@@ -56,14 +55,14 @@ describe('QueryUtils Unit Tests', () => {
   });
 
   it('deve lançar erro se o formato da string estiver incorreto', () => {
-    const input = "status=Confirmada"; // Falta espaço e aspas
+    const input = 'status=Confirmada'; // Falta espaço e aspas
 
     expect(() => parseFilter(input)).toThrow(/Formato de filtro inválido/);
   });
 
   it('deve lançar erro se o operador não existir', () => {
-    // Embora o regex no seu código capture apenas operadores válidos, 
-    // se a string passar no regex mas falhar no mapa (teoricamente impossivel com seu regex atual, 
+    // Embora o regex no seu código capture apenas operadores válidos,
+    // se a string passar no regex mas falhar no mapa (teoricamente impossivel com seu regex atual,
     // mas bom para garantir robustez caso o regex mude), validamos o formato.
     // Vamos testar algo que quebre o regex propositalmente para cair no 'else'
     const input = "status invalidOp 'valor'";

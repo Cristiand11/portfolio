@@ -47,12 +47,21 @@ describe('ConsultaController Unit Tests', () => {
       const dataFutura = '2030-10-20';
       req.body = { idMedico: 'med-1', data: dataFutura, hora: '14:00' };
 
-      Medico.findById.mockResolvedValue({ id: 'med-1', email: 'house@med.com', duracaoPadraoConsultaMinutos: 30 });
+      Medico.findById.mockResolvedValue({
+        id: 'med-1',
+        email: 'house@med.com',
+        duracaoPadraoConsultaMinutos: 30,
+      });
       Paciente.findById.mockResolvedValue({ id: 'paciente-1', nome: 'Paciente Teste' });
       Medico.isHorarioDisponivel.mockResolvedValue(true);
       Consulta.checkConflict.mockResolvedValue(false);
       Consulta.checkPatientConflict.mockResolvedValue(false);
-      Consulta.create.mockResolvedValue({ id: 100, status: 'Aguardando', data: dataFutura, hora: '14:00' });
+      Consulta.create.mockResolvedValue({
+        id: 100,
+        status: 'Aguardando',
+        data: dataFutura,
+        hora: '14:00',
+      });
 
       await consultaController.createConsulta(req, res);
 
@@ -86,7 +95,7 @@ describe('ConsultaController Unit Tests', () => {
       req.user = { id: 'aux-1', perfil: 'auxiliar' };
       // CORREÇÃO: Adicionado data/hora para passar pela validação inicial (400) e chegar no erro de permissão (403)
       req.body = { idPaciente: 'pac-1', data: '2030-01-01', hora: '10:00' };
-      
+
       Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: null });
 
       await consultaController.createConsulta(req, res);
@@ -98,7 +107,7 @@ describe('ConsultaController Unit Tests', () => {
       req.user = { id: 'user-1', perfil: 'hacker' };
       // CORREÇÃO: Adicionado data/hora para passar pela validação inicial
       req.body = { data: '2030-01-01', hora: '10:00' };
-      
+
       await consultaController.createConsulta(req, res);
       expect(res.status).toHaveBeenCalledWith(403);
     });
@@ -112,9 +121,18 @@ describe('ConsultaController Unit Tests', () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'pac-1', perfil: 'paciente' };
 
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', paciente_id: 'pac-1', medico_id: 'med-1', data: '2030-12-31', hora: '10:00' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        paciente_id: 'pac-1',
+        medico_id: 'med-1',
+        data: '2030-12-31',
+        hora: '10:00',
+      });
       Paciente.findById.mockResolvedValue({ nome: 'Pac' });
-      Medico.findById.mockResolvedValue({ email: 'med@test.com', cancelamentoAntecedenciaHoras: 24 });
+      Medico.findById.mockResolvedValue({
+        email: 'med@test.com',
+        cancelamentoAntecedenciaHoras: 24,
+      });
       Consulta.cancelar.mockResolvedValue({});
 
       await consultaController.cancelarConsulta(req, res);
@@ -125,7 +143,12 @@ describe('ConsultaController Unit Tests', () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'aux-1', perfil: 'auxiliar' };
 
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', medico_id: 'med-1', data: '2030-01-01', hora: '10:00' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        medico_id: 'med-1',
+        data: '2030-01-01',
+        hora: '10:00',
+      });
       Medico.findById.mockResolvedValue({ id: 'med-1', cancelamentoAntecedenciaHoras: 0 });
       Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: 'med-1' });
       Consulta.cancelar.mockResolvedValue({});
@@ -138,7 +161,12 @@ describe('ConsultaController Unit Tests', () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'aux-1', perfil: 'auxiliar' };
 
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', medico_id: 'med-1', data: '2030-01-01', hora: '10:00' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        medico_id: 'med-1',
+        data: '2030-01-01',
+        hora: '10:00',
+      });
       Medico.findById.mockResolvedValue({ cancelamentoAntecedenciaHoras: 0 });
       Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: 'med-OUTRO' });
 
@@ -158,7 +186,8 @@ describe('ConsultaController Unit Tests', () => {
 
       await consultaController.getAllConsultas(req, res);
       expect(Consulta.findPaginated).toHaveBeenCalledWith(
-        expect.any(Number), expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
         expect.stringContaining("idPaciente eq 'pac-1'"),
         expect.any(Object)
       );
@@ -206,7 +235,11 @@ describe('ConsultaController Unit Tests', () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'aux-1', perfil: 'auxiliar' };
 
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', medico_id: 'med-1', status: 'Confirmada' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        medico_id: 'med-1',
+        status: 'Confirmada',
+      });
       Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: 'med-1' });
       Consulta.marcarComoConcluida.mockResolvedValue({});
 
@@ -230,8 +263,13 @@ describe('ConsultaController Unit Tests', () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'med-1', perfil: 'medico' };
       const dataFutura = '2030-01-01';
-      
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', status: 'Aguardando Confirmação do Médico', data: dataFutura, hora: '10:00' });
+
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        status: 'Aguardando Confirmação do Médico',
+        data: dataFutura,
+        hora: '10:00',
+      });
       Consulta.confirmar.mockResolvedValue({ status: 'Confirmada' });
 
       await consultaController.confirmarConsulta(req, res);
@@ -240,7 +278,12 @@ describe('ConsultaController Unit Tests', () => {
 
     it('deve expirar consulta se data já passou (409)', async () => {
       req.params = { id: 'cons-1' };
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', status: 'Aguardando Confirmação do Médico', data: '2000-01-01', hora: '10:00' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        status: 'Aguardando Confirmação do Médico',
+        data: '2000-01-01',
+        hora: '10:00',
+      });
 
       await consultaController.confirmarConsulta(req, res);
       expect(Consulta.updateStatus).toHaveBeenCalledWith('cons-1', 'Expirada');
@@ -257,11 +300,17 @@ describe('ConsultaController Unit Tests', () => {
       req.user = { id: 'aux-1', perfil: 'auxiliar' };
       req.body = { novaData: '2030-01-01', novaHora: '10:00' };
 
-      Consulta.findById.mockResolvedValue({ medico_id: 'med-1', status: 'Confirmada', data: '2030-05-05', hora: '12:00', duracaoMinutos: 30 });
+      Consulta.findById.mockResolvedValue({
+        medico_id: 'med-1',
+        status: 'Confirmada',
+        data: '2030-05-05',
+        hora: '12:00',
+        duracaoMinutos: 30,
+      });
 
       // CORREÇÃO: Mock do db.query para verificar vínculo do auxiliar
       db.query.mockResolvedValue({ rows: [{ idMedico: 'med-1' }] });
-      
+
       Medico.isHorarioDisponivel.mockResolvedValue(true);
       Consulta.checkConflict.mockResolvedValue(false);
       Consulta.checkPatientConflict.mockResolvedValue(false);
@@ -280,7 +329,10 @@ describe('ConsultaController Unit Tests', () => {
   describe('reprovarConsulta', () => {
     it('deve expirar consulta se data da proposta já passou', async () => {
       req.params = { id: 'cons-1' };
-      Consulta.findById.mockResolvedValue({ dataRemarcacaoSugerida: '2000-01-01', horaRemarcacaoSugerida: '10:00' });
+      Consulta.findById.mockResolvedValue({
+        dataRemarcacaoSugerida: '2000-01-01',
+        horaRemarcacaoSugerida: '10:00',
+      });
 
       await consultaController.reprovarConsulta(req, res);
       expect(Consulta.updateStatus).toHaveBeenCalledWith('cons-1', 'Expirada');
@@ -295,7 +347,13 @@ describe('ConsultaController Unit Tests', () => {
     it('deve rejeitar automaticamente se houver conflito no novo horário (409)', async () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'med-1', perfil: 'medico' };
-      Consulta.findById.mockResolvedValue({ id: 'cons-1', medico_id: 'med-1', status: 'Remarcação Solicitada Pelo Paciente', dataRemarcacaoSugerida: '2030-05-05', horaRemarcacaoSugerida: '15:00' });
+      Consulta.findById.mockResolvedValue({
+        id: 'cons-1',
+        medico_id: 'med-1',
+        status: 'Remarcação Solicitada Pelo Paciente',
+        dataRemarcacaoSugerida: '2030-05-05',
+        horaRemarcacaoSugerida: '15:00',
+      });
       Consulta.checkConflict.mockResolvedValue(true);
 
       await consultaController.aceitarRemarcacao(req, res);
@@ -308,7 +366,10 @@ describe('ConsultaController Unit Tests', () => {
     it('deve rejeitar com sucesso se permissões ok', async () => {
       req.params = { id: 'cons-1' };
       req.user = { id: 'med-1', perfil: 'medico' };
-      Consulta.findById.mockResolvedValue({ medico_id: 'med-1', status: 'Remarcação Solicitada Pelo Paciente' });
+      Consulta.findById.mockResolvedValue({
+        medico_id: 'med-1',
+        status: 'Remarcação Solicitada Pelo Paciente',
+      });
       Consulta.rejeitarRemarcacao.mockResolvedValue({});
 
       await consultaController.rejeitarRemarcacao(req, res);

@@ -28,12 +28,14 @@ describe('NotificationService Unit Tests', () => {
     const resultado = await notificationService.enviarEmail(emailData);
 
     // Verifica se o nodemailer foi chamado com os parâmetros certos
-    expect(mockSendMail).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'paciente@teste.com',
-      subject: 'Confirmação',
-      html: '<p>Olá</p>',
-      from: expect.stringContaining('AgendaMed')
-    }));
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'paciente@teste.com',
+        subject: 'Confirmação',
+        html: '<p>Olá</p>',
+        from: expect.stringContaining('AgendaMed'),
+      })
+    );
 
     // Verifica o retorno
     expect(resultado).toEqual(mockInfo);
@@ -51,8 +53,8 @@ describe('NotificationService Unit Tests', () => {
     };
 
     // Espera que a função exploda o erro para ser tratado pelo controller
-    await expect(notificationService.enviarEmail(emailData))
-      .rejects
-      .toThrow('Falha na conexão SMTP');
+    await expect(notificationService.enviarEmail(emailData)).rejects.toThrow(
+      'Falha na conexão SMTP'
+    );
   });
 });

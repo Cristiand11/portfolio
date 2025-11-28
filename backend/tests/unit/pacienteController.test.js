@@ -28,8 +28,8 @@ jest.mock('axios');
 jest.mock('cpf-cnpj-validator', () => ({
   cpf: {
     isValid: jest.fn(),
-    strip: jest.fn(val => val.replace(/\D/g, '')),
-  }
+    strip: jest.fn((val) => val.replace(/\D/g, '')),
+  },
 }));
 
 describe('PacienteController Unit Tests', () => {
@@ -47,18 +47,18 @@ describe('PacienteController Unit Tests', () => {
   // ---------------------------------------------------------
   describe('createPaciente', () => {
     it('deve criar paciente com CPF válido e endereço via CEP (201)', async () => {
-      req.body = { 
-        nome: 'Teste', 
-        cpf: '123.456.789-00', 
-        cepCodigo: '89200000' 
+      req.body = {
+        nome: 'Teste',
+        cpf: '123.456.789-00',
+        cepCodigo: '89200000',
       };
 
       // Mock Valid CPF
       cpf.isValid.mockReturnValue(true);
-      
+
       // Mock ViaCEP Success
-      axios.get.mockResolvedValue({ 
-        data: { logradouro: 'Rua Teste', localidade: 'Joinville', uf: 'SC', bairro: 'Centro' } 
+      axios.get.mockResolvedValue({
+        data: { logradouro: 'Rua Teste', localidade: 'Joinville', uf: 'SC', bairro: 'Centro' },
       });
 
       // Mock DB Create
@@ -68,10 +68,12 @@ describe('PacienteController Unit Tests', () => {
 
       // Verificações
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('89200000'));
-      expect(Paciente.create).toHaveBeenCalledWith(expect.objectContaining({
-        endereco: 'Rua Teste',
-        cidade: 'Joinville'
-      }));
+      expect(Paciente.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endereco: 'Rua Teste',
+          cidade: 'Joinville',
+        })
+      );
       expect(res.status).toHaveBeenCalledWith(201);
     });
 
@@ -82,10 +84,12 @@ describe('PacienteController Unit Tests', () => {
       await pacienteController.createPaciente(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        message: expect.stringMatching(/Erro ao cadastrar/),
-        error: expect.stringMatching(/CPF inválido/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringMatching(/Erro ao cadastrar/),
+          error: expect.stringMatching(/CPF inválido/),
+        })
+      );
     });
 
     it('deve retornar 400 se CEP não for encontrado (Erro ViaCEP)', async () => {
@@ -98,36 +102,38 @@ describe('PacienteController Unit Tests', () => {
       await pacienteController.createPaciente(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      
+
       // CORREÇÃO: Ajustado para esperar a mensagem exata que seu código retorna
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.stringMatching(/Erro ao consultar o CEP/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.stringMatching(/Erro ao consultar o CEP/),
+        })
+      );
     });
 
     it('deve criar link com médico se quem cria é um médico', async () => {
-        req.user = { id: 'med-1', perfil: 'medico' };
-        req.body = { cpf: '123' };
-        cpf.isValid.mockReturnValue(true);
-        Paciente.create.mockResolvedValue({ id: 'pac-1' });
+      req.user = { id: 'med-1', perfil: 'medico' };
+      req.body = { cpf: '123' };
+      cpf.isValid.mockReturnValue(true);
+      Paciente.create.mockResolvedValue({ id: 'pac-1' });
 
-        await pacienteController.createPaciente(req, res);
+      await pacienteController.createPaciente(req, res);
 
-        expect(Medico.createLink).toHaveBeenCalledWith('med-1', 'pac-1');
+      expect(Medico.createLink).toHaveBeenCalledWith('med-1', 'pac-1');
     });
 
     it('deve criar link com médico se quem cria é auxiliar', async () => {
-        req.user = { id: 'aux-1', perfil: 'auxiliar' };
-        req.body = { cpf: '123' };
-        cpf.isValid.mockReturnValue(true);
-        Paciente.create.mockResolvedValue({ id: 'pac-1' });
-        
-        // Mock Auxiliar buscando seu médico chefe
-        Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: 'med-chefe' });
+      req.user = { id: 'aux-1', perfil: 'auxiliar' };
+      req.body = { cpf: '123' };
+      cpf.isValid.mockReturnValue(true);
+      Paciente.create.mockResolvedValue({ id: 'pac-1' });
 
-        await pacienteController.createPaciente(req, res);
+      // Mock Auxiliar buscando seu médico chefe
+      Auxiliar.findById.mockResolvedValue({ id: 'aux-1', idMedico: 'med-chefe' });
 
-        expect(Medico.createLink).toHaveBeenCalledWith('med-chefe', 'pac-1');
+      await pacienteController.createPaciente(req, res);
+
+      expect(Medico.createLink).toHaveBeenCalledWith('med-chefe', 'pac-1');
     });
   });
 
@@ -139,7 +145,7 @@ describe('PacienteController Unit Tests', () => {
       req.params = { id: 'meu-id' };
       req.user = { id: 'meu-id' }; // Tokens batem
       req.body = { cpf: '123' };
-      
+
       cpf.isValid.mockReturnValue(true);
       Paciente.update.mockResolvedValue({ id: 'meu-id' });
 
@@ -150,7 +156,7 @@ describe('PacienteController Unit Tests', () => {
 
     it('deve negar atualização se tentar alterar outro usuário (403)', async () => {
       req.params = { id: 'outro-id' }; // ID URL
-      req.user = { id: 'meu-id' };     // ID Token
+      req.user = { id: 'meu-id' }; // ID Token
 
       await pacienteController.updatePaciente(req, res);
 
@@ -167,9 +173,11 @@ describe('PacienteController Unit Tests', () => {
       await pacienteController.createPaciente(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.stringMatching(/Erro ao consultar o CEP/)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.stringMatching(/Erro ao consultar o CEP/),
+        })
+      );
     });
   });
 
@@ -177,15 +185,15 @@ describe('PacienteController Unit Tests', () => {
   // Get Medicos Consultados
   // ---------------------------------------------------------
   describe('getMedicosConsultados', () => {
-      it('deve retornar lista de médicos', async () => {
-          req.user = { id: 'pac-1' };
-          Paciente.findMedicosConsultados.mockResolvedValue([{ nome: 'Dr. House' }]);
+    it('deve retornar lista de médicos', async () => {
+      req.user = { id: 'pac-1' };
+      Paciente.findMedicosConsultados.mockResolvedValue([{ nome: 'Dr. House' }]);
 
-          await pacienteController.getMedicosConsultados(req, res);
+      await pacienteController.getMedicosConsultados(req, res);
 
-          expect(Paciente.findMedicosConsultados).toHaveBeenCalledWith('pac-1');
-          expect(res.status).toHaveBeenCalledWith(200);
-          expect(res.json).toHaveBeenCalledWith([{ nome: 'Dr. House' }]);
-      });
+      expect(Paciente.findMedicosConsultados).toHaveBeenCalledWith('pac-1');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith([{ nome: 'Dr. House' }]);
+    });
   });
 });

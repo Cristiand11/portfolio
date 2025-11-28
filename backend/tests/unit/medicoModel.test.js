@@ -10,7 +10,7 @@ jest.mock('../../src/utils/dateUtils');
 describe('MedicoModel Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    formatarData.mockImplementation(d => '2025-01-01');
+    formatarData.mockImplementation((d) => '2025-01-01');
   });
 
   // ---------------------------------------------------------
@@ -20,7 +20,7 @@ describe('MedicoModel Unit Tests', () => {
     it('deve criar medico hashando a senha', async () => {
       const dados = { nome: 'Dr', senha: '123' };
       bcrypt.hash.mockResolvedValue('hash123');
-      
+
       db.query.mockResolvedValue({ rows: [{ ...dados, senha: 'hash123' }] });
 
       await Medico.create(dados);
@@ -43,7 +43,7 @@ describe('MedicoModel Unit Tests', () => {
 
       // Filtro: "nome eq 'A' or crm eq 'B'"
       const filter = "nome eq 'A' or crm eq 'B'";
-      
+
       await Medico.findPaginated(1, 10, filter);
 
       // Verifica se gerou "(nome = $1 OR crm = $2)"
@@ -79,7 +79,9 @@ describe('MedicoModel Unit Tests', () => {
 
       // Verifica se a query só tem o campo telefone e lastModifiedDate
       expect(db.query).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE medico SET telefone = \$1, "lastModifiedDate" = NOW\(\) WHERE/),
+        expect.stringMatching(
+          /UPDATE medico SET telefone = \$1, "lastModifiedDate" = NOW\(\) WHERE/
+        ),
         ['999', 1]
       );
     });
@@ -158,7 +160,7 @@ describe('MedicoModel Unit Tests', () => {
       db.query.mockResolvedValueOnce({ rows: [{ count: '5' }] });
       db.query.mockResolvedValueOnce({ rows: [] });
 
-      await Medico.findPaginated(1, 10, "crm isnotnull");
+      await Medico.findPaginated(1, 10, 'crm isnotnull');
 
       expect(db.query).toHaveBeenCalledWith(
         expect.stringContaining('crm IS NOT NULL'),
@@ -206,12 +208,16 @@ describe('MedicoModel Unit Tests', () => {
   // ---------------------------------------------------------
   describe('Fluxos de Inativação', () => {
     it('solicitarInativacao: deve atualizar status e data', async () => {
-      db.query.mockResolvedValue({ 
-        rows: [{ 
-          id: 1, status: 'Aguardando', 
-          inativacaoSolicitadaEm: new Date(),
-          createdDate: new Date(), lastModifiedDate: new Date() 
-        }] 
+      db.query.mockResolvedValue({
+        rows: [
+          {
+            id: 1,
+            status: 'Aguardando',
+            inativacaoSolicitadaEm: new Date(),
+            createdDate: new Date(),
+            lastModifiedDate: new Date(),
+          },
+        ],
       });
 
       await Medico.solicitarInativacao(1);
@@ -223,11 +229,15 @@ describe('MedicoModel Unit Tests', () => {
     });
 
     it('reverterInativacao: deve limpar data e voltar status', async () => {
-      db.query.mockResolvedValue({ 
-        rows: [{ 
-          id: 1, status: 'Ativo', 
-          createdDate: new Date(), lastModifiedDate: new Date() 
-        }] 
+      db.query.mockResolvedValue({
+        rows: [
+          {
+            id: 1,
+            status: 'Ativo',
+            createdDate: new Date(),
+            lastModifiedDate: new Date(),
+          },
+        ],
       });
 
       await Medico.reverterInativacao(1);
@@ -247,18 +257,17 @@ describe('MedicoModel Unit Tests', () => {
       db.query.mockResolvedValue({ rows: [{ count: '42' }] });
       const total = await Medico.countAtivos();
       expect(total).toBe(42);
-      expect(db.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE status = $1'),
-        ['Ativo']
-      );
+      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('WHERE status = $1'), [
+        'Ativo',
+      ]);
     });
 
     it('countSolicitacoesInativacaoRecentes: deve filtrar por data', async () => {
       db.query.mockResolvedValue({ rows: [{ count: '5' }] });
       const dataInicio = new Date();
-      
+
       const total = await Medico.countSolicitacoesInativacaoRecentes(dataInicio);
-      
+
       expect(total).toBe(5);
       expect(db.query).toHaveBeenCalledWith(
         expect.stringContaining('WHERE "inativacaoSolicitadaEm" >= $1'),
@@ -268,7 +277,7 @@ describe('MedicoModel Unit Tests', () => {
 
     it('createLink: deve inserir na tabela de junção', async () => {
       db.query.mockResolvedValue({}); // Retorno irrelevante (void)
-      
+
       await Medico.createLink(1, 100);
 
       expect(db.query).toHaveBeenCalledWith(
@@ -289,14 +298,18 @@ describe('MedicoModel Unit Tests', () => {
     });
 
     it('deve formatar dados se encontrado', async () => {
-      db.query.mockResolvedValue({ 
-        rows: [{ 
-          id: 1, senha: 'hash', 
-          createdDate: new Date(), lastModifiedDate: new Date() 
-        }] 
+      db.query.mockResolvedValue({
+        rows: [
+          {
+            id: 1,
+            senha: 'hash',
+            createdDate: new Date(),
+            lastModifiedDate: new Date(),
+          },
+        ],
       });
       const resultado = await Medico.findById(1);
-      
+
       expect(resultado).not.toHaveProperty('senha');
       expect(formatarData).toHaveBeenCalled();
     });

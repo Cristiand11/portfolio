@@ -7,7 +7,7 @@ jest.mock('../../src/config/database');
 // Mock Manual Req/Res/Next
 const mockRequest = (user, params = {}) => ({
   user,
-  params
+  params,
 });
 
 const mockResponse = () => {
@@ -111,7 +111,7 @@ describe('AuthorizationMiddleware Unit Tests', () => {
   describe('medicoOuSeuAuxiliarAuth', () => {
     it('deve permitir medico dono da consulta', async () => {
       req = mockRequest({ id: 'med-1', perfil: 'medico' }, { id: 'consulta-1' });
-      
+
       // Mock Consulta retornando que pertence ao med-1
       db.query.mockResolvedValue({ rows: [{ medico_id: 'med-1' }] });
 
@@ -125,7 +125,7 @@ describe('AuthorizationMiddleware Unit Tests', () => {
 
       // 1. Mock Consulta (pertence ao med-1)
       db.query.mockResolvedValueOnce({ rows: [{ medico_id: 'med-1' }] });
-      
+
       // 2. Mock Auxiliar (vinculado ao med-1)
       db.query.mockResolvedValueOnce({ rows: [{ idMedico: 'med-1' }] });
 
@@ -139,7 +139,7 @@ describe('AuthorizationMiddleware Unit Tests', () => {
 
       // 1. Consulta do med-1
       db.query.mockResolvedValueOnce({ rows: [{ medico_id: 'med-1' }] });
-      
+
       // 2. Auxiliar do med-2
       db.query.mockResolvedValueOnce({ rows: [{ idMedico: 'med-2' }] });
 
@@ -168,7 +168,7 @@ describe('AuthorizationMiddleware Unit Tests', () => {
 
     it('deve permitir o medico chefe editar seu auxiliar', async () => {
       req = mockRequest({ id: 'med-1', perfil: 'medico' }, { id: 'aux-1' });
-      
+
       // Mock Auxiliar pertence ao med-1
       db.query.mockResolvedValue({ rows: [{ idMedico: 'med-1' }] });
 
@@ -178,7 +178,7 @@ describe('AuthorizationMiddleware Unit Tests', () => {
 
     it('deve bloquear medico estranho', async () => {
       req = mockRequest({ id: 'med-2', perfil: 'medico' }, { id: 'aux-1' });
-      
+
       // Mock Auxiliar pertence ao med-1
       db.query.mockResolvedValue({ rows: [{ idMedico: 'med-1' }] });
 

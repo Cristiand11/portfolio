@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">38.46% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>5/13</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">38.46% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>5/13</span>
             </div>
         
             
@@ -122,40 +122,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -169,6 +143,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import api from "./api";
@@ -176,14 +176,14 @@
 /**
  * Busca a lista de pacientes do médico logado (Médico ou Auxiliar).
  */
-export const getMeusPacientes = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>arams) =&gt; {</span>
+export const getMeusPacientes = <span class="fstat-no" title="function not covered" >(p</span>arams) =&gt; {
 <span class="cstat-no" title="statement not covered" >  return api.get("/medicos/me/pacientes", { params });</span>
 };
 &nbsp;
 /**
  * Auxiliar busca a lista paginada de pacientes atendidos pelo médico vinculado
  */
-export const getPacientesByMedicoId = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(</span>
+export const getPacientesByMedicoId = <span class="fstat-no" title="function not covered" >async </span>(
   medicoId,
   page = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   size = <span class="branch-0 cbranch-no" title="branch not covered" >10,</span>
@@ -207,7 +207,7 @@ export const getPacientesByMedicoId = <span class="cstat-no" title="statement no
 /**
  * Cadastra um paciente no sistema
  */
-export const createPaciente = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>acienteData) =&gt; {</span>
+export const createPaciente = <span class="fstat-no" title="function not covered" >(p</span>acienteData) =&gt; {
   // O token do médico/auxiliar logado já é enviado automaticamente pelo 'api'
 <span class="cstat-no" title="statement not covered" >  return api.post("/pacientes", pacienteData);</span>
 };
@@ -215,14 +215,14 @@ export const createPaciente = <span class="cstat-no" title="statement not covere
 /**
  * Busca os dados do perfil do paciente logado.
  */
-export const getMeuPerfil = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+export const getMeuPerfil = <span class="fstat-no" title="function not covered" >()</span> =&gt; {
 <span class="cstat-no" title="statement not covered" >  return api.get("/pacientes/me");</span>
 };
 &nbsp;
 /**
  * Atualiza os dados do perfil do paciente logado.
  */
-export const updateMeuPerfil = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>dPaciente, pacienteData) =&gt; {</span>
+export const updateMeuPerfil = <span class="fstat-no" title="function not covered" >(i</span>dPaciente, pacienteData) =&gt; {
 <span class="cstat-no" title="statement not covered" >  return api.put(`/pacientes/${idPaciente}`, pacienteData);</span>
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -232,7 +232,7 @@ export const updateMeuPerfil = <span class="cstat-no" title="statement not cover
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-27T23:16:11.830Z
+                at 2025-11-28T01:08:26.424Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

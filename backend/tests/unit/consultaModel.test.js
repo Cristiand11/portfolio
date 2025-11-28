@@ -1,5 +1,5 @@
-const db = require('../../src/config/database'); 
-const Consulta = require('../../src/models/consultaModel'); 
+const db = require('../../src/config/database');
+const Consulta = require('../../src/models/consultaModel');
 jest.mock('../../src/config/database');
 
 describe('ConsultaModel - Validação de Conflitos', () => {
@@ -9,7 +9,6 @@ describe('ConsultaModel - Validação de Conflitos', () => {
   });
 
   describe('checkConflict (Conflito do Médico)', () => {
-    
     it('Deve retornar TRUE quando o banco retornar count > 0', async () => {
       // ARRANGE (Preparar)
       // Simulamos que o banco retornou uma linha com count: '1' (conflito existe)
@@ -26,12 +25,12 @@ describe('ConsultaModel - Validação de Conflitos', () => {
       // ASSERT (Verificar)
       expect(result).toBe(true); // Esperamos true
       expect(db.query).toHaveBeenCalledTimes(1); // Verifica se o banco foi chamado
-      
+
       // Verifica se os parâmetros SQL continham os status corretos (incluindo pendentes)
       const queryCallArgs = db.query.mock.calls[0];
       const valuesPassed = queryCallArgs[1]; // O segundo argumento de db.query são os values
       const statusArray = valuesPassed[2]; // O terceiro item no array values é o array de status
-      
+
       expect(statusArray).toContain('Confirmada');
       expect(statusArray).toContain('Aguardando Confirmação do Médico');
       expect(statusArray).toContain('Aguardando Confirmação do Paciente');
@@ -50,24 +49,23 @@ describe('ConsultaModel - Validação de Conflitos', () => {
     });
 
     it('Deve incluir o ID da consulta para exclusão na query se fornecido', async () => {
-        // ARRANGE
-        db.query.mockResolvedValue({ rows: [{ count: '0' }] });
-        const excludeId = 99;
-  
-        // ACT
-        await Consulta.checkConflict(1, '2025-10-30', '14:00', 30, excludeId);
-  
-        // ASSERT
-        const querySql = db.query.mock.calls[0][0]; // A string SQL
-        const queryValues = db.query.mock.calls[0][1]; // Os valores
-        
-        expect(querySql).toContain('AND id != $6'); // Verifica se a cláusula foi adicionada
-        expect(queryValues).toContain(excludeId);   // Verifica se o ID foi passado
+      // ARRANGE
+      db.query.mockResolvedValue({ rows: [{ count: '0' }] });
+      const excludeId = 99;
+
+      // ACT
+      await Consulta.checkConflict(1, '2025-10-30', '14:00', 30, excludeId);
+
+      // ASSERT
+      const querySql = db.query.mock.calls[0][0]; // A string SQL
+      const queryValues = db.query.mock.calls[0][1]; // Os valores
+
+      expect(querySql).toContain('AND id != $6'); // Verifica se a cláusula foi adicionada
+      expect(queryValues).toContain(excludeId); // Verifica se o ID foi passado
     });
   });
 
   describe('checkPatientConflict (Conflito do Paciente)', () => {
-    
     it('Deve retornar TRUE quando houver conflito na agenda do paciente', async () => {
       // ARRANGE
       db.query.mockResolvedValue({ rows: [{ count: '2' }] }); // Paciente ocupado
@@ -80,18 +78,18 @@ describe('ConsultaModel - Validação de Conflitos', () => {
     });
 
     it('Deve verificar os mesmos status de bloqueio que a função do médico', async () => {
-        // ARRANGE
-        db.query.mockResolvedValue({ rows: [{ count: '0' }] });
-  
-        // ACT
-        await Consulta.checkPatientConflict(50, '2025-10-30', '10:00', 30);
-  
-        // ASSERT
-        const queryValues = db.query.mock.calls[0][1];
-        const statusArray = queryValues[2];
-        
-        expect(statusArray).toContain('Confirmada');
-        expect(statusArray).toContain('Aguardando Confirmação do Paciente');
+      // ARRANGE
+      db.query.mockResolvedValue({ rows: [{ count: '0' }] });
+
+      // ACT
+      await Consulta.checkPatientConflict(50, '2025-10-30', '10:00', 30);
+
+      // ASSERT
+      const queryValues = db.query.mock.calls[0][1];
+      const statusArray = queryValues[2];
+
+      expect(statusArray).toContain('Confirmada');
+      expect(statusArray).toContain('Aguardando Confirmação do Paciente');
     });
   });
 
@@ -137,9 +135,9 @@ describe('ConsultaModel - Validação de Conflitos', () => {
   describe('update', () => {
     it('deve atualizar apenas campos permitidos e setar lastModifiedDate', async () => {
       const dados = { observacoes: 'Nova obs', status: 'Concluída' };
-      
-      db.query.mockResolvedValue({ 
-        rows: [{ id: 1, ...dados }] 
+
+      db.query.mockResolvedValue({
+        rows: [{ id: 1, ...dados }],
       });
 
       await Consulta.update(1, dados);
@@ -148,7 +146,7 @@ describe('ConsultaModel - Validação de Conflitos', () => {
         expect.stringContaining('UPDATE consulta SET'),
         expect.any(Array)
       );
-      
+
       const sql = db.query.mock.calls[0][0];
       expect(sql).toContain('observacoes = $1');
       expect(sql).toContain('status = $2');
@@ -179,14 +177,17 @@ describe('ConsultaModel - Validação de Conflitos', () => {
   describe('create', () => {
     it('deve criar consulta e formatar datas no retorno', async () => {
       const dados = { data: '2025-10-20', hora: '14:00' };
-      
+
       // Mock do retorno do INSERT
-      db.query.mockResolvedValue({ 
-        rows: [{ 
-          id: 1, ...dados, 
-          createdDate: new Date(), 
-          lastModifiedDate: new Date() 
-        }] 
+      db.query.mockResolvedValue({
+        rows: [
+          {
+            id: 1,
+            ...dados,
+            createdDate: new Date(),
+            lastModifiedDate: new Date(),
+          },
+        ],
       });
 
       const result = await Consulta.create(dados);
@@ -230,10 +231,12 @@ describe('ConsultaModel - Validação de Conflitos', () => {
       const sql = db.query.mock.calls[0][0];
       expect(sql).toContain('status = $1');
       expect(sql).toContain('"dataRemarcacaoSugerida" = $2');
-      expect(db.query).toHaveBeenCalledWith(
-        expect.any(String),
-        ['Aguardando', '2030-01-01', '10:00', 1]
-      );
+      expect(db.query).toHaveBeenCalledWith(expect.any(String), [
+        'Aguardando',
+        '2030-01-01',
+        '10:00',
+        1,
+      ]);
     });
 
     it('aceitarRemarcacao: deve limpar sugestões e confirmar nova data', async () => {
@@ -255,7 +258,7 @@ describe('ConsultaModel - Validação de Conflitos', () => {
       const sql = db.query.mock.calls[0][0];
       expect(sql).toContain("status = 'Confirmada'");
       // Não deve alterar data/hora principal, apenas limpar as sugeridas
-      expect(sql).not.toContain('data = $1'); 
+      expect(sql).not.toContain('data = $1');
       expect(sql).toContain('"dataRemarcacaoSugerida" = NULL');
     });
   });
@@ -267,7 +270,7 @@ describe('ConsultaModel - Validação de Conflitos', () => {
     it('marcarComoConcluida: deve setar status para Concluída', async () => {
       db.query.mockResolvedValue({ rows: [{ id: 1 }] });
       await Consulta.marcarComoConcluida(1);
-      
+
       const params = db.query.mock.calls[0][1];
       expect(params[0]).toBe('Concluída');
     });
