@@ -5,14 +5,14 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_EMAIL,
+    user: process.env.BREVO_SMTP_USER,
     pass: process.env.BREVO_SMTP_KEY,
   },
 });
 
 async function enviarEmail({ para, assunto, mensagemHtml }) {
   const info = await transporter.sendMail({
-    from: `"AgendaMed" <cristiandomingues.15@gmail.com>`,
+    from: `"AgendaMed" <${process.env.BREVO_EMAIL}>`,
     to: para,
     subject: assunto,
     html: mensagemHtml,
