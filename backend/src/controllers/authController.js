@@ -109,7 +109,7 @@ exports.forgotPassword = async (req, res) => {
       [user.id, perfil.toLowerCase(), tokenHash, expiresAt]
     );
 
-    const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
     const resetUrl = `${frontendBaseUrl}/reset-password?token=${resetToken}`;
     const assunto = 'Recuperação de Senha - AgendaMed';
     const mensagemHtml = `<p>Você solicitou a redefinição de sua senha. Clique no link a seguir para criar uma nova senha: <a href="${resetUrl}">${resetUrl}</a></p><p>Este link expira em 1 hora.</p>`;
